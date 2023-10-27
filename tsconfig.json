@@ -1,9 +1,14 @@
 {
 	"extends": "@sindresorhus/tsconfig",
 	"compilerOptions": {
+		"noUnusedLocals": false,
+		"noUnusedParameters": false,
 		"moduleResolution": "node16",
 		"module": "Node16",
 		"outDir": "dist"
 	},
-	"include": ["source"]
+	"include": ["src"],
+	"paths": {
+		"~/*": ["./src/*"]
+	}
 }
