@@ -49,18 +49,18 @@ export const InstallEmbeddingModel = () => {
 	useEffect(() => {
 		const outputDirectory = `${fishcakePath}/models/`;
 		const outputFilename = 'jina-embeddings-v2-base-en.onnx';
+		const outputFilePath = path.join(outputDirectory, outputFilename);
 
 		// Check if model is already installed
-		if (fs.existsSync(`${outputDirectory}/${outputFilename}`)) {
+		if (fs.existsSync(outputFilePath)) {
 			setDoesModelExist(true);
 		}
 
 		if (shouldDownloadStart) {
 			// eslint-disable-next-line @typescript-eslint/no-floating-promises
 			(async () => {
-				// const url =
-				// 	'https://huggingface.co/Xenova/jina-embeddings-v2-base-en/resolve/main/onnx/model_quantized.onnx';
-				const url = 'https://link.testfile.org/30MB';
+				const url =
+					'https://huggingface.co/Xenova/jina-embeddings-v2-base-en/resolve/main/onnx/model_quantized.onnx';
 				const outputDirectory = `${fishcakePath}/models/`;
 
 				// Ensure the output directory exists or create it
@@ -80,10 +80,27 @@ export const InstallEmbeddingModel = () => {
 					responseType: 'stream',
 				});
 
+				// eslint-disable-next-line @typescript-eslint/no-misused-promises
+				process.on('SIGINT', async () => {
+					await fs.remove(outputFilePath);
+					process.exit();
+				});
+
+				// eslint-disable-next-line @typescript-eslint/no-misused-promises
+				process.on('SIGTERM', async () => {
+					await fs.remove(outputFilePath);
+					process.exit();
+				});
+
+				// eslint-disable-next-line @typescript-eslint/no-misused-promises
+				process.on('uncaughtException', async () => {
+					await fs.remove(outputFilePath);
+					process.exit(1);
+				});
 				const totalLength = response.headers['content-length'];
 
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
-				response.data.on('data', (chunk: any) => {
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+				response.data.on('data', (chunk: Buffer) => {
 					downloadedLength += chunk.length;
 
 					const endTime = performance.now();
@@ -96,7 +113,8 @@ export const InstallEmbeddingModel = () => {
 				});
 
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-				response.data.on('error', async (error: string) => {
+				response.data.on('error', async (error: Error) => {
+					await fs.remove(outputFilePath);
 					await writeErrorToFile(error);
 					setIsError(true);
 				});
@@ -107,6 +125,7 @@ export const InstallEmbeddingModel = () => {
 				writer.on('finish', () => setIsCompleted(true));
 				// eslint-disable-next-line @typescript-eslint/no-misused-promises
 				writer.on('error', async error => {
+					await fs.remove(outputFilePath);
 					await writeErrorToFile(error);
 					setIsError(true);
 				});
@@ -135,15 +154,17 @@ export const InstallEmbeddingModel = () => {
 					with the code it needs to modify.
 				</Text>
 				<Text color="gray">
-					Fishcake runs the <Text color="cyan">jina-embeddings-v2</Text> model
-					on your computer to perform this grouping. Press{' '}
+					Fishcake runs the <Text color="white">jina-embeddings-v2()</Text>{' '}
+					model on your computer to perform this grouping. Press{' '}
 					<Text color="white">enter</Text> to install the model.
 				</Text>
 				<Text color="gray">Requirements: No requirements</Text>
 
 				{shouldDownloadStart && (
-					<Box gap={1} width={70}>
-						<ProgressBar value={Math.round(downloadProgress)} />
+					<Box gap={1}>
+						<Box width={70} flexGrow={0} flexShrink={0}>
+							<ProgressBar value={Math.round(downloadProgress)} />
+						</Box>
 						<Text>{Math.round(downloadProgress)}%</Text>
 						<Text color={'gray'}>
 							({Math.round(downloadSpeed).toLocaleString('en-US')}{' '}
