@@ -20,6 +20,7 @@
 		"@inkjs/ui": "^1.0.0",
 		"@tanstack/react-query": "^5.0.5",
 		"@xenova/transformers": "^2.7.0",
+		"axios": "^1.6.0",
 		"chromadb": "^1.5.3",
 		"cli-spinners": "^2.9.1",
 		"figures": "^5.0.0",

@@ -49,7 +49,7 @@ export const theme = extendTheme(defaultTheme, {
 		TextInput: {
 			styles: {
 				value: (): TextProps => ({
-					color: 'white',
+					color: 'yellow',
 				}),
 			},
 		},

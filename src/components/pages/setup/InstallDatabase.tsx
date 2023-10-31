@@ -7,9 +7,10 @@ import {sleep} from 'zx';
 import {Header} from '../../Header.js';
 import {Body} from '../../Body.js';
 import {Footer} from '../../Footer.js';
-import {SelectFiles} from './SelectFiles.js';
 import {chromaInstall} from '../../../scripts/chroma/chromaInstall.js';
 import {chromaIsInstalled} from '../../../scripts/chroma/chromaIsInstalled.js';
+import {PageContainer} from '../../PageContainer.js';
+import {InstallEmbeddingModel} from './InstallEmbeddingModel.js';
 
 export const InstallDatabase = () => {
 	const {exit} = useApp();
@@ -25,7 +26,7 @@ export const InstallDatabase = () => {
 		// eslint-disable-next-line @typescript-eslint/no-floating-promises
 		(async () => {
 			const isInstalled = await chromaIsInstalled();
-			await sleep(1200);
+			await sleep(500); // Show loading spinner for at least a second so we don't have a flickering transition.
 			setIsInstalledLoading(false);
 			setIsDatabaseInstalled(isInstalled);
 		})();
@@ -58,15 +59,15 @@ export const InstallDatabase = () => {
 		}
 	});
 
-	if (isDatabaseInstalled) {
-		return <SelectFiles />;
-	}
 	if (isInstalledLoading) {
 		return <Spinner label="🍥 Loading..." />;
 	}
+	if (isDatabaseInstalled) {
+		return <InstallEmbeddingModel />;
+	}
 
 	return (
-		<Box gap={1} flexDirection="column">
+		<PageContainer>
 			<Header title="Setup fishcake" subtitle="1/3" />
 			<Body>
 				<Text color={'gray'} underline>
@@ -114,6 +115,6 @@ export const InstallDatabase = () => {
 				controls={['esc', 'enter']}
 				enterLabel={isSuccess ? 'next step' : 'install'}
 			/>
-		</Box>
+		</PageContainer>
 	);
 };

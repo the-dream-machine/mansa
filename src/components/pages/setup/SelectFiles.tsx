@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from 'react';
-import {Box, Spacer, Text} from 'ink';
+import {Box, Text} from 'ink';
 import {type Option, TextInput, MultiSelect} from '@inkjs/ui';
 import Fuse from 'fuse.js';
 import {fs} from 'zx';
@@ -61,10 +61,10 @@ export const SelectFiles = () => {
 
 	return (
 		<PageContainer>
-			<Header title="Set up fishcake" subtitle="2/3" />
+			<Header title="Set up fishcake" subtitle="3/3" />
 			<Body>
 				<Text color={'gray'} underline>
-					2. Select files to index
+					3. Select files to index
 				</Text>
 
 				<Text color={'gray'}>
@@ -79,14 +79,12 @@ export const SelectFiles = () => {
 				</Text>
 
 				{/* Search input */}
-				<Box>
-					<TextInput
-						placeholder="Search file/folder..."
-						onChange={query => {
-							setSetSearchQuery(query);
-						}}
-					/>
-				</Box>
+				<TextInput
+					placeholder="Search for file/folder..."
+					onChange={query => {
+						setSetSearchQuery(query);
+					}}
+				/>
 
 				{/* Count */}
 				<Box>
@@ -94,14 +92,19 @@ export const SelectFiles = () => {
 						{selectedPaths.length.toLocaleString('en-US')}/
 						{filePaths.length.toLocaleString('en-US')} selected
 					</Text>
-					{searchQuery && <Text color="gray"> • {options.length} results</Text>}
+					{searchQuery && (
+						<Text color="gray">
+							{' '}
+							• {options.length} results for "{searchQuery}"
+						</Text>
+					)}
 				</Box>
 
 				{/* Multiselect */}
 				{options.length > 0 && selectedPaths.length > 0 ? (
 					<MultiSelect
 						defaultValue={selectedPaths}
-						visibleOptionCount={20}
+						visibleOptionCount={5}
 						highlightText={searchQuery}
 						options={options}
 						onSubmit={handleSubmit}
@@ -110,7 +113,7 @@ export const SelectFiles = () => {
 						}}
 					/>
 				) : (
-					<Text color={'red'}>No results found</Text>
+					<Text color={'red'}>No files found</Text>
 				)}
 			</Body>
 			<Footer controls={['up', 'down', 'tab', 'search', 'esc', 'enter']} />
