@@ -13,7 +13,7 @@ import {Footer} from '../../Footer.js';
 import {fishcakePath} from '../../../utils/userPath.js';
 import {SelectFiles} from './SelectFiles.js';
 
-const errorLogFilePath = `${fishcakePath}/logs/install_model_error_${uuid()}.log`;
+const errorLogFilePath = `${fishcakePath}/logs/download_model_error_${uuid()}.log`;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const writeErrorToFile = async (error: any) => {
 	// Ensure the directory exists before writing the log file
@@ -51,7 +51,7 @@ export const InstallEmbeddingModel = () => {
 		const outputFilename = 'jina-embeddings-v2-base-en.onnx';
 		const outputFilePath = path.join(outputDirectory, outputFilename);
 
-		// Check if model is already installed
+		// Check if model is already downloaded
 		if (fs.existsSync(outputFilePath)) {
 			setDoesModelExist(true);
 		}
@@ -60,7 +60,7 @@ export const InstallEmbeddingModel = () => {
 			// eslint-disable-next-line @typescript-eslint/no-floating-promises
 			(async () => {
 				const url =
-					'https://huggingface.co/Xenova/jina-embeddings-v2-base-en/resolve/main/onnx/model_quantized.onnx';
+					'https://huggingface.co/Xenova/jina-embeddings-v2-base-en/resolve/main/onnx/model.onnx';
 				const outputDirectory = `${fishcakePath}/models/`;
 
 				// Ensure the output directory exists or create it
@@ -146,7 +146,7 @@ export const InstallEmbeddingModel = () => {
 			<Header title="Setup fishcake" subtitle="2/3" />
 			<Body>
 				<Text underline color="gray">
-					2. Install embedding model
+					2. Download embedding model
 				</Text>
 				<Text color="gray">
 					Fishcake groups together pieces of code based on their related
@@ -154,9 +154,9 @@ export const InstallEmbeddingModel = () => {
 					with the code it needs to modify.
 				</Text>
 				<Text color="gray">
-					Fishcake runs the <Text color="white">jina-embeddings-v2()</Text>{' '}
-					model on your computer to perform this grouping. Press{' '}
-					<Text color="white">enter</Text> to install the model.
+					Fishcake runs the <Text color="white">jina-embeddings-v2</Text> model
+					(547mb) on your computer to perform the grouping. Press{' '}
+					<Text color="white">enter</Text> to download the model.
 				</Text>
 				<Text color="gray">Requirements: No requirements</Text>
 
@@ -177,7 +177,7 @@ export const InstallEmbeddingModel = () => {
 					<>
 						<Text>
 							<Text color="green">{figureSet.tick} </Text>
-							Installation completed! 🎉
+							Download complete! 🎉
 						</Text>
 						<Text color="gray">
 							Hit <Text color="white">enter</Text> to go to the next step
@@ -200,7 +200,7 @@ export const InstallEmbeddingModel = () => {
 			</Body>
 			<Footer
 				controls={['esc', 'enter']}
-				enterLabel={isCompleted ? 'next step' : 'install'}
+				enterLabel={isCompleted ? 'next step' : 'download'}
 			/>
 		</PageContainer>
 	);
