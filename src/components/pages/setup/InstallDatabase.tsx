@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from 'react';
-import {Box, Spacer, Text, useApp, useInput} from 'ink';
+import {Text, useApp, useInput} from 'ink';
 import figureSet from 'figures';
 import {Spinner} from '@inkjs/ui';
 import {sleep} from 'zx';
@@ -10,10 +10,11 @@ import {Footer} from '../../Footer.js';
 import {chromaInstall} from '../../../scripts/chroma/chromaInstall.js';
 import {chromaIsInstalled} from '../../../scripts/chroma/chromaIsInstalled.js';
 import {PageContainer} from '../../PageContainer.js';
-import {InstallEmbeddingModel} from './InstallEmbeddingModel.js';
+import {useNavigation} from '../../NavigationProvider.js';
 
 export const InstallDatabase = () => {
 	const {exit} = useApp();
+	const navigation = useNavigation();
 
 	const [isDatabaseInstalled, setIsDatabaseInstalled] = useState(false);
 	const [isInstalledLoading, setIsInstalledLoading] = useState(true);
@@ -26,11 +27,15 @@ export const InstallDatabase = () => {
 		// eslint-disable-next-line @typescript-eslint/no-floating-promises
 		(async () => {
 			const isInstalled = await chromaIsInstalled();
-			await sleep(500); // Show loading spinner for at least a second so we don't have a flickering transition.
+			await sleep(300); // Show loading spinner for at least a second so we don't have a flickering transition.
 			setIsInstalledLoading(false);
 			setIsDatabaseInstalled(isInstalled);
 		})();
-	}, []);
+
+		if (isDatabaseInstalled) {
+			navigation?.navigate('installEmbeddingModel');
+		}
+	}, [isDatabaseInstalled]);
 
 	useInput((input, key) => {
 		if (key.escape) {
@@ -62,13 +67,10 @@ export const InstallDatabase = () => {
 	if (isInstalledLoading) {
 		return <Spinner label="🍥 Loading..." />;
 	}
-	if (isDatabaseInstalled) {
-		return <InstallEmbeddingModel />;
-	}
 
 	return (
 		<PageContainer>
-			<Header title="Setup fishcake" subtitle="1/3" />
+			<Header title="Setup fishcake" subtitle="1/2" />
 			<Body>
 				<Text color={'gray'} underline>
 					1. Install Database
@@ -93,7 +95,7 @@ export const InstallDatabase = () => {
 							Successfully installed! 🎉
 						</Text>
 						<Text color="gray">
-							Hit <Text color="white">enter</Text> to go to the next step
+							Press <Text color="white">enter</Text> to go to the next step
 						</Text>
 					</>
 				)}

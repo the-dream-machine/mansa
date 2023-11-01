@@ -11,7 +11,7 @@ import {Header} from '../../Header.js';
 import {Body} from '../../Body.js';
 import {Footer} from '../../Footer.js';
 import {fishcakePath} from '../../../utils/userPath.js';
-import {SelectFiles} from './SelectFiles.js';
+import {useNavigation} from '../../NavigationProvider.js';
 
 const errorLogFilePath = `${fishcakePath}/logs/download_model_error_${uuid()}.log`;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -33,6 +33,8 @@ export const InstallEmbeddingModel = () => {
 	const [shouldDownloadStart, setSetShouldDownloadStart] = useState(false);
 
 	const {exit} = useApp();
+	const navigation = useNavigation();
+
 	useInput((input, key) => {
 		if (key.escape) {
 			exit();
@@ -48,19 +50,35 @@ export const InstallEmbeddingModel = () => {
 
 	useEffect(() => {
 		const outputDirectory = `${fishcakePath}/models/`;
-		const outputFilename = 'jina-embeddings-v2-base-en.onnx';
+		const outputFilename = 'bge-base-en-v1.5.onnx';
 		const outputFilePath = path.join(outputDirectory, outputFilename);
+
+		// const removeIfIncomplete = async () => {
+		// 	if (!doesModelExist) {
+		// 		await fs.remove(outputFilePath);
+		// 	}
+		// };
+
+		// Remove file in node.js process exists while downloading
+		const listenerCallback = async () => {
+			await fs.remove(outputFilePath);
+			process.exit();
+		};
 
 		// Check if model is already downloaded
 		if (fs.existsSync(outputFilePath)) {
 			setDoesModelExist(true);
 		}
 
+		if (doesModelExist) {
+			navigation?.navigate('indexFiles');
+		}
+
 		if (shouldDownloadStart) {
 			// eslint-disable-next-line @typescript-eslint/no-floating-promises
 			(async () => {
 				const url =
-					'https://huggingface.co/Xenova/jina-embeddings-v2-base-en/resolve/main/onnx/model.onnx';
+					'https://huggingface.co/Xenova/bge-base-en-v1.5/resolve/main/onnx/model.onnx';
 				const outputDirectory = `${fishcakePath}/models/`;
 
 				// Ensure the output directory exists or create it
@@ -80,23 +98,6 @@ export const InstallEmbeddingModel = () => {
 					responseType: 'stream',
 				});
 
-				// eslint-disable-next-line @typescript-eslint/no-misused-promises
-				process.on('SIGINT', async () => {
-					await fs.remove(outputFilePath);
-					process.exit();
-				});
-
-				// eslint-disable-next-line @typescript-eslint/no-misused-promises
-				process.on('SIGTERM', async () => {
-					await fs.remove(outputFilePath);
-					process.exit();
-				});
-
-				// eslint-disable-next-line @typescript-eslint/no-misused-promises
-				process.on('uncaughtException', async () => {
-					await fs.remove(outputFilePath);
-					process.exit(1);
-				});
 				const totalLength = response.headers['content-length'];
 
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
@@ -129,21 +130,33 @@ export const InstallEmbeddingModel = () => {
 					await writeErrorToFile(error);
 					setIsError(true);
 				});
+
+				// eslint-disable-next-line @typescript-eslint/no-misused-promises
+				process.on('SIGINT', listenerCallback);
+				// eslint-disable-next-line @typescript-eslint/no-misused-promises
+				process.on('SIGTERM', listenerCallback);
+				// eslint-disable-next-line @typescript-eslint/no-misused-promises
+				process.on('uncaughtException', listenerCallback);
 			})();
 		}
-	}, [shouldDownloadStart]);
+
+		return () => {
+			// eslint-disable-next-line @typescript-eslint/no-misused-promises
+			process.off('SIGINT', listenerCallback);
+			// eslint-disable-next-line @typescript-eslint/no-misused-promises
+			process.off('SIGTERM', listenerCallback);
+			// eslint-disable-next-line @typescript-eslint/no-misused-promises
+			process.off('uncaughtException', listenerCallback);
+		};
+	}, [shouldDownloadStart, doesModelExist]);
 
 	const downloadSpeedUnits = ['bytes/s', 'kb/s', 'mb/s', 'gb/s', 'tb/s'][
 		Math.floor(Math.log2(downloadSpeed) / 10)
 	];
 
-	if (doesModelExist) {
-		return <SelectFiles />;
-	}
-
 	return (
 		<PageContainer>
-			<Header title="Setup fishcake" subtitle="2/3" />
+			<Header title="Setup fishcake" subtitle="2/2" />
 			<Body>
 				<Text underline color="gray">
 					2. Download embedding model
@@ -154,9 +167,9 @@ export const InstallEmbeddingModel = () => {
 					with the code it needs to modify.
 				</Text>
 				<Text color="gray">
-					Fishcake runs the <Text color="white">jina-embeddings-v2</Text> model
-					(547mb) on your computer to perform the grouping. Press{' '}
-					<Text color="white">enter</Text> to download the model.
+					Fishcake runs the <Text color="white">bge-base-en-v1.5</Text>{' '}
+					embedding model (436 MB) on your computer to perform the grouping.
+					Press <Text color="white">enter</Text> to download the model.
 				</Text>
 				<Text color="gray">Requirements: No requirements</Text>
 
@@ -172,7 +185,6 @@ export const InstallEmbeddingModel = () => {
 						</Text>
 					</Box>
 				)}
-
 				{isCompleted && (
 					<>
 						<Text>
@@ -180,7 +192,7 @@ export const InstallEmbeddingModel = () => {
 							Download complete! 🎉
 						</Text>
 						<Text color="gray">
-							Hit <Text color="white">enter</Text> to go to the next step
+							Press <Text color="white">enter</Text> to continue.
 						</Text>
 					</>
 				)}
@@ -200,7 +212,7 @@ export const InstallEmbeddingModel = () => {
 			</Body>
 			<Footer
 				controls={['esc', 'enter']}
-				enterLabel={isCompleted ? 'next step' : 'download'}
+				enterLabel={isCompleted ? 'continue' : 'download'}
 			/>
 		</PageContainer>
 	);
