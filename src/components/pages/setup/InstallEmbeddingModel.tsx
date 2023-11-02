@@ -53,12 +53,6 @@ export const InstallEmbeddingModel = () => {
 		const outputFilename = 'bge-base-en-v1.5.onnx';
 		const outputFilePath = path.join(outputDirectory, outputFilename);
 
-		// const removeIfIncomplete = async () => {
-		// 	if (!doesModelExist) {
-		// 		await fs.remove(outputFilePath);
-		// 	}
-		// };
-
 		// Remove file in node.js process exists while downloading
 		const listenerCallback = async () => {
 			await fs.remove(outputFilePath);

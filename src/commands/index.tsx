@@ -1,6 +1,6 @@
-import React, {useEffect, useState} from 'react';
+import React, {useEffect} from 'react';
 import {QueryClient, QueryClientProvider} from '@tanstack/react-query';
-import {Spinner, ThemeProvider} from '@inkjs/ui';
+import {ThemeProvider} from '@inkjs/ui';
 import {theme} from '../utils/theme.js';
 
 import {FullScreen} from '../components/FullScreen.js';
@@ -16,21 +16,15 @@ const listenerCallback = async () => {
 };
 
 export default function App() {
-	const [isInitializingDatabase, setIsInitializingDatabase] = useState(false);
-
 	useEffect(() => {
-		setIsInitializingDatabase(true);
 		// Start chroma DB on mount
-
 		// eslint-disable-next-line @typescript-eslint/no-floating-promises
 		(async () => {
 			await chromaStart();
-			setIsInitializingDatabase(false);
 		})();
 
 		return () => {
 			// Stop Chroma DB on unmount
-
 			// eslint-disable-next-line @typescript-eslint/no-misused-promises
 			process.off('SIGINT', listenerCallback);
 			// eslint-disable-next-line @typescript-eslint/no-misused-promises
@@ -45,11 +39,7 @@ export default function App() {
 			<ThemeProvider theme={theme}>
 				<NavigationProvider>
 					<FullScreen>
-						{isInitializingDatabase ? (
-							<Spinner label="🍥 Starting database..." />
-						) : (
-							<NavigationHandler />
-						)}
+						<NavigationHandler />
 					</FullScreen>
 				</NavigationProvider>
 			</ThemeProvider>

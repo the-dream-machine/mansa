@@ -1,6 +1,5 @@
-import React, {useEffect, useState} from 'react';
-import {Text, useApp, useInput} from 'ink';
-import {fs} from 'zx';
+import React, {type Dispatch, useEffect, useState} from 'react';
+import {Box, Text, useApp, useInput} from 'ink';
 
 import {getRepoFilePaths} from '../../scripts/getRepoFilePaths.js';
 import {Header} from '../Header.js';
@@ -8,52 +7,37 @@ import {Footer} from '../Footer.js';
 import {Body} from '../Body.js';
 import {PageContainer} from '../PageContainer.js';
 import {getRepoDetails} from '../../scripts/getRepoDetails.js';
-import {codeSplitter} from '../../utils/splitter/codeSplitter/codeSplitter.js';
 import {saveEmbeddings} from '../../utils/saveEmbeddings.js';
 
 import {v4 as uuid} from 'uuid';
-import type {CodeDocument} from '../../types/CodeDocument.js';
-import {Spinner} from '@inkjs/ui';
+import {ProgressBar} from '@inkjs/ui';
 import figureSet from 'figures';
+import {registerRepo} from '../../scripts/registerRepo.js';
+import {parseFiles} from '../../utils/parseFiles.js';
+import {fs} from 'zx';
+import {useNavigation} from '../NavigationProvider.js';
+import type {Config} from '../../types/Config.js';
 
-const parseCode = async (filePaths: string[]): Promise<CodeDocument[]> => {
-	let codeDocuments: CodeDocument[] = [];
-	const gitHash = uuid();
+interface SubmitArgs {
+	filePaths: string[];
+	setProgress: Dispatch<React.SetStateAction<number>>;
+}
 
-	for (const filePath of filePaths) {
-		const sourceCode = (await fs.readFile(filePath)).toString();
+const handleSubmit = async ({filePaths, setProgress}: SubmitArgs) => {
+	const repo = await getRepoDetails();
+	const collectionName = repo.name ?? uuid();
+	const codeDocuments = await parseFiles(filePaths);
 
-		try {
-			const splitCode = await codeSplitter({
-				gitHash,
-				filePath,
-				sourceCode,
-				chunkSize: 1500,
-			});
-
-			codeDocuments = [...codeDocuments, splitCode];
-		} catch (error) {
-			console.error(error);
-		}
-	}
-
-	return codeDocuments;
-};
-
-const handleSubmit = async (filePaths: string[]) => {
-	const collectionName = `my_${uuid()}_repo`;
-	const codeDocuments = await parseCode(filePaths);
-
-	return await saveEmbeddings({
-		codeDocuments,
-		collectionName,
-	});
+	return await saveEmbeddings({codeDocuments, collectionName, setProgress});
 };
 
 export const IndexFiles = () => {
 	const {exit} = useApp();
+	const navigation = useNavigation();
+
 	const [repoName, setRepoName] = useState('');
 	const [isIndexing, setIsIndexing] = useState(false);
+	const [indexingProgress, setIndexingProgress] = useState(0);
 	const [isIndexingSuccess, setIsIndexingSuccess] = useState(false);
 	const [isIndexingError, setIsIndexingError] = useState(false);
 
@@ -62,11 +46,26 @@ export const IndexFiles = () => {
 			exit();
 		}
 		if (key.return) {
-			setIsIndexing(true);
+			if (isIndexingSuccess) {
+				navigation?.navigate('selectInstallation');
+			} else {
+				setIsIndexing(true);
+			}
 		}
 	});
 
 	useEffect(() => {
+		try {
+			// Check if files are already indexed
+			const config: Config = fs.readJsonSync('./.fishcake/config.json');
+			if (config.filePaths.length === 0) {
+				throw new Error('file not found');
+			}
+			navigation?.navigate('selectInstallation');
+		} catch (error) {
+			return;
+		}
+
 		if (!repoName) {
 			// eslint-disable-next-line @typescript-eslint/no-floating-promises
 			(async () => {
@@ -78,11 +77,15 @@ export const IndexFiles = () => {
 		if (isIndexing) {
 			// eslint-disable-next-line @typescript-eslint/no-floating-promises
 			(async () => {
-				const paths = await getRepoFilePaths();
-				const submitResult = await handleSubmit(paths);
+				const filePaths = await getRepoFilePaths();
+				const submitResult = await handleSubmit({
+					filePaths,
+					setProgress: setIndexingProgress,
+				});
 				setIsIndexing(false);
 
 				if (submitResult) {
+					await registerRepo({repo: repoName, filePaths});
 					setIsIndexingSuccess(true);
 				} else {
 					setIsIndexingError(true);
@@ -106,7 +109,14 @@ export const IndexFiles = () => {
 					Press <Text color="white">enter</Text> to start indexing.
 				</Text>
 
-				{isIndexing && <Spinner label="Indexing" />}
+				{(isIndexing || isIndexingSuccess || isIndexingError) && (
+					<Box gap={1}>
+						<Box width={70} flexGrow={0} flexShrink={0}>
+							<ProgressBar value={indexingProgress} />
+						</Box>
+						<Text>{indexingProgress}%</Text>
+					</Box>
+				)}
 
 				{isIndexingSuccess && (
 					<>
@@ -133,7 +143,10 @@ export const IndexFiles = () => {
 					</>
 				)}
 			</Body>
-			<Footer controls={['esc', 'enter']} enterLabel={'start indexing'} />
+			<Footer
+				controls={['esc', 'enter']}
+				enterLabel={isIndexingSuccess ? 'continue' : 'start indexing'}
+			/>
 		</PageContainer>
 	);
 };

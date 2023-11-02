@@ -54,7 +54,13 @@ const ignoreFileExtensions = [
 	'*.git',
 	'*.lockb',
 	'*.log',
+	'.DS_Store',
+
+	// Ignore package manager lock files
+	'bun.lockb',
+	'yarn.lock',
 	'package-lock.json',
+	'pnpm-lock.yaml',
 ];
 
 const getFilesInDir = async (dirPath: string): Promise<string[]> => {

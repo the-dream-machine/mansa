@@ -1,6 +1,10 @@
 import React, {createContext, useContext, useState} from 'react';
 
-type Page = 'installDatabase' | 'installEmbeddingModel' | 'indexFiles';
+type Page =
+	| 'installDatabase'
+	| 'installEmbeddingModel'
+	| 'indexFiles'
+	| 'selectInstallation';
 
 interface NavigationContext {
 	activePage: Page;
