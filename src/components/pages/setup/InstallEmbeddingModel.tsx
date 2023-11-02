@@ -49,15 +49,9 @@ export const InstallEmbeddingModel = () => {
 	});
 
 	useEffect(() => {
-		const outputDirectory = `${fishcakePath}/models/`;
-		const outputFilename = 'bge-base-en-v1.5.onnx';
+		const outputDirectory = `${fishcakePath}/models/Xenova/bge-base-en-v1.5/onnx/`;
+		const outputFilename = 'model.onnx';
 		const outputFilePath = path.join(outputDirectory, outputFilename);
-
-		// Remove file in node.js process exists while downloading
-		const listenerCallback = async () => {
-			await fs.remove(outputFilePath);
-			process.exit();
-		};
 
 		// Check if model is already downloaded
 		if (fs.existsSync(outputFilePath)) {
@@ -73,7 +67,6 @@ export const InstallEmbeddingModel = () => {
 			(async () => {
 				const url =
 					'https://huggingface.co/Xenova/bge-base-en-v1.5/resolve/main/onnx/model.onnx';
-				const outputDirectory = `${fishcakePath}/models/`;
 
 				// Ensure the output directory exists or create it
 				if (!fs.existsSync(outputDirectory)) {
@@ -124,24 +117,8 @@ export const InstallEmbeddingModel = () => {
 					await writeErrorToFile(error);
 					setIsError(true);
 				});
-
-				// eslint-disable-next-line @typescript-eslint/no-misused-promises
-				process.on('SIGINT', listenerCallback);
-				// eslint-disable-next-line @typescript-eslint/no-misused-promises
-				process.on('SIGTERM', listenerCallback);
-				// eslint-disable-next-line @typescript-eslint/no-misused-promises
-				process.on('uncaughtException', listenerCallback);
 			})();
 		}
-
-		return () => {
-			// eslint-disable-next-line @typescript-eslint/no-misused-promises
-			process.off('SIGINT', listenerCallback);
-			// eslint-disable-next-line @typescript-eslint/no-misused-promises
-			process.off('SIGTERM', listenerCallback);
-			// eslint-disable-next-line @typescript-eslint/no-misused-promises
-			process.off('uncaughtException', listenerCallback);
-		};
 	}, [shouldDownloadStart, doesModelExist]);
 
 	const downloadSpeedUnits = ['bytes/s', 'kb/s', 'mb/s', 'gb/s', 'tb/s'][

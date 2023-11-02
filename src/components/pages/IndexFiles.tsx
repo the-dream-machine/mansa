@@ -62,9 +62,7 @@ export const IndexFiles = () => {
 				throw new Error('file not found');
 			}
 			navigation?.navigate('selectInstallation');
-		} catch (error) {
-			return;
-		}
+		} catch (error) {}
 
 		if (!repoName) {
 			// eslint-disable-next-line @typescript-eslint/no-floating-promises
