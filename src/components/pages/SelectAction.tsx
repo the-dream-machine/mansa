@@ -15,7 +15,7 @@ const options: Option[] = [
 ];
 
 interface Args {
-	query: string;
+	query: string[];
 	collectionName: string;
 }
 const submitAction = async ({query, collectionName}: Args) => {
@@ -35,7 +35,7 @@ export const SelectAction = () => {
 					// console.log('🌱 # value:', value);
 
 					await submitAction({
-						query: value,
+						query: [value],
 						collectionName: 'ragdoll',
 					});
 				}}

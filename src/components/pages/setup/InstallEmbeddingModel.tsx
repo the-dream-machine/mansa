@@ -11,7 +11,13 @@ import {Header} from '../../Header.js';
 import {Body} from '../../Body.js';
 import {Footer} from '../../Footer.js';
 import {fishcakePath} from '../../../utils/userPath.js';
-import {useNavigation} from '../../NavigationProvider.js';
+import {NavigationContext} from '../../NavigationProvider.js';
+import {NavigationPage} from '../../../machines/navigationMachine.js';
+import {
+	modelOutputFullPath,
+	modelOutputDirectory,
+	modelOutputFilename,
+} from '../../../utils/modelPath.js';
 
 const errorLogFilePath = `${fishcakePath}/logs/download_model_error_${uuid()}.log`;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -25,6 +31,8 @@ const writeErrorToFile = async (error: any) => {
 };
 
 export const InstallEmbeddingModel = () => {
+	const [, navigate] = NavigationContext.useActor();
+
 	const [downloadProgress, setDownloadProgress] = useState(0);
 	const [downloadSpeed, setDownloadSpeed] = useState(0);
 	const [isCompleted, setIsCompleted] = useState(false);
@@ -33,7 +41,6 @@ export const InstallEmbeddingModel = () => {
 	const [shouldDownloadStart, setSetShouldDownloadStart] = useState(false);
 
 	const {exit} = useApp();
-	const navigation = useNavigation();
 
 	useInput((input, key) => {
 		if (key.escape) {
@@ -49,17 +56,14 @@ export const InstallEmbeddingModel = () => {
 	});
 
 	useEffect(() => {
-		const outputDirectory = `${fishcakePath}/models/Xenova/bge-base-en-v1.5/onnx/`;
-		const outputFilename = 'model.onnx';
-		const outputFilePath = path.join(outputDirectory, outputFilename);
-
 		// Check if model is already downloaded
-		if (fs.existsSync(outputFilePath)) {
+		if (fs.existsSync(modelOutputFullPath)) {
 			setDoesModelExist(true);
 		}
 
 		if (doesModelExist) {
-			navigation?.navigate('indexFiles');
+			console.log('MODEL EXIST');
+			navigate(NavigationPage.INDEX_REPO);
 		}
 
 		if (shouldDownloadStart) {
@@ -69,10 +73,13 @@ export const InstallEmbeddingModel = () => {
 					'https://huggingface.co/Xenova/bge-base-en-v1.5/resolve/main/onnx/model.onnx';
 
 				// Ensure the output directory exists or create it
-				if (!fs.existsSync(outputDirectory)) {
-					fs.mkdirSync(outputDirectory, {recursive: true});
+				if (!fs.existsSync(modelOutputDirectory)) {
+					fs.mkdirSync(modelOutputDirectory, {recursive: true});
 				}
-				const outputFilePath = path.join(outputDirectory, outputFilename);
+				const outputFilePath = path.join(
+					modelOutputDirectory,
+					modelOutputFilename,
+				);
 
 				const writer = fs.createWriteStream(outputFilePath);
 				let downloadedLength = 0;

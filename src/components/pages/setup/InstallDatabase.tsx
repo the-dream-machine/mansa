@@ -10,11 +10,12 @@ import {Footer} from '../../Footer.js';
 import {chromaInstall} from '../../../scripts/chroma/chromaInstall.js';
 import {chromaIsInstalled} from '../../../scripts/chroma/chromaIsInstalled.js';
 import {PageContainer} from '../../PageContainer.js';
-import {useNavigation} from '../../NavigationProvider.js';
+import {NavigationContext} from '../../NavigationProvider.js';
+import {NavigationPage} from '../../../machines/navigationMachine.js';
 
 export const InstallDatabase = () => {
 	const {exit} = useApp();
-	const navigation = useNavigation();
+	const [, navigate] = NavigationContext.useActor();
 
 	const [isDatabaseInstalled, setIsDatabaseInstalled] = useState(false);
 	const [isInstalledLoading, setIsInstalledLoading] = useState(true);
@@ -29,11 +30,11 @@ export const InstallDatabase = () => {
 			const isInstalled = await chromaIsInstalled();
 			await sleep(300); // Show loading spinner for at least a second so we don't have a flickering transition.
 			setIsInstalledLoading(false);
-			setIsDatabaseInstalled(isInstalled);
+			setIsDatabaseInstalled(true);
 		})();
 
 		if (isDatabaseInstalled) {
-			navigation?.navigate('installEmbeddingModel');
+			navigate(NavigationPage.INSTALL_EMBEDDING_MODEL);
 		}
 	}, [isDatabaseInstalled]);
 

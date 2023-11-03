@@ -33,7 +33,6 @@ export const IndexFiles = () => {
 	});
 
 	const showLoader =
-		state.matches(State.CHECKING_STATUS) ||
 		state.matches(State.STARTING_DATABASE) ||
 		state.matches(State.FETCHING_REPO_DETAILS);
 	const showProgressBar =
@@ -77,10 +76,8 @@ export const IndexFiles = () => {
 								</Text>
 							</Text>
 						</Box>
-						{showCurrentIndexingFile ? (
+						{showCurrentIndexingFile && (
 							<Text color="gray">Indexing: {currentIndexingFilePath}</Text>
-						) : (
-							<Text> </Text>
 						)}
 					</Box>
 				)}
