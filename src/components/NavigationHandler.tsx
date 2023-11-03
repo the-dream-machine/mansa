@@ -3,7 +3,7 @@ import {useNavigation} from './NavigationProvider.js';
 import {InstallDatabase} from './pages/setup/InstallDatabase.js';
 import {InstallEmbeddingModel} from './pages/setup/InstallEmbeddingModel.js';
 import {IndexFiles} from './pages/IndexFiles.js';
-import {SelectInstallation} from './pages/SelectInstallation.js';
+import {SelectAction} from './pages/SelectAction.js';
 
 const NavigationHandler = () => {
 	const navigation = useNavigation();
@@ -18,7 +18,7 @@ const NavigationHandler = () => {
 				<InstallEmbeddingModel />
 			)}
 			{navigation.activePage === 'indexFiles' && <IndexFiles />}
-			{navigation.activePage === 'selectInstallation' && <SelectInstallation />}
+			{navigation.activePage === 'selectInstallation' && <SelectAction />}
 		</>
 	);
 };

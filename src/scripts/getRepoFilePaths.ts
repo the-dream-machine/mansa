@@ -15,6 +15,7 @@ const ignoreFileExtensions = [
 	'*.bmp',
 	'*.tiff',
 	'*.ico',
+	'*.icns',
 	'*.mp3',
 	'*.wav',
 	'*.wma',
@@ -54,6 +55,7 @@ const ignoreFileExtensions = [
 	'*.git',
 	'*.lockb',
 	'*.log',
+	'*.lock',
 	'.DS_Store',
 
 	// Ignore package manager lock files
