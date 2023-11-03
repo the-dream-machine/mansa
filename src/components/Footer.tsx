@@ -6,13 +6,18 @@ type Control = 'up' | 'down' | 'tab' | 'search' | 'esc' | 'enter';
 interface Props {
 	controls: Control[];
 	enterLabel?: string;
+	enterDisabled?: boolean;
 }
 
-export const Footer = ({controls, enterLabel = 'submit'}: Props) => {
+export const Footer = ({
+	controls,
+	enterLabel = 'submit',
+	enterDisabled = false,
+}: Props) => {
 	return (
 		<>
 			<Spacer />
-			<Box paddingBottom={0.75}>
+			<Box paddingBottom={1}>
 				{controls.includes('up') && (
 					<Text color="gray">
 						<Text color="white">{figureSet.triangleUp}</Text> up
@@ -49,7 +54,7 @@ export const Footer = ({controls, enterLabel = 'submit'}: Props) => {
 				{controls.includes('enter') && (
 					<Text color="gray">
 						{' '}
-						• <Text color="white">enter </Text>
+						• <Text color={enterDisabled ? 'gray' : 'white'}>enter </Text>
 						{enterLabel}
 					</Text>
 				)}

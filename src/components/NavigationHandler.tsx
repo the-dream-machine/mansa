@@ -2,10 +2,10 @@ import React from 'react';
 import {NavigationContext} from './NavigationProvider.js';
 import {InstallDatabase} from './pages/setup/InstallDatabase.js';
 import {InstallEmbeddingModel} from './pages/setup/InstallEmbeddingModel.js';
-import {IndexFiles} from './pages/IndexFiles.js';
+import {IndexRepo} from './pages/IndexRepo.js';
 import {SelectAction} from './pages/SelectAction.js';
 import {AppState, NavigationPage} from '../machines/navigationMachine.js';
-import {Spinner} from '@inkjs/ui';
+import {GlobalLoader} from './GlobalLoader.js';
 
 const NavigationHandler = () => {
 	const [state] = NavigationContext.useActor();
@@ -18,7 +18,7 @@ const NavigationHandler = () => {
 		state.matches(AppState.IS_REPO_INDEXED);
 
 	if (showLoader) {
-		return <Spinner label="Loading..." />;
+		return <GlobalLoader />;
 	}
 
 	return (
@@ -27,7 +27,7 @@ const NavigationHandler = () => {
 			{state.matches(NavigationPage.INSTALL_EMBEDDING_MODEL) && (
 				<InstallEmbeddingModel />
 			)}
-			{state.matches(NavigationPage.INDEX_REPO) && <IndexFiles />}
+			{state.matches(NavigationPage.INDEX_REPO) && <IndexRepo />}
 			{state.matches(NavigationPage.SELECT_OPTION) && <SelectAction />}
 		</>
 	);

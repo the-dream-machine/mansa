@@ -1,6 +1,6 @@
 import React from 'react';
 import {Box, Text, useApp, useInput} from 'ink';
-import {ProgressBar, Spinner} from '@inkjs/ui';
+import {ProgressBar} from '@inkjs/ui';
 import figureSet from 'figures';
 import {useMachine} from '@xstate/react';
 
@@ -8,10 +8,14 @@ import {Header} from '../Header.js';
 import {Footer} from '../Footer.js';
 import {Body} from '../Body.js';
 import {PageContainer} from '../PageContainer.js';
-import {State, indexFilesMachine} from '../../machines/indexFilesMachine.js';
+import {
+	IndexRepoState,
+	indexRepoMachine,
+} from '../../machines/indexRepoMachine.js';
+import {GlobalLoader} from '../GlobalLoader.js';
 
-export const IndexFiles = () => {
-	const [state, send] = useMachine(indexFilesMachine);
+export const IndexRepo = () => {
+	const [state, send] = useMachine(indexRepoMachine);
 
 	const repoName = state.context.repoName;
 	const currentIndexingFile = state.context.currentFileIndexing;
@@ -32,20 +36,25 @@ export const IndexFiles = () => {
 		}
 	});
 
-	const showLoader =
-		state.matches(State.STARTING_DATABASE) ||
-		state.matches(State.FETCHING_REPO_DETAILS);
+	const showLoader = state.matches(IndexRepoState.FETCHING_REPO_DETAILS);
 	const showProgressBar =
-		state.matches(State.INDEXING_FILES) ||
-		state.matches(State.REGISTER_REPO) ||
-		state.matches(State.INDEXING_SUCCESS_IDLE) ||
-		state.matches(State.INDEXING_ERROR_IDLE);
-	const showSuccessMessage = state.matches(State.INDEXING_SUCCESS_IDLE);
-	const showErrorMessage = state.matches(State.INDEXING_ERROR_IDLE);
-	const showCurrentIndexingFile = state.matches(State.INDEXING_FILES);
+		state.matches(IndexRepoState.INDEXING_REPO_FILE) ||
+		state.matches(IndexRepoState.REGISTER_REPO) ||
+		state.matches(IndexRepoState.INDEXING_SUCCESS_IDLE) ||
+		state.matches(IndexRepoState.INDEXING_ERROR_IDLE);
+	const showSuccessMessage = state.matches(
+		IndexRepoState.INDEXING_SUCCESS_IDLE,
+	);
+	const showErrorMessage = state.matches(IndexRepoState.INDEXING_ERROR_IDLE);
+	const showCurrentIndexingFile = state.matches(
+		IndexRepoState.INDEXING_REPO_FILE,
+	);
+	const enterDisabled =
+		state.matches(IndexRepoState.INDEXING_REPO_FILE) ||
+		state.matches(IndexRepoState.REGISTER_REPO);
 
 	if (showLoader) {
-		return <Spinner label="🍥 Loading.." />;
+		return <GlobalLoader />;
 	}
 
 	return (
@@ -111,6 +120,7 @@ export const IndexFiles = () => {
 			<Footer
 				controls={['esc', 'enter']}
 				enterLabel={showSuccessMessage ? 'continue' : 'start indexing'}
+				enterDisabled={enterDisabled}
 			/>
 		</PageContainer>
 	);
