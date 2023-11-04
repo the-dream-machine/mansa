@@ -1,20 +1,23 @@
-import React from 'react';
+import React, {useEffect} from 'react';
 import {Text, useApp, useInput} from 'ink';
 import figureSet from 'figures';
 import {Spinner} from '@inkjs/ui';
+import {useMachine} from '@xstate/react';
 
 import {Header} from '../../Header.js';
 import {Body} from '../../Body.js';
 import {Footer} from '../../Footer.js';
 import {PageContainer} from '../../PageContainer.js';
-import {useMachine} from '@xstate/react';
 import {
 	InstallDatabaseEvent,
 	InstallDatabaseState,
 	installDatabaseMachine,
 } from '../../../machines/installDatabaseMachine.js';
+import {AppState} from '../../../machines/navigationMachine.js';
+import {NavigationContext} from '../../NavigationProvider.js';
 
 export const InstallDatabase = () => {
+	const [, navigate] = NavigationContext.useActor();
 	const [state, send] = useMachine(installDatabaseMachine);
 	const {exit} = useApp();
 
@@ -26,6 +29,12 @@ export const InstallDatabase = () => {
 			send(InstallDatabaseEvent.ENTER_PRESSED);
 		}
 	});
+
+	useEffect(() => {
+		if (state.matches(InstallDatabaseState.EXIT)) {
+			navigate(AppState.IS_DATABASE_INSTALLED);
+		}
+	}, [state]);
 
 	const errorLogFilePath = state.context.errorLogFilePath;
 

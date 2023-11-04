@@ -9,7 +9,6 @@ import {GlobalLoader} from './GlobalLoader.js';
 
 const NavigationHandler = () => {
 	const [state] = NavigationContext.useActor();
-	console.log('🌱 # state:', state.value);
 	const showLoader =
 		state.matches(AppState.IS_DATABASE_INSTALLED) ||
 		state.matches(AppState.IS_DATABASE_RUNNING) ||

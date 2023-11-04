@@ -135,6 +135,9 @@ export const navigationMachine = createMachine<
 		[AppState.IS_DATABASE_INSTALLED]: {
 			target: AppState.IS_DATABASE_INSTALLED,
 		},
+		[AppState.IS_DATABASE_RUNNING]: {
+			target: AppState.IS_DATABASE_RUNNING,
+		},
 		[AppState.IS_EMBEDDING_MODEL_INSTALLED]: {
 			target: AppState.IS_EMBEDDING_MODEL_INSTALLED,
 		},

@@ -18,6 +18,7 @@ export enum InstallDatabaseState {
 	INSTALL_DATABASE_SUCCESS_IDLE = 'INSTALL_DATABASE_SUCCESS_IDLE',
 	WRITING_ERROR_FILE = 'WRITING_ERROR_FILE',
 	INSTALL_DATABASE_ERROR_IDLE = 'INSTALL_DATABASE_ERROR_IDLE',
+	EXIT = 'EXIT',
 }
 
 type InstallDatabaseMachineState =
@@ -39,6 +40,10 @@ type InstallDatabaseMachineState =
 	  }
 	| {
 			value: InstallDatabaseState.INSTALL_DATABASE_ERROR_IDLE;
+			context: InstallDatabaseMachineContext;
+	  }
+	| {
+			value: InstallDatabaseState.EXIT;
 			context: InstallDatabaseMachineContext;
 	  };
 
@@ -85,14 +90,6 @@ export const installDatabaseMachine = createMachine<
 				},
 			},
 		},
-		[InstallDatabaseState.INSTALL_DATABASE_SUCCESS_IDLE]: {
-			on: {
-				[InstallDatabaseEvent.ENTER_PRESSED]: {
-					// TODO: Go to next page
-					target: '',
-				},
-			},
-		},
 		[InstallDatabaseState.WRITING_ERROR_FILE]: {
 			invoke: {
 				src: async context =>
@@ -112,5 +109,13 @@ export const installDatabaseMachine = createMachine<
 				},
 			},
 		},
+		[InstallDatabaseState.INSTALL_DATABASE_SUCCESS_IDLE]: {
+			on: {
+				[InstallDatabaseEvent.ENTER_PRESSED]: {
+					target: InstallDatabaseState.EXIT,
+				},
+			},
+		},
+		[InstallDatabaseState.EXIT]: {},
 	},
 });
