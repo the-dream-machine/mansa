@@ -9,6 +9,7 @@ import {Footer} from '../Footer.js';
 import {Body} from '../Body.js';
 import {PageContainer} from '../PageContainer.js';
 import {
+	IndexRepoEvent,
 	IndexRepoState,
 	indexRepoMachine,
 } from '../../machines/indexRepoMachine.js';
@@ -26,16 +27,6 @@ export const IndexRepo = () => {
 		(currentIndexingFileCount / totalFiles) * 100,
 	);
 
-	const {exit} = useApp();
-	useInput((input, key) => {
-		if (key.escape) {
-			exit();
-		}
-		if (key.return) {
-			send('ENTER_PRESSED');
-		}
-	});
-
 	const showLoader = state.matches(IndexRepoState.FETCHING_REPO_DETAILS);
 	const showProgressBar =
 		state.matches(IndexRepoState.INDEXING_REPO_FILE) ||
@@ -52,6 +43,16 @@ export const IndexRepo = () => {
 	const enterDisabled =
 		state.matches(IndexRepoState.INDEXING_REPO_FILE) ||
 		state.matches(IndexRepoState.REGISTER_REPO);
+
+	const {exit} = useApp();
+	useInput((i, key) => {
+		if (key.escape) {
+			exit();
+		}
+		if (key.return) {
+			send(IndexRepoEvent.ENTER_PRESSED);
+		}
+	});
 
 	if (showLoader) {
 		return <GlobalLoader />;

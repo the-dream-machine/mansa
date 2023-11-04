@@ -1,72 +1,51 @@
-import React, {useEffect, useState} from 'react';
+import React from 'react';
 import {Text, useApp, useInput} from 'ink';
 import figureSet from 'figures';
 import {Spinner} from '@inkjs/ui';
-import {sleep} from 'zx';
 
 import {Header} from '../../Header.js';
 import {Body} from '../../Body.js';
 import {Footer} from '../../Footer.js';
-import {chromaInstall} from '../../../scripts/chroma/chromaInstall.js';
-import {chromaIsInstalled} from '../../../scripts/chroma/chromaIsInstalled.js';
 import {PageContainer} from '../../PageContainer.js';
-import {NavigationContext} from '../../NavigationProvider.js';
-import {NavigationPage} from '../../../machines/navigationMachine.js';
+import {useMachine} from '@xstate/react';
+import {
+	InstallDatabaseEvent,
+	InstallDatabaseState,
+	installDatabaseMachine,
+} from '../../../machines/installDatabaseMachine.js';
 
 export const InstallDatabase = () => {
+	const [state, send] = useMachine(installDatabaseMachine);
 	const {exit} = useApp();
-	const [, navigate] = NavigationContext.useActor();
-
-	const [isDatabaseInstalled, setIsDatabaseInstalled] = useState(false);
-	const [isInstalledLoading, setIsInstalledLoading] = useState(true);
-	const [isLoading, setIsLoading] = useState(false);
-	const [isError, setIsError] = useState(false);
-	const [errorLogFilePath, setErrorLogFilePath] = useState('');
-	const [isSuccess, setIsSuccess] = useState(false);
-
-	useEffect(() => {
-		// eslint-disable-next-line @typescript-eslint/no-floating-promises
-		(async () => {
-			const isInstalled = await chromaIsInstalled();
-			await sleep(300); // Show loading spinner for at least a second so we don't have a flickering transition.
-			setIsInstalledLoading(false);
-			setIsDatabaseInstalled(true);
-		})();
-
-		if (isDatabaseInstalled) {
-			navigate(NavigationPage.INSTALL_EMBEDDING_MODEL);
-		}
-	}, [isDatabaseInstalled]);
 
 	useInput((input, key) => {
 		if (key.escape) {
 			exit();
 		}
 		if (key.return) {
-			if (!isSuccess) {
-				// eslint-disable-next-line @typescript-eslint/no-floating-promises
-				(async () => {
-					setIsLoading(true);
-					const {status, errorLogFilePath} = await chromaInstall();
-					if (status) {
-						setIsSuccess(true);
-					} else {
-						setIsError(true);
-						if (errorLogFilePath) {
-							setErrorLogFilePath(errorLogFilePath);
-						}
-					}
-
-					setIsLoading(false);
-				})();
-			} else {
-				setIsDatabaseInstalled(true);
-			}
+			send(InstallDatabaseEvent.ENTER_PRESSED);
 		}
 	});
 
-	if (isInstalledLoading) {
-		return <Spinner label="🍥 Loading..." />;
+	const errorLogFilePath = state.context.errorLogFilePath;
+
+	const showInstallingLoader = state.matches(
+		InstallDatabaseState.INSTALLING_DATABASE,
+	);
+	const showInstallSuccess = state.matches(
+		InstallDatabaseState.INSTALL_DATABASE_SUCCESS_IDLE,
+	);
+	const showInstallError = state.matches(
+		InstallDatabaseState.INSTALL_DATABASE_ERROR_IDLE,
+	);
+	const enterDisabled = state.matches(InstallDatabaseState.INSTALLING_DATABASE);
+
+	let enterLabel = 'install';
+	if (state.matches(InstallDatabaseState.INSTALL_DATABASE_SUCCESS_IDLE)) {
+		enterLabel = 'next step';
+	}
+	if (state.matches(InstallDatabaseState.INSTALL_DATABASE_ERROR_IDLE)) {
+		enterLabel = 'retry';
 	}
 
 	return (
@@ -88,8 +67,8 @@ export const InstallDatabase = () => {
 					installed.
 				</Text>
 
-				{isLoading && <Spinner label="Installing database..." />}
-				{isSuccess && (
+				{showInstallingLoader && <Spinner label="Installing database..." />}
+				{showInstallSuccess && (
 					<>
 						<Text>
 							<Text color="green">{figureSet.tick} </Text>
@@ -100,23 +79,26 @@ export const InstallDatabase = () => {
 						</Text>
 					</>
 				)}
-				{isError && (
+				{showInstallError && (
 					<>
 						<Text>
 							<Text color="red">{figureSet.cross} </Text>
 							An Error occurred! 😭
 						</Text>
-
 						<Text color="gray">
 							You can view the full error logs here:{' '}
 							<Text color="white">{errorLogFilePath}</Text>
+						</Text>
+						<Text color="gray">
+							Press <Text color="white">enter</Text> to retry.
 						</Text>
 					</>
 				)}
 			</Body>
 			<Footer
 				controls={['esc', 'enter']}
-				enterLabel={isSuccess ? 'next step' : 'install'}
+				enterLabel={enterLabel}
+				enterDisabled={enterDisabled}
 			/>
 		</PageContainer>
 	);

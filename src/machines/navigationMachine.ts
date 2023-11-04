@@ -1,9 +1,9 @@
 import {createMachine} from 'xstate';
-import {getRepoConfig} from '../scripts/getRepoConfig.js';
 import {chromaIsInstalled} from '../scripts/chroma/chromaIsInstalled.js';
 import {isEmbeddingModelInstalled} from '../utils/isEmbeddingModelInstalled.js';
 import {chromaIsRunning} from '../scripts/chroma/chromaIsRunning.js';
 import {chromaStart} from '../scripts/chroma/chromaStart.js';
+import {isRepoIndexed} from '../scripts/isRepoIndexed.js';
 
 export enum NavigationPage {
 	INSTALL_DATABASE = 'INSTALL_DATABASE',
@@ -117,7 +117,7 @@ export const navigationMachine = createMachine<
 		},
 		[AppState.IS_REPO_INDEXED]: {
 			invoke: {
-				src: async () => await getRepoConfig(),
+				src: async () => await isRepoIndexed(),
 				onDone: {
 					target: NavigationPage.SELECT_OPTION,
 				},
@@ -132,25 +132,25 @@ export const navigationMachine = createMachine<
 		[NavigationPage.SELECT_OPTION]: {},
 	},
 	on: {
-		IS_DATABASE_INSTALLED: {
+		[AppState.IS_DATABASE_INSTALLED]: {
 			target: AppState.IS_DATABASE_INSTALLED,
 		},
-		IS_EMBEDDING_MODEL_INSTALLED: {
+		[AppState.IS_EMBEDDING_MODEL_INSTALLED]: {
 			target: AppState.IS_EMBEDDING_MODEL_INSTALLED,
 		},
-		IS_REPO_INDEXED: {
+		[AppState.IS_REPO_INDEXED]: {
 			target: AppState.IS_REPO_INDEXED,
 		},
-		INSTALL_DATABASE: {
+		[NavigationPage.INSTALL_DATABASE]: {
 			target: NavigationPage.INSTALL_DATABASE,
 		},
-		INSTALL_EMBEDDING_MODEL: {
+		[NavigationPage.INSTALL_EMBEDDING_MODEL]: {
 			target: NavigationPage.INSTALL_EMBEDDING_MODEL,
 		},
-		INDEX_REPO: {
+		[NavigationPage.INDEX_REPO]: {
 			target: NavigationPage.INDEX_REPO,
 		},
-		SELECT_OPTION: {
+		[NavigationPage.SELECT_OPTION]: {
 			target: NavigationPage.SELECT_OPTION,
 		},
 	},

@@ -7,7 +7,7 @@ import {saveFileEmbeddings} from '../utils/saveFileEmbeddings.js';
 import {registerRepo} from '../scripts/registerRepo.js';
 
 // Context
-export interface IndexRepoMachineContext {
+interface IndexRepoMachineContext {
 	filePaths: string[];
 	currentFileIndexing: number;
 	repoName: string;
@@ -25,7 +25,7 @@ export enum IndexRepoState {
 }
 
 //  State machine states
-export type IndexRepoMachineState =
+type IndexRepoMachineState =
 	| {value: IndexRepoState.IDLE; context: IndexRepoMachineContext}
 	| {
 			value: IndexRepoState.FETCHING_REPO_DETAILS;
@@ -46,8 +46,12 @@ export type IndexRepoMachineState =
 			context: IndexRepoMachineContext;
 	  };
 
+export enum IndexRepoEvent {
+	ENTER_PRESSED = 'ENTER_PRESSED',
+}
+
 //  State machine events
-export type IndexRepoMachineEvent = {type: 'ENTER_PRESSED'};
+type IndexRepoMachineEvent = {type: IndexRepoEvent.ENTER_PRESSED};
 
 // Guards
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -137,7 +141,7 @@ export const indexRepoMachine = createMachine<
 		},
 		[IndexRepoState.INDEXING_SUCCESS_IDLE]: {
 			on: {
-				ENTER_PRESSED: {
+				[IndexRepoEvent.ENTER_PRESSED]: {
 					actions: () => {
 						// TODO: Go to next page (SELECT_OPTION)
 						console.log('HOORAAYY! 🎉');
