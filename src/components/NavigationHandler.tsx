@@ -1,7 +1,7 @@
 import React from 'react';
 import {NavigationContext} from './NavigationProvider.js';
 import {InstallDatabase} from './pages/setup/InstallDatabase.js';
-import {InstallEmbeddingModel} from './pages/setup/InstallEmbeddingModel.js';
+import {DownloadEmbeddingModel} from './pages/setup/DownloadEmbeddingModel.js';
 import {IndexRepo} from './pages/IndexRepo.js';
 import {SelectAction} from './pages/SelectAction.js';
 import {AppState, NavigationPage} from '../machines/navigationMachine.js';
@@ -24,7 +24,7 @@ const NavigationHandler = () => {
 		<>
 			{state.matches(NavigationPage.INSTALL_DATABASE) && <InstallDatabase />}
 			{state.matches(NavigationPage.INSTALL_EMBEDDING_MODEL) && (
-				<InstallEmbeddingModel />
+				<DownloadEmbeddingModel />
 			)}
 			{state.matches(NavigationPage.INDEX_REPO) && <IndexRepo />}
 			{state.matches(NavigationPage.SELECT_OPTION) && <SelectAction />}

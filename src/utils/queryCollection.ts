@@ -1,5 +1,5 @@
 import {chroma} from './chroma.js';
-import {embeddingFunction} from './embeddingFunction.js';
+import {getEmbeddingFunction} from './embeddingFunction.js';
 
 interface Args {
 	collectionName: string;
@@ -8,6 +8,7 @@ interface Args {
 }
 
 export const queryCollection = async ({collectionName, query, limit}: Args) => {
+	const embeddingFunction = await getEmbeddingFunction();
 	const collection = await chroma.getCollection({
 		name: collectionName,
 		embeddingFunction,

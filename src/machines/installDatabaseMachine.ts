@@ -1,14 +1,17 @@
-import {assign, createMachine} from 'xstate';
+import {type Sender, assign, createMachine} from 'xstate';
 import {v4 as uuid} from 'uuid';
 
 import {chromaInstall} from '../scripts/chroma/chromaInstall.js';
 import {writeFile} from '../utils/writeFile.js';
-import {fishcakePath} from '../utils/userPath.js';
+import {fishcakePath} from '../utils/fishcakePath.js';
+import {AppState, type NavigationMachineEvent} from './navigationMachine.js';
 
 // Context
 interface InstallDatabaseMachineContext {
 	errorLogFilePath: string;
-	errorOutput: string;
+	errorMessage: string;
+	enterLabel: 'install' | 'next step' | 'retry';
+	navigate?: Sender<NavigationMachineEvent>;
 }
 
 // States
@@ -18,7 +21,6 @@ export enum InstallDatabaseState {
 	INSTALL_DATABASE_SUCCESS_IDLE = 'INSTALL_DATABASE_SUCCESS_IDLE',
 	WRITING_ERROR_FILE = 'WRITING_ERROR_FILE',
 	INSTALL_DATABASE_ERROR_IDLE = 'INSTALL_DATABASE_ERROR_IDLE',
-	EXIT = 'EXIT',
 }
 
 type InstallDatabaseMachineState =
@@ -41,10 +43,6 @@ type InstallDatabaseMachineState =
 	| {
 			value: InstallDatabaseState.INSTALL_DATABASE_ERROR_IDLE;
 			context: InstallDatabaseMachineContext;
-	  }
-	| {
-			value: InstallDatabaseState.EXIT;
-			context: InstallDatabaseMachineContext;
 	  };
 
 //  Events
@@ -65,7 +63,8 @@ export const installDatabaseMachine = createMachine<
 	initial: InstallDatabaseState.IDLE,
 	context: {
 		errorLogFilePath: '',
-		errorOutput: '',
+		errorMessage: '',
+		enterLabel: 'install',
 	},
 	states: {
 		[InstallDatabaseState.IDLE]: {
@@ -80,12 +79,15 @@ export const installDatabaseMachine = createMachine<
 				src: async () => await chromaInstall(),
 				onDone: {
 					target: InstallDatabaseState.INSTALL_DATABASE_SUCCESS_IDLE,
+					actions: assign({
+						enterLabel: 'next step',
+					}),
 				},
 				onError: {
 					target: InstallDatabaseState.WRITING_ERROR_FILE,
 					actions: assign({
+						errorMessage: (context, event) => event.data.stderr,
 						errorLogFilePath: `${fishcakePath}/logs/install_db_error_${uuid()}.log`,
-						errorOutput: (context, event) => event.data.stderr,
 					}),
 				},
 			},
@@ -95,10 +97,13 @@ export const installDatabaseMachine = createMachine<
 				src: async context =>
 					await writeFile({
 						filePath: context.errorLogFilePath,
-						fileContent: context.errorOutput,
+						fileContent: context.errorMessage,
 					}),
 				onDone: {
 					target: InstallDatabaseState.INSTALL_DATABASE_ERROR_IDLE,
+					actions: assign({
+						enterLabel: 'retry',
+					}),
 				},
 			},
 		},
@@ -112,10 +117,13 @@ export const installDatabaseMachine = createMachine<
 		[InstallDatabaseState.INSTALL_DATABASE_SUCCESS_IDLE]: {
 			on: {
 				[InstallDatabaseEvent.ENTER_PRESSED]: {
-					target: InstallDatabaseState.EXIT,
+					actions: context => {
+						if (context.navigate) {
+							context.navigate(AppState.IS_DATABASE_INSTALLED);
+						}
+					},
 				},
 			},
 		},
-		[InstallDatabaseState.EXIT]: {},
 	},
 });

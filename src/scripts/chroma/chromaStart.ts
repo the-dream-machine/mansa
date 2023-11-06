@@ -1,5 +1,5 @@
 import {$, sleep} from 'zx';
-import {fishcakePath} from '../../utils/userPath.js';
+import {fishcakePath} from '../../utils/fishcakePath.js';
 
 export const chromaStart = async () => {
 	// Start chroma db

@@ -13,14 +13,16 @@ import {
 	InstallDatabaseState,
 	installDatabaseMachine,
 } from '../../../machines/installDatabaseMachine.js';
-import {AppState} from '../../../machines/navigationMachine.js';
 import {NavigationContext} from '../../NavigationProvider.js';
 
 export const InstallDatabase = () => {
 	const [, navigate] = NavigationContext.useActor();
-	const [state, send] = useMachine(installDatabaseMachine);
-	const {exit} = useApp();
+	const [state, send] = useMachine(installDatabaseMachine, {
+		context: {navigate},
+	});
+	const {enterLabel, errorLogFilePath} = state.context;
 
+	const {exit} = useApp();
 	useInput((input, key) => {
 		if (key.escape) {
 			exit();
@@ -29,14 +31,6 @@ export const InstallDatabase = () => {
 			send(InstallDatabaseEvent.ENTER_PRESSED);
 		}
 	});
-
-	useEffect(() => {
-		if (state.matches(InstallDatabaseState.EXIT)) {
-			navigate(AppState.IS_DATABASE_INSTALLED);
-		}
-	}, [state]);
-
-	const errorLogFilePath = state.context.errorLogFilePath;
 
 	const showInstallingLoader = state.matches(
 		InstallDatabaseState.INSTALLING_DATABASE,
@@ -48,14 +42,6 @@ export const InstallDatabase = () => {
 		InstallDatabaseState.INSTALL_DATABASE_ERROR_IDLE,
 	);
 	const enterDisabled = state.matches(InstallDatabaseState.INSTALLING_DATABASE);
-
-	let enterLabel = 'install';
-	if (state.matches(InstallDatabaseState.INSTALL_DATABASE_SUCCESS_IDLE)) {
-		enterLabel = 'next step';
-	}
-	if (state.matches(InstallDatabaseState.INSTALL_DATABASE_ERROR_IDLE)) {
-		enterLabel = 'retry';
-	}
 
 	return (
 		<PageContainer>

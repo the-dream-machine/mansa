@@ -1,6 +1,6 @@
 import {fs} from 'zx';
 
-interface Repo {
+export interface Repo {
 	name?: string;
 	description?: string;
 	version?: string;

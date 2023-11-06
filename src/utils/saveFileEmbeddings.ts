@@ -1,5 +1,5 @@
 import {chroma} from './chroma.js';
-import {embeddingFunction} from './embeddingFunction.js';
+import {getEmbeddingFunction} from './embeddingFunction.js';
 import type {CodeDocument} from '../types/CodeDocument.js';
 
 interface Args {
@@ -8,6 +8,7 @@ interface Args {
 }
 
 export const saveFileEmbeddings = async ({document, collectionName}: Args) => {
+	const embeddingFunction = await getEmbeddingFunction();
 	const collection = await chroma.getOrCreateCollection({
 		embeddingFunction,
 		name: collectionName,

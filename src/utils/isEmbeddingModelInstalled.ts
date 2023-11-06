@@ -1,10 +1,6 @@
-import {fs} from 'zx';
-import {modelOutputFullPath} from './modelPath.js';
+import {getEmbeddingFunction} from './embeddingFunction.js';
 
 export const isEmbeddingModelInstalled = async () => {
-	const result = await fs.exists(modelOutputFullPath);
-	if (!result) {
-		throw new Error('Model does not exist');
-	}
-	return;
+	const embeddingFunction = await getEmbeddingFunction();
+	return await embeddingFunction.generate(['test']);
 };

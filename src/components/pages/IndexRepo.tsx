@@ -14,9 +14,13 @@ import {
 	indexRepoMachine,
 } from '../../machines/indexRepoMachine.js';
 import {GlobalLoader} from '../GlobalLoader.js';
+import {NavigationContext} from '../NavigationProvider.js';
 
 export const IndexRepo = () => {
-	const [state, send] = useMachine(indexRepoMachine);
+	const [, navigate] = NavigationContext.useActor();
+	const [state, send] = useMachine(indexRepoMachine, {
+		context: {navigate},
+	});
 
 	const repoName = state.context.repoName;
 	const currentIndexingFile = state.context.currentFileIndexing;

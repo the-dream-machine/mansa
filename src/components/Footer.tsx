@@ -47,14 +47,13 @@ export const Footer = ({
 				{controls.includes('esc') && (
 					<Text color="gray">
 						<Text color="white">esc </Text>
-						exit
+						exit •{' '}
 					</Text>
 				)}
 
 				{controls.includes('enter') && (
-					<Text color="gray">
-						{' '}
-						• <Text color={enterDisabled ? 'gray' : 'white'}>enter </Text>
+					<Text color="gray" strikethrough={enterDisabled}>
+						<Text color={enterDisabled ? 'gray' : 'white'}>enter </Text>
 						{enterLabel}
 					</Text>
 				)}

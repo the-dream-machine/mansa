@@ -1,16 +1,24 @@
-import {assign, createMachine} from 'xstate';
+import {type Sender, assign, createMachine} from 'xstate';
+import {v4 as uuid} from 'uuid';
 
 import {getRepoDetails} from '../scripts/getRepoDetails.js';
 import {getRepoFilePaths} from '../scripts/getRepoFilePaths.js';
 import {parseFile} from '../utils/parseFile.js';
 import {saveFileEmbeddings} from '../utils/saveFileEmbeddings.js';
 import {registerRepo} from '../scripts/registerRepo.js';
+import {AppState, type NavigationMachineEvent} from './navigationMachine.js';
+import {fishcakePath} from '../utils/fishcakePath.js';
+import {writeFile} from '../utils/writeFile.js';
 
 // Context
 interface IndexRepoMachineContext {
+	repoName: string;
 	filePaths: string[];
 	currentFileIndexing: number;
-	repoName: string;
+	indexErrorMessage: string;
+	indexErrorLogPath: string;
+	enterLabel: 'start indexing' | 'continue' | 'retry';
+	navigate?: Sender<NavigationMachineEvent>;
 }
 
 // States
@@ -22,6 +30,7 @@ export enum IndexRepoState {
 	REGISTER_REPO = 'REGISTER_REPO',
 	INDEXING_SUCCESS_IDLE = 'INDEXING_SUCCESS_IDLE',
 	INDEXING_ERROR_IDLE = 'INDEXING_ERROR_IDLE',
+	WRITING_ERROR_FILE = 'WRITING_ERROR_FILE',
 }
 
 //  State machine states
@@ -43,6 +52,10 @@ type IndexRepoMachineState =
 	  }
 	| {
 			value: IndexRepoState.INDEXING_ERROR_IDLE;
+			context: IndexRepoMachineContext;
+	  }
+	| {
+			value: IndexRepoState.WRITING_ERROR_FILE;
 			context: IndexRepoMachineContext;
 	  };
 
@@ -70,7 +83,10 @@ export const indexRepoMachine = createMachine<
 	context: {
 		repoName: '',
 		filePaths: [],
+		indexErrorMessage: '',
+		indexErrorLogPath: '',
 		currentFileIndexing: 0,
+		enterLabel: 'start indexing',
 	},
 	states: {
 		[IndexRepoState.FETCHING_REPO_DETAILS]: {
@@ -79,7 +95,14 @@ export const indexRepoMachine = createMachine<
 				onDone: {
 					target: IndexRepoState.IDLE,
 					actions: assign({
-						repoName: (context, event) => event.data.name,
+						repoName: (_, event) => event.data.name,
+					}),
+				},
+				onError: {
+					target: IndexRepoState.WRITING_ERROR_FILE,
+					actions: assign({
+						indexErrorMessage: (_, event) => event.data.message,
+						indexErrorLogPath: `${fishcakePath}/logs/index_repo_error_${uuid()}.log`,
 					}),
 				},
 			},
@@ -95,14 +118,24 @@ export const indexRepoMachine = createMachine<
 				onDone: {
 					target: IndexRepoState.INDEXING_REPO_FILE,
 					actions: assign({
-						filePaths: (context, event) => event.data,
+						filePaths: (_, event) => event.data,
+					}),
+				},
+				onError: {
+					target: IndexRepoState.WRITING_ERROR_FILE,
+					actions: assign({
+						indexErrorMessage: (_, event) => event.data.message,
+						indexErrorLogPath: context =>
+							`${fishcakePath}/logs/index_${
+								context.repoName
+							}_repo_error_${uuid()}.log`,
 					}),
 				},
 			},
 		},
 		[IndexRepoState.INDEXING_REPO_FILE]: {
 			invoke: {
-				src: async (context, e) => {
+				src: async context => {
 					const currentFile =
 						context.filePaths[context.currentFileIndexing] ?? '';
 					const parsedFile = await parseFile(currentFile);
@@ -125,27 +158,63 @@ export const indexRepoMachine = createMachine<
 						cond: (context, event) => isLastFilePath(context, event),
 					},
 				],
+				onError: {
+					target: IndexRepoState.WRITING_ERROR_FILE,
+					actions: assign({
+						indexErrorMessage: (_, event) => event.data.message,
+						indexErrorLogPath: context =>
+							`${fishcakePath}/logs/index_${
+								context.repoName
+							}_repo_error_${uuid()}.log`,
+					}),
+				},
 			},
 		},
 		[IndexRepoState.REGISTER_REPO]: {
 			invoke: {
-				src: async (context, e) =>
+				src: async context =>
 					await registerRepo({
 						repo: context.repoName,
 						filePaths: context.filePaths,
 					}),
 				onDone: {
 					target: IndexRepoState.INDEXING_SUCCESS_IDLE,
+					actions: assign({
+						enterLabel: 'continue',
+					}),
 				},
 			},
 		},
 		[IndexRepoState.INDEXING_SUCCESS_IDLE]: {
 			on: {
 				[IndexRepoEvent.ENTER_PRESSED]: {
-					actions: () => {
-						// TODO: Go to next page (SELECT_OPTION)
-						console.log('HOORAAYY! 🎉');
+					actions: context => {
+						if (context.navigate) {
+							context.navigate(AppState.IS_REPO_INDEXED);
+						}
 					},
+				},
+			},
+		},
+		[IndexRepoState.WRITING_ERROR_FILE]: {
+			invoke: {
+				src: async context =>
+					await writeFile({
+						filePath: context.indexErrorLogPath,
+						fileContent: context.indexErrorMessage,
+					}),
+				onDone: {
+					target: IndexRepoState.INDEXING_ERROR_IDLE,
+					actions: assign({
+						enterLabel: 'retry',
+					}),
+				},
+			},
+		},
+		[IndexRepoState.INDEXING_ERROR_IDLE]: {
+			on: {
+				[IndexRepoEvent.ENTER_PRESSED]: {
+					target: IndexRepoState.FETCHING_REPO_DETAILS,
 				},
 			},
 		},
