@@ -10,7 +10,7 @@ import {AppState, type NavigationMachineEvent} from './navigationMachine.js';
 interface InstallDatabaseMachineContext {
 	errorLogFilePath: string;
 	errorMessage: string;
-	enterLabel: 'install' | 'next step' | 'retry';
+	enterLabel: 'install' | 'continue' | 'retry';
 	navigate?: Sender<NavigationMachineEvent>;
 }
 
@@ -80,7 +80,7 @@ export const installDatabaseMachine = createMachine<
 				onDone: {
 					target: InstallDatabaseState.INSTALL_DATABASE_SUCCESS_IDLE,
 					actions: assign({
-						enterLabel: 'next step',
+						enterLabel: 'continue',
 					}),
 				},
 				onError: {

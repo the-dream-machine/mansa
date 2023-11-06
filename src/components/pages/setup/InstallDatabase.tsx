@@ -70,7 +70,7 @@ export const InstallDatabase = () => {
 							Successfully installed! 🎉
 						</Text>
 						<Text color="gray">
-							Press <Text color="white">enter</Text> to go to the next step
+							Press <Text color="white">enter</Text> to continue
 						</Text>
 					</>
 				)}
