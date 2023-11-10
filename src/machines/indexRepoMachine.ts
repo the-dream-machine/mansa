@@ -9,6 +9,9 @@ import {registerRepo} from '../scripts/registerRepo.js';
 import {AppState, type NavigationMachineEvent} from './navigationMachine.js';
 import {fishcakePath} from '../utils/fishcakePath.js';
 import {writeFile} from '../utils/writeFile.js';
+import {parseCodeFile} from '../utils/parseCodeFile.js';
+import {getEmbeddingFunction} from '../utils/embeddingFunction.js';
+import {chroma} from '../utils/chroma.js';
 
 // Context
 interface IndexRepoMachineContext {
@@ -81,7 +84,7 @@ export const indexRepoMachine = createMachine<
 	predictableActionArguments: true,
 	initial: IndexRepoState.FETCHING_REPO_DETAILS,
 	context: {
-		repoName: '',
+		repoName: 'your repo',
 		filePaths: [],
 		indexErrorMessage: '',
 		indexErrorLogPath: '',
@@ -136,13 +139,35 @@ export const indexRepoMachine = createMachine<
 		[IndexRepoState.INDEXING_REPO_FILE]: {
 			invoke: {
 				src: async context => {
-					const currentFile =
+					const currentFilePath =
 						context.filePaths[context.currentFileIndexing] ?? '';
-					const parsedFile = await parseFile(currentFile);
-					return await saveFileEmbeddings({
-						document: parsedFile,
-						collectionName: context.repoName,
+					console.log('🌱 # currentFilePath:', currentFilePath);
+					// const parsedFile = await parseFile(currentFile);
+					const parsedCodeFile = await parseCodeFile({
+						filePath: currentFilePath,
 					});
+					console.log('🌱 # parsedFile:', parsedCodeFile);
+
+					const embeddingFunction = await getEmbeddingFunction();
+					const collection = await chroma.getOrCreateCollection({
+						embeddingFunction,
+						name: context.repoName,
+						metadata: {
+							description: 'repo_tree_summary',
+						},
+					});
+
+					const result = await collection.add({
+						ids: [`${parsedCodeFile.filePath}_${uuid()}`],
+						metadatas: [
+							{
+								filePath: parsedCodeFile.filePath,
+								relations: parsedCodeFile.relations.join(','),
+							},
+						],
+						documents: [parsedCodeFile.fileSummary],
+					});
+					console.log('🌱 # Add collection result:', result);
 				},
 				onDone: [
 					{

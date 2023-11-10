@@ -21,8 +21,10 @@ export const IndexRepo = () => {
 	const [state, send] = useMachine(indexRepoMachine, {
 		context: {navigate},
 	});
+	console.log('🌱 # state:', state.value);
 
 	const repoName = state.context.repoName;
+	const indexErrorLogPath = state.context.indexErrorLogPath;
 	const currentIndexingFile = state.context.currentFileIndexing;
 	const currentIndexingFilePath = state.context.filePaths[currentIndexingFile];
 	const currentIndexingFileCount = currentIndexingFile + 1;
@@ -49,7 +51,7 @@ export const IndexRepo = () => {
 		state.matches(IndexRepoState.REGISTER_REPO);
 
 	const {exit} = useApp();
-	useInput((i, key) => {
+	useInput((_, key) => {
 		if (key.escape) {
 			exit();
 		}
@@ -115,10 +117,10 @@ export const IndexRepo = () => {
 							An Error occurred! 😭
 						</Text>
 
-						{/* <Text color="gray">
+						<Text color="gray">
 							You can view the full error logs here:{' '}
-							<Text color="white">{errorLogFilePath}</Text>
-						</Text> */}
+							<Text color="white">{indexErrorLogPath}</Text>
+						</Text>
 					</>
 				)}
 			</Body>

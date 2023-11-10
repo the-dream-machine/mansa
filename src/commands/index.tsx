@@ -14,9 +14,9 @@ export default function App() {
 		<QueryClientProvider client={queryClient}>
 			<ThemeProvider theme={theme}>
 				<NavigationProvider>
-					<FullScreen>
-						<NavigationHandler />
-					</FullScreen>
+					{/* <FullScreen> */}
+					<NavigationHandler />
+					{/* </FullScreen> */}
 				</NavigationProvider>
 			</ThemeProvider>
 		</QueryClientProvider>

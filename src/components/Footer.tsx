@@ -17,7 +17,7 @@ export const Footer = ({
 	return (
 		<>
 			<Spacer />
-			<Box paddingBottom={1}>
+			<Box paddingBottom={1} position="absolute">
 				{controls.includes('up') && (
 					<Text color="gray">
 						<Text color="white">{figureSet.triangleUp}</Text> up

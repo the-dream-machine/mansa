@@ -6,6 +6,6 @@ export const getRepoConfig = async () => {
 		const config: Config = await fs.readJson('./.fishcake/config.json');
 		return config;
 	} catch (err) {
-		throw new Error("Couldn't find package.json");
+		throw new Error("Couldn't find ./.fishcake/config.json");
 	}
 };
