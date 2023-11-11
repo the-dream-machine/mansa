@@ -7,7 +7,7 @@ interface Props {
 
 export const Body = ({children}: Props) => {
 	return (
-		<Box paddingX={2} flexDirection="column" gap={1}>
+		<Box paddingX={1} flexDirection="column" gap={1}>
 			{children}
 		</Box>
 	);

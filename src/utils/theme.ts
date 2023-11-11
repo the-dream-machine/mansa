@@ -2,13 +2,34 @@ import {defaultTheme, extendTheme} from '@inkjs/ui';
 import type {ColorName} from 'chalk';
 import type {BoxProps, TextProps} from 'ink';
 
+interface SelectState {
+	isFocused: boolean;
+	isSelected: boolean;
+}
+
 export const theme = extendTheme(defaultTheme, {
 	components: {
 		Spinner: {
 			styles: {
 				frame: (): TextProps => ({
-					color: 'yellowBright',
+					color: 'cyanBright',
 				}),
+			},
+		},
+		Select: {
+			styles: {
+				focusIndicator: (): TextProps => ({
+					color: 'magentaBright',
+				}),
+				label: ({isFocused}: SelectState): TextProps => {
+					let color: ColorName = 'gray';
+
+					if (isFocused) {
+						color = 'magentaBright';
+					}
+
+					return {color};
+				},
 			},
 		},
 		MultiSelect: {
@@ -16,9 +37,7 @@ export const theme = extendTheme(defaultTheme, {
 				focusIndicator: (): TextProps => ({
 					color: 'magenta',
 				}),
-
-				// eslint-disable-next-line @typescript-eslint/no-explicit-any
-				label: ({isFocused, isSelected}: any): TextProps => {
+				label: ({isFocused, isSelected}: SelectState): TextProps => {
 					let color: ColorName = 'gray';
 
 					if (isSelected) {

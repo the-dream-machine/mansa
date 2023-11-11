@@ -1,8 +1,8 @@
-import {fishcakePath} from './fishcakePath.js';
+import {fishcakeUserPath} from './fishcakePath.js';
 import {env} from '@xenova/transformers';
 
-env.localModelPath = `${fishcakePath}/models/`;
-env.cacheDir = `${fishcakePath}/.cache/`;
+env.localModelPath = `${fishcakeUserPath}/models/`;
+env.cacheDir = `${fishcakeUserPath}/.cache/`;
 
 export const getEmbeddingFunction = async () => {
 	const {TransformersEmbeddingFunction} = await import('chromadb');

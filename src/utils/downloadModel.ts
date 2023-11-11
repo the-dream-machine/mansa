@@ -2,13 +2,13 @@ import {fs} from 'zx';
 import axios, {type AxiosResponse} from 'axios';
 import type {Sender} from 'xstate';
 
-import {fishcakePath} from './fishcakePath.js';
+import {fishcakeUserPath} from './fishcakePath.js';
 import {
 	DownloadModelEvent,
 	type DownloadModelMachineEvent,
 } from '../machines/downloadModelMachine.js';
 
-const outputDirectory = `${fishcakePath}/models/Xenova/bge-base-en-v1.5/onnx`;
+const outputDirectory = `${fishcakeUserPath}/models/Xenova/bge-base-en-v1.5/onnx`;
 const filename = 'model.onnx';
 
 export const downloadModel = async (

@@ -6,10 +6,13 @@ import {IndexRepo} from './pages/IndexRepo.js';
 import {SelectAction} from './pages/SelectAction.js';
 import {AppState, NavigationPage} from '../machines/navigationMachine.js';
 import {GlobalLoader} from './GlobalLoader.js';
+import SelectPackageManager from './pages/SelectPackageManager.js';
 
 const NavigationHandler = () => {
 	const [state] = NavigationContext.useActor();
+	console.log('🌱 # navigation state:', state.value);
 	const showLoader =
+		state.matches(AppState.IS_REPO_INDEXED) ||
 		state.matches(AppState.IS_DATABASE_INSTALLED) ||
 		state.matches(AppState.IS_DATABASE_RUNNING) ||
 		state.matches(AppState.STARTING_DATABASE) ||
@@ -22,6 +25,7 @@ const NavigationHandler = () => {
 
 	return (
 		<>
+			{state.matches(NavigationPage.REGISTER_REPO) && <SelectPackageManager />}
 			{state.matches(NavigationPage.INSTALL_DATABASE) && <InstallDatabase />}
 			{state.matches(NavigationPage.INSTALL_EMBEDDING_MODEL) && (
 				<DownloadEmbeddingModel />

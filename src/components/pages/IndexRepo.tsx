@@ -66,7 +66,7 @@ export const IndexRepo = () => {
 
 	return (
 		<PageContainer>
-			<Header title={`Index ${repoName} files`} />
+			<Header title={`Set up fishcake for your repo`} subtitle="2/2" />
 			<Body>
 				<Text color={'gray'}>
 					Fishcake uses your <Text color="white">.gitignore</Text> file to

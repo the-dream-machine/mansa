@@ -4,7 +4,7 @@ import {v4 as uuid} from 'uuid';
 import {downloadEmbeddingModelMetadata} from '../utils/downloadModelMetadata.js';
 import {downloadModel} from '../utils/downloadModel.js';
 import {writeFile} from '../utils/writeFile.js';
-import {fishcakePath} from '../utils/fishcakePath.js';
+import {fishcakeUserPath} from '../utils/fishcakePath.js';
 import {AppState, type NavigationMachineEvent} from './navigationMachine.js';
 
 // Context
@@ -102,7 +102,7 @@ export const downloadModelMachine = createMachine<
 					target: DownloadModelState.WRITING_ERROR_FILE,
 					actions: assign({
 						downloadErrorMessage: (_, event) => event.data.message,
-						downloadErrorLogPath: `${fishcakePath}/logs/download_model_error_${uuid()}.log`,
+						downloadErrorLogPath: `${fishcakeUserPath}/logs/download_model_error_${uuid()}.log`,
 					}),
 				},
 			},
@@ -120,7 +120,7 @@ export const downloadModelMachine = createMachine<
 					target: DownloadModelState.WRITING_ERROR_FILE,
 					actions: assign({
 						downloadErrorMessage: (_, event) => event.data.message,
-						downloadErrorLogPath: `${fishcakePath}/logs/download_model_error_${uuid()}.log`,
+						downloadErrorLogPath: `${fishcakeUserPath}/logs/download_model_error_${uuid()}.log`,
 					}),
 				},
 			},

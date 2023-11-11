@@ -3,7 +3,7 @@ import {v4 as uuid} from 'uuid';
 
 import {chromaInstall} from '../scripts/chroma/chromaInstall.js';
 import {writeFile} from '../utils/writeFile.js';
-import {fishcakePath} from '../utils/fishcakePath.js';
+import {fishcakeUserPath} from '../utils/fishcakePath.js';
 import {AppState, type NavigationMachineEvent} from './navigationMachine.js';
 
 // Context
@@ -87,7 +87,7 @@ export const installDatabaseMachine = createMachine<
 					target: InstallDatabaseState.WRITING_ERROR_FILE,
 					actions: assign({
 						errorMessage: (context, event) => event.data.stderr,
-						errorLogFilePath: `${fishcakePath}/logs/install_db_error_${uuid()}.log`,
+						errorLogFilePath: `${fishcakeUserPath}/logs/install_db_error_${uuid()}.log`,
 					}),
 				},
 			},

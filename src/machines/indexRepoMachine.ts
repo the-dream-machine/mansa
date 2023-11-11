@@ -1,13 +1,13 @@
 import {type Sender, assign, createMachine} from 'xstate';
 import {v4 as uuid} from 'uuid';
 
-import {getRepoDetails} from '../scripts/getRepoDetails.js';
+import {getRepositoryDetails} from '../utils/getRepositoryDetails.js';
 import {getRepoFilePaths} from '../scripts/getRepoFilePaths.js';
 import {parseFile} from '../utils/parseFile.js';
 import {saveFileEmbeddings} from '../utils/saveFileEmbeddings.js';
-import {registerRepo} from '../scripts/registerRepo.js';
+import {createFishcakeConfig} from '../utils/createFishcakeConfig.js';
 import {AppState, type NavigationMachineEvent} from './navigationMachine.js';
-import {fishcakePath} from '../utils/fishcakePath.js';
+import {fishcakeUserPath} from '../utils/fishcakePath.js';
 import {writeFile} from '../utils/writeFile.js';
 import {parseCodeFile} from '../utils/parseCodeFile.js';
 import {getEmbeddingFunction} from '../utils/embeddingFunction.js';
@@ -94,7 +94,7 @@ export const indexRepoMachine = createMachine<
 	states: {
 		[IndexRepoState.FETCHING_REPO_DETAILS]: {
 			invoke: {
-				src: async () => await getRepoDetails(),
+				src: async () => await getRepositoryDetails(),
 				onDone: {
 					target: IndexRepoState.IDLE,
 					actions: assign({
@@ -105,7 +105,7 @@ export const indexRepoMachine = createMachine<
 					target: IndexRepoState.WRITING_ERROR_FILE,
 					actions: assign({
 						indexErrorMessage: (_, event) => event.data.message,
-						indexErrorLogPath: `${fishcakePath}/logs/index_repo_error_${uuid()}.log`,
+						indexErrorLogPath: `${fishcakeUserPath}/logs/index_repo_error_${uuid()}.log`,
 					}),
 				},
 			},
@@ -129,7 +129,7 @@ export const indexRepoMachine = createMachine<
 					actions: assign({
 						indexErrorMessage: (_, event) => event.data.message,
 						indexErrorLogPath: context =>
-							`${fishcakePath}/logs/index_${
+							`${fishcakeUserPath}/logs/index_${
 								context.repoName
 							}_repo_error_${uuid()}.log`,
 					}),
@@ -188,7 +188,7 @@ export const indexRepoMachine = createMachine<
 					actions: assign({
 						indexErrorMessage: (_, event) => event.data.message,
 						indexErrorLogPath: context =>
-							`${fishcakePath}/logs/index_${
+							`${fishcakeUserPath}/logs/index_${
 								context.repoName
 							}_repo_error_${uuid()}.log`,
 					}),
@@ -198,9 +198,8 @@ export const indexRepoMachine = createMachine<
 		[IndexRepoState.REGISTER_REPO]: {
 			invoke: {
 				src: async context =>
-					await registerRepo({
-						repo: context.repoName,
-						filePaths: context.filePaths,
+					await createFishcakeConfig({
+						packageManager: 'bun', // Placeholder to make TS compiler happy
 					}),
 				onDone: {
 					target: IndexRepoState.INDEXING_SUCCESS_IDLE,

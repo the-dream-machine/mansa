@@ -9,7 +9,7 @@ import {PageContainer} from '../../PageContainer.js';
 import {Header} from '../../Header.js';
 import {Body} from '../../Body.js';
 import {Footer} from '../../Footer.js';
-import {fishcakePath} from '../../../utils/fishcakePath.js';
+import {fishcakeUserPath} from '../../../utils/fishcakePath.js';
 import {NavigationContext} from '../../NavigationProvider.js';
 import {
 	DownloadModelEvent,
@@ -17,7 +17,7 @@ import {
 	downloadModelMachine,
 } from '../../../machines/downloadModelMachine.js';
 
-const errorLogFilePath = `${fishcakePath}/logs/download_model_error_${uuid()}.log`;
+const errorLogFilePath = `${fishcakeUserPath}/logs/download_model_error_${uuid()}.log`;
 
 export const DownloadEmbeddingModel = () => {
 	const [, navigate] = NavigationContext.useActor();

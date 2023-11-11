@@ -1,8 +1,8 @@
 import {fs} from 'zx';
-import {fishcakePath} from './fishcakePath.js';
+import {fishcakeUserPath} from './fishcakePath.js';
 import axios, {type AxiosResponse} from 'axios';
 
-export const outputDirectory = `${fishcakePath}/models/Xenova/bge-base-en-v1.5`;
+export const outputDirectory = `${fishcakeUserPath}/models/Xenova/bge-base-en-v1.5`;
 
 export const downloadEmbeddingModelMetadata = async () => {
 	// Ensure the output directory exists or create it
