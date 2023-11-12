@@ -40,7 +40,7 @@ const SelectPackageManager = () => {
 		<PageContainer>
 			<Header title={`Set up fishcake for ${repositoryName}`} subtitle="1/2" />
 			<Body>
-				<Text>
+				<Text color="gray">
 					Which package manager are you currently using for this project?
 				</Text>
 

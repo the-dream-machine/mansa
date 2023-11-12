@@ -57,6 +57,9 @@ const ignoreFileExtensions = [
 	'*.log',
 	'*.lock',
 	'.DS_Store',
+	'.node',
+	'.sqlite',
+	'/node_modules',
 
 	// Ignore package manager lock files
 	'bun.lockb',
@@ -100,7 +103,7 @@ const getFilesInDir = async (dirPath: string): Promise<string[]> => {
 	return results;
 };
 
-export const getRepoFilePaths = async () => {
+export const getRepositoryFilePaths = async () => {
 	const paths = await getFilesInDir('.');
 	return paths;
 };

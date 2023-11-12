@@ -1,10 +1,6 @@
 import {fs} from 'zx';
-import {fishcakeRepoPath} from './fishcakePath.js';
+import {fishcakeRepositoryPath} from './fishcakePath.js';
+import type {FileChecksumItem} from '../types/FileChecksumItem.js';
 
-export interface ChecksumFile {
-	filePath: string;
-	checksum: string;
-}
-
-export const getRepositoryChecksums = async (): Promise<ChecksumFile[]> =>
-	await fs.readJson(`${fishcakeRepoPath}/checksums.json`);
+export const getRepositoryChecksums = async (): Promise<FileChecksumItem[]> =>
+	await fs.readJson(`${fishcakeRepositoryPath}/checksums.json`);

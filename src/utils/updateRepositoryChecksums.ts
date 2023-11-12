@@ -1,11 +1,9 @@
 import {fs} from 'zx';
 import {createChecksum} from './createChecksum.js';
-import {fishcakeRepoPath} from './fishcakePath.js';
-import {
-	type ChecksumFile,
-	getRepositoryChecksums,
-} from './getRepositoryChecksums.js';
-import {writeFile} from './writeFile.js';
+import {fishcakeRepositoryPath} from './fishcakePath.js';
+import {getRepositoryChecksums} from './getRepositoryChecksums.js';
+import {writeToFile} from './writeToFile.js';
+import type {FileChecksumItem} from '../types/FileChecksumItem.js';
 
 interface Args {
 	filePath: string;
@@ -13,8 +11,8 @@ interface Args {
 
 export const updateRepositoryChecksums = async ({filePath}: Args) => {
 	const checksum = await createChecksum({filePath});
-	const repositoryChecksumFilePath = `${fishcakeRepoPath}/checksums.json`;
-	let updatedChecksums: ChecksumFile[] = [];
+	const repositoryChecksumFilePath = `${fishcakeRepositoryPath}/checksums.json`;
+	let updatedChecksums: FileChecksumItem[] = [];
 
 	if (await fs.exists(repositoryChecksumFilePath)) {
 		const savedChecksums = await getRepositoryChecksums();
@@ -23,7 +21,7 @@ export const updateRepositoryChecksums = async ({filePath}: Args) => {
 		updatedChecksums = [{filePath, checksum}];
 	}
 
-	await writeFile({
+	await writeToFile({
 		filePath: repositoryChecksumFilePath,
 		fileContent: JSON.stringify(updatedChecksums),
 	});

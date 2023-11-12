@@ -1,6 +1,6 @@
 import {fs} from 'zx';
-import {fishcakeRepoPath} from './fishcakePath.js';
-import {writeFile} from './writeFile.js';
+import {fishcakeRepositoryPath} from './fishcakePath.js';
+import {writeToFile} from './writeToFile.js';
 import {summarizeFile} from './summarizeFile.js';
 import type {FileMapItem} from '../types/FileMapItem.js';
 import {getRepositoryMap} from './getRepositoryMap.js';
@@ -11,7 +11,7 @@ interface Args {
 
 export const updateRepositoryMap = async ({filePath}: Args) => {
 	const fileMapItem = await summarizeFile({filePath});
-	const repositoryMapFilePath = `${fishcakeRepoPath}/map.json`;
+	const repositoryMapFilePath = `${fishcakeRepositoryPath}/map.json`;
 	let updatedMap: FileMapItem[] = [];
 
 	if (await fs.exists(repositoryMapFilePath)) {
@@ -21,7 +21,7 @@ export const updateRepositoryMap = async ({filePath}: Args) => {
 		updatedMap = [fileMapItem];
 	}
 
-	await writeFile({
+	await writeToFile({
 		filePath: repositoryMapFilePath,
 		fileContent: JSON.stringify(updatedMap),
 	});

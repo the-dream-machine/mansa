@@ -9,21 +9,22 @@ import {Footer} from '../Footer.js';
 import {Body} from '../Body.js';
 import {PageContainer} from '../PageContainer.js';
 import {
-	IndexRepoEvent,
-	IndexRepoState,
-	indexRepoMachine,
-} from '../../machines/indexRepoMachine.js';
+	IndexRepositoryEvent,
+	IndexRepositoryState,
+	indexRepositoryMachine,
+} from '../../machines/indexRepositoryMachine.js';
 import {GlobalLoader} from '../GlobalLoader.js';
 import {NavigationContext} from '../NavigationProvider.js';
 
-export const IndexRepo = () => {
+export const IndexRepository = () => {
 	const [, navigate] = NavigationContext.useActor();
-	const [state, send] = useMachine(indexRepoMachine, {
+	const [state, send] = useMachine(indexRepositoryMachine, {
 		context: {navigate},
 	});
 
 	const repositoryName = state.context.repositoryName;
-	const indexErrorLogPath = state.context.indexErrorLogPath;
+	const enterLabel = state.context.enterLabel;
+	const indexRepositoryErrorLogPath = state.context.indexRepositoryErrorLogPath;
 	const currentIndexingFile = state.context.currentFileIndexing;
 	const currentIndexingFilePath = state.context.filePaths[currentIndexingFile];
 	const currentIndexingFileCount = currentIndexingFile + 1;
@@ -32,19 +33,21 @@ export const IndexRepo = () => {
 		(currentIndexingFileCount / totalFiles) * 100,
 	);
 
-	const showLoader = state.matches(IndexRepoState.FETCHING_REPO_DETAILS);
+	const showLoader = state.matches(IndexRepositoryState.FETCHING_REPO_DETAILS);
 	const showProgressBar =
-		state.matches(IndexRepoState.INDEXING_REPO_FILE) ||
-		state.matches(IndexRepoState.INDEXING_SUCCESS_IDLE) ||
-		state.matches(IndexRepoState.INDEXING_ERROR_IDLE);
+		state.matches(IndexRepositoryState.INDEXING_REPO_FILE) ||
+		state.matches(IndexRepositoryState.INDEXING_SUCCESS_IDLE) ||
+		state.matches(IndexRepositoryState.INDEXING_ERROR_IDLE);
 	const showSuccessMessage = state.matches(
-		IndexRepoState.INDEXING_SUCCESS_IDLE,
+		IndexRepositoryState.INDEXING_SUCCESS_IDLE,
 	);
-	const showErrorMessage = state.matches(IndexRepoState.INDEXING_ERROR_IDLE);
+	const showErrorMessage = state.matches(
+		IndexRepositoryState.INDEXING_ERROR_IDLE,
+	);
 	const showCurrentIndexingFile = state.matches(
-		IndexRepoState.INDEXING_REPO_FILE,
+		IndexRepositoryState.INDEXING_REPO_FILE,
 	);
-	const enterDisabled = state.matches(IndexRepoState.INDEXING_REPO_FILE);
+	const enterDisabled = state.matches(IndexRepositoryState.INDEXING_REPO_FILE);
 
 	const {exit} = useApp();
 	useInput((_, key) => {
@@ -52,7 +55,7 @@ export const IndexRepo = () => {
 			exit();
 		}
 		if (key.return) {
-			send(IndexRepoEvent.ENTER_PRESSED);
+			send(IndexRepositoryEvent.ENTER_PRESSED);
 		}
 	});
 
@@ -76,9 +79,11 @@ export const IndexRepo = () => {
 					snippets are sent to our server at the time of processing.
 				</Text>
 
-				<Text color="gray">
-					Press <Text color="white">enter</Text> to start indexing.
-				</Text>
+				{(!showSuccessMessage || !showErrorMessage) && (
+					<Text color="gray">
+						Press <Text color="white">enter</Text> to start indexing.
+					</Text>
+				)}
 
 				{showProgressBar && (
 					<Box flexDirection="column" gap={1}>
@@ -117,17 +122,19 @@ export const IndexRepo = () => {
 							<Text color="red">{figureSet.cross} </Text>
 							An Error occurred! 😭
 						</Text>
-
+						<Text color="gray">
+							Press <Text color="white">enter</Text> to retry.
+						</Text>
 						<Text color="gray">
 							You can view the full error logs here:{' '}
-							<Text color="white">{indexErrorLogPath}</Text>
+							<Text color="white">{indexRepositoryErrorLogPath}</Text>
 						</Text>
 					</>
 				)}
 			</Body>
 			<Footer
 				controls={['esc', 'enter']}
-				enterLabel={showSuccessMessage ? 'continue' : 'start indexing'}
+				enterLabel={enterLabel}
 				enterDisabled={enterDisabled}
 			/>
 		</PageContainer>

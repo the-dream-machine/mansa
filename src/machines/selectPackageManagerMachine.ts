@@ -92,7 +92,7 @@ export const selectPackageManagerMachine = createMachine<
 				onDone: {
 					actions: context => {
 						if (context.navigate) {
-							context.navigate(AppState.IS_REPO_REGISTERED);
+							context.navigate(AppState.DOES_CONFIG_EXIST);
 						}
 					},
 				},
