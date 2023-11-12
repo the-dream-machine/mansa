@@ -158,6 +158,9 @@ export const indexRepositoryMachine = createMachine<
 					{
 						target: IndexRepositoryState.INDEXING_SUCCESS_IDLE,
 						cond: context => isLastFilePath(context),
+						actions: assign({
+							enterLabel: 'continue',
+						}),
 					},
 				],
 				onError: {
