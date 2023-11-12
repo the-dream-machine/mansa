@@ -23,6 +23,7 @@
 		"@xstate/react": "^3.2.2",
 		"axios": "^1.6.0",
 		"chromadb": "^1.5.3",
+		"crypto": "^1.0.1",
 		"figures": "^5.0.0",
 		"ignore": "^5.2.4",
 		"ink": "^4.1.0",

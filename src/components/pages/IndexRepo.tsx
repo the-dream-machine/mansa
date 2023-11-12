@@ -21,9 +21,8 @@ export const IndexRepo = () => {
 	const [state, send] = useMachine(indexRepoMachine, {
 		context: {navigate},
 	});
-	console.log('🌱 # state:', state.value);
 
-	const repoName = state.context.repoName;
+	const repositoryName = state.context.repositoryName;
 	const indexErrorLogPath = state.context.indexErrorLogPath;
 	const currentIndexingFile = state.context.currentFileIndexing;
 	const currentIndexingFilePath = state.context.filePaths[currentIndexingFile];
@@ -36,7 +35,6 @@ export const IndexRepo = () => {
 	const showLoader = state.matches(IndexRepoState.FETCHING_REPO_DETAILS);
 	const showProgressBar =
 		state.matches(IndexRepoState.INDEXING_REPO_FILE) ||
-		state.matches(IndexRepoState.REGISTER_REPO) ||
 		state.matches(IndexRepoState.INDEXING_SUCCESS_IDLE) ||
 		state.matches(IndexRepoState.INDEXING_ERROR_IDLE);
 	const showSuccessMessage = state.matches(
@@ -46,9 +44,7 @@ export const IndexRepo = () => {
 	const showCurrentIndexingFile = state.matches(
 		IndexRepoState.INDEXING_REPO_FILE,
 	);
-	const enterDisabled =
-		state.matches(IndexRepoState.INDEXING_REPO_FILE) ||
-		state.matches(IndexRepoState.REGISTER_REPO);
+	const enterDisabled = state.matches(IndexRepoState.INDEXING_REPO_FILE);
 
 	const {exit} = useApp();
 	useInput((_, key) => {
@@ -66,13 +62,18 @@ export const IndexRepo = () => {
 
 	return (
 		<PageContainer>
-			<Header title={`Set up fishcake for your repo`} subtitle="2/2" />
+			<Header title={`Set up fishcake for ${repositoryName}`} subtitle="2/2" />
 			<Body>
 				<Text color={'gray'}>
 					Fishcake uses your <Text color="white">.gitignore</Text> file to
 					figure out which files and folders should be ignored when parsing and
 					indexing your code. Also, fishcake ignores file formats whose content
 					can't be parsed like image, video and audio files.
+				</Text>
+				<Text color="gray">
+					🔐 <Text color="white">Security:</Text> your files remain on your
+					device, they are never stored on fishcake's servers. Only code
+					snippets are sent to our server at the time of processing.
 				</Text>
 
 				<Text color="gray">

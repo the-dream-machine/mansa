@@ -1,7 +1,7 @@
-import {chroma} from '../utils/chroma.js';
-import {getRepoConfig} from './getRepoConfig.js';
+import {getRepositoryChecksums} from '../utils/getRepositoryChecksums.js';
+import {getRepositoryMap} from '../utils/getRepositoryMap.js';
 
-export const isRepoIndexed = async () => {
-	const repoConfig = await getRepoConfig();
-	return await chroma.getCollection({name: repoConfig.repo});
-};
+export const isRepoIndexed = async () => ({
+	checksums: await getRepositoryChecksums(),
+	repositoryMap: await getRepositoryMap(),
+});

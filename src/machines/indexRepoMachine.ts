@@ -1,21 +1,20 @@
-import {type Sender, assign, createMachine} from 'xstate';
+import {type Sender, assign, createMachine, type DoneInvokeEvent} from 'xstate';
 import {v4 as uuid} from 'uuid';
 
-import {getRepositoryDetails} from '../utils/getRepositoryDetails.js';
+import {
+	type Repo,
+	getRepositoryDetails,
+} from '../utils/getRepositoryDetails.js';
 import {getRepoFilePaths} from '../scripts/getRepoFilePaths.js';
-import {parseFile} from '../utils/parseFile.js';
-import {saveFileEmbeddings} from '../utils/saveFileEmbeddings.js';
-import {createFishcakeConfig} from '../utils/createFishcakeConfig.js';
 import {AppState, type NavigationMachineEvent} from './navigationMachine.js';
 import {fishcakeUserPath} from '../utils/fishcakePath.js';
 import {writeFile} from '../utils/writeFile.js';
-import {parseCodeFile} from '../utils/parseCodeFile.js';
-import {getEmbeddingFunction} from '../utils/embeddingFunction.js';
-import {chroma} from '../utils/chroma.js';
+import {updateRepositoryChecksums} from '../utils/updateRepositoryChecksums.js';
+import {updateRepositoryMap} from '../utils/updateRepositoryMap.js';
 
 // Context
 interface IndexRepoMachineContext {
-	repoName: string;
+	repositoryName: string;
 	filePaths: string[];
 	currentFileIndexing: number;
 	indexErrorMessage: string;
@@ -30,7 +29,6 @@ export enum IndexRepoState {
 	FETCHING_REPO_DETAILS = 'FETCHING_REPO_DETAILS',
 	FETCHING_FILE_PATHS = 'FETCHING_FILE_PATHS',
 	INDEXING_REPO_FILE = 'INDEXING_REPO_FILE',
-	REGISTER_REPO = 'REGISTER_REPO',
 	INDEXING_SUCCESS_IDLE = 'INDEXING_SUCCESS_IDLE',
 	INDEXING_ERROR_IDLE = 'INDEXING_ERROR_IDLE',
 	WRITING_ERROR_FILE = 'WRITING_ERROR_FILE',
@@ -48,7 +46,6 @@ type IndexRepoMachineState =
 			context: IndexRepoMachineContext;
 	  }
 	| {value: IndexRepoState.INDEXING_REPO_FILE; context: IndexRepoMachineContext}
-	| {value: IndexRepoState.REGISTER_REPO; context: IndexRepoMachineContext}
 	| {
 			value: IndexRepoState.INDEXING_SUCCESS_IDLE;
 			context: IndexRepoMachineContext;
@@ -84,7 +81,7 @@ export const indexRepoMachine = createMachine<
 	predictableActionArguments: true,
 	initial: IndexRepoState.FETCHING_REPO_DETAILS,
 	context: {
-		repoName: 'your repo',
+		repositoryName: 'your repo',
 		filePaths: [],
 		indexErrorMessage: '',
 		indexErrorLogPath: '',
@@ -98,13 +95,15 @@ export const indexRepoMachine = createMachine<
 				onDone: {
 					target: IndexRepoState.IDLE,
 					actions: assign({
-						repoName: (_, event) => event.data.name,
+						repositoryName: (_, event: DoneInvokeEvent<Repo>) =>
+							event.data.name,
 					}),
 				},
 				onError: {
 					target: IndexRepoState.WRITING_ERROR_FILE,
 					actions: assign({
-						indexErrorMessage: (_, event) => event.data.message,
+						indexErrorMessage: (_, event: DoneInvokeEvent<Error>) =>
+							event.data.message,
 						indexErrorLogPath: `${fishcakeUserPath}/logs/index_repo_error_${uuid()}.log`,
 					}),
 				},
@@ -121,16 +120,17 @@ export const indexRepoMachine = createMachine<
 				onDone: {
 					target: IndexRepoState.INDEXING_REPO_FILE,
 					actions: assign({
-						filePaths: (_, event) => event.data,
+						filePaths: (_, event: DoneInvokeEvent<string[]>) => event.data,
 					}),
 				},
 				onError: {
 					target: IndexRepoState.WRITING_ERROR_FILE,
 					actions: assign({
-						indexErrorMessage: (_, event) => event.data.message,
+						indexErrorMessage: (_, event: DoneInvokeEvent<Error>) =>
+							event.data.message,
 						indexErrorLogPath: context =>
 							`${fishcakeUserPath}/logs/index_${
-								context.repoName
+								context.repositoryName
 							}_repo_error_${uuid()}.log`,
 					}),
 				},
@@ -139,35 +139,9 @@ export const indexRepoMachine = createMachine<
 		[IndexRepoState.INDEXING_REPO_FILE]: {
 			invoke: {
 				src: async context => {
-					const currentFilePath =
-						context.filePaths[context.currentFileIndexing] ?? '';
-					console.log('🌱 # currentFilePath:', currentFilePath);
-					// const parsedFile = await parseFile(currentFile);
-					const parsedCodeFile = await parseCodeFile({
-						filePath: currentFilePath,
-					});
-					console.log('🌱 # parsedFile:', parsedCodeFile);
-
-					const embeddingFunction = await getEmbeddingFunction();
-					const collection = await chroma.getOrCreateCollection({
-						embeddingFunction,
-						name: context.repoName,
-						metadata: {
-							description: 'repo_tree_summary',
-						},
-					});
-
-					const result = await collection.add({
-						ids: [`${parsedCodeFile.filePath}_${uuid()}`],
-						metadatas: [
-							{
-								filePath: parsedCodeFile.filePath,
-								relations: parsedCodeFile.relations.join(','),
-							},
-						],
-						documents: [parsedCodeFile.fileSummary],
-					});
-					console.log('🌱 # Add collection result:', result);
+					const filePath = context.filePaths[context.currentFileIndexing] ?? '';
+					await updateRepositoryChecksums({filePath});
+					await updateRepositoryMap({filePath});
 				},
 				onDone: [
 					{
@@ -179,32 +153,19 @@ export const indexRepoMachine = createMachine<
 						}),
 					},
 					{
-						target: IndexRepoState.REGISTER_REPO,
+						target: IndexRepoState.INDEXING_SUCCESS_IDLE,
 						cond: (context, event) => isLastFilePath(context, event),
 					},
 				],
 				onError: {
 					target: IndexRepoState.WRITING_ERROR_FILE,
 					actions: assign({
-						indexErrorMessage: (_, event) => event.data.message,
+						indexErrorMessage: (_, event: DoneInvokeEvent<Error>) =>
+							event.data.message,
 						indexErrorLogPath: context =>
 							`${fishcakeUserPath}/logs/index_${
-								context.repoName
+								context.repositoryName
 							}_repo_error_${uuid()}.log`,
-					}),
-				},
-			},
-		},
-		[IndexRepoState.REGISTER_REPO]: {
-			invoke: {
-				src: async context =>
-					await createFishcakeConfig({
-						packageManager: 'bun', // Placeholder to make TS compiler happy
-					}),
-				onDone: {
-					target: IndexRepoState.INDEXING_SUCCESS_IDLE,
-					actions: assign({
-						enterLabel: 'continue',
 					}),
 				},
 			},
