@@ -5,7 +5,7 @@ interface Args {
 	fileContent: string;
 }
 
-export const writeFile = async ({filePath, fileContent}: Args) => {
+export const writeToFile = async ({filePath, fileContent}: Args) => {
 	// Ensure the directory exists before writing the log file
 	const dirname = path.dirname(filePath);
 	if (!fs.existsSync(dirname)) {
