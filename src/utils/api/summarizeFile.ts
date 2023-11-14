@@ -1,6 +1,6 @@
 import axios, {type AxiosResponse} from 'axios';
 import {fs} from 'zx';
-import type {FileMapItem} from '../types/FileMapItem.js';
+import type {FileMapItem} from '../../types/FileMapItem.js';
 
 interface Args {
 	filePath: string;

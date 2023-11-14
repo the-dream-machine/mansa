@@ -1,9 +1,9 @@
 import {fs} from 'zx';
-import {createChecksum} from './createChecksum.js';
-import {fishcakeRepositoryPath} from './fishcakePath.js';
+import {createChecksum} from '../createChecksum.js';
+import {fishcakeRepositoryPath} from '../fishcakePath.js';
 import {getRepositoryChecksums} from './getRepositoryChecksums.js';
-import {writeToFile} from './writeToFile.js';
-import type {FileChecksumItem} from '../types/FileChecksumItem.js';
+import {writeToFile} from '../writeToFile.js';
+import type {FileChecksumItem} from '../../types/FileChecksumItem.js';
 
 interface Args {
 	filePath: string;

@@ -6,7 +6,7 @@ import type {PackageManager} from '../types/PackageManager.js';
 import {
 	type Repo,
 	getRepositoryDetails,
-} from '../utils/getRepositoryDetails.js';
+} from '../utils/repository/getRepositoryDetails.js';
 
 // Context
 interface SelectPackageManagerMachineContext {

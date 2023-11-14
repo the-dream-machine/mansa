@@ -10,7 +10,7 @@ import {Body} from '../Body.js';
 import {type Step} from '../../types/Step.js';
 import {Colors} from '../Colors.js';
 import {ScrollContainer} from '../ScrollContainer.js';
-import {ScrollArea} from '../ScrollArea.js';
+import winston from 'winston';
 
 const steps: Step[] = [
 	{
@@ -105,10 +105,11 @@ const firstStep = steps[0];
 // eslint-disable-next-line @typescript-eslint/no-unsafe-call
 const highlightedBashCommand = highlight(
 	firstStep?.bash_command_to_run,
-	'bash',
+	'javascript',
 );
+console.log('🌱 # highlightedBashCommand:', highlightedBashCommand);
 
-export const SelectAction = () => {
+export const StepsHandler = () => {
 	const [output, setOutput] = useState('');
 	const [isLoading, setIsLoading] = useState(false);
 	const [isSuccess, setIsSuccess] = useState(false);
@@ -124,6 +125,7 @@ export const SelectAction = () => {
 			setIsLoading(true);
 			try {
 				await sleep(4000);
+
 				const process =
 					await $`bun add @trigger.dev/sdk @trigger.dev/nextjs`.quiet();
 				for (const chunk of process.stdout) {
@@ -139,7 +141,7 @@ export const SelectAction = () => {
 	});
 
 	return (
-		<Box flexDirection="column">
+		<Box flexDirection="column" paddingX={3}>
 			{/* Header */}
 			<Box paddingY={1} gap={1}>
 				<Text color="#FFFFFF" backgroundColor="#4eb03a" bold>
@@ -154,12 +156,12 @@ export const SelectAction = () => {
 				)}
 				{isSuccess && (
 					<Box paddingX={1}>
-						<Text color={Colors.LightGreen}>●</Text>
+						<Text color={Colors.LightGreen}>•</Text>
 						<Text color={Colors.White}> Run successful</Text>
 					</Box>
 				)}
 			</Box>
-			<ScrollArea>
+			<ScrollContainer>
 				<Box flexShrink={0} flexDirection="column">
 					<Box gap={1} flexDirection="column">
 						<Box>
@@ -175,16 +177,26 @@ export const SelectAction = () => {
 						</Box>
 
 						{output && (
-							<>
-								<Text>Logs:</Text>
-								<Box borderStyle="single" borderColor="gray" paddingX={1}>
-									<Text color="gray">{output}</Text>
+							<Box gap={0} flexDirection="column">
+								<Box paddingY={1}>
+									<Text color={Colors.LightGrey}>Logs:</Text>
 								</Box>
-							</>
+								<Box
+									paddingY={0}
+									paddingX={3}
+									borderStyle={'single'}
+									borderColor={Colors.LightGrey}
+									borderTop={false}
+									borderBottom={false}
+									borderRight={false}
+								>
+									<Text color={Colors.DarkGrey}>{output}</Text>
+								</Box>
+							</Box>
 						)}
 					</Box>
 				</Box>
-			</ScrollArea>
+			</ScrollContainer>
 			<Footer
 				controls={['esc', 'enter', 'up', 'down']}
 				enterLabel={'run command'}

@@ -1,7 +1,7 @@
 import {createMachine} from 'xstate';
-import {getRepositoryConfig} from '../utils/getRepositoryConfig.js';
-import {getRepositoryMap} from '../utils/getRepositoryMap.js';
-import {getRepositoryChecksums} from '../utils/getRepositoryChecksums.js';
+import {getRepositoryConfig} from '../utils/repository/getRepositoryConfig.js';
+import {getRepositoryMap} from '../utils/repository/getRepositoryMap.js';
+import {getRepositoryChecksums} from '../utils/repository/getRepositoryChecksums.js';
 
 export enum NavigationPage {
 	CREATE_CONFIG = 'CREATE_CONFIG',

@@ -4,13 +4,13 @@ import {v4 as uuid} from 'uuid';
 import {
 	type Repo,
 	getRepositoryDetails,
-} from '../utils/getRepositoryDetails.js';
-import {getRepositoryFilePaths} from '../utils/getRepositoryFilePaths.js';
+} from '../utils/repository/getRepositoryDetails.js';
+import {getRepositoryFilePaths} from '../utils/repository/getRepositoryFilePaths.js';
 import {AppState, type NavigationMachineEvent} from './navigationMachine.js';
 import {fishcakeUserPath} from '../utils/fishcakePath.js';
 import {writeToFile} from '../utils/writeToFile.js';
-import {updateRepositoryChecksums} from '../utils/updateRepositoryChecksums.js';
-import {updateRepositoryMap} from '../utils/updateRepositoryMap.js';
+import {updateRepositoryChecksums} from '../utils/repository/updateRepositoryChecksums.js';
+import {updateRepositoryMap} from '../utils/repository/updateRepositoryMap.js';
 
 // Context
 interface IndexRepositoryMachineContext {

@@ -3,7 +3,7 @@ import {Box, Spacer, Text} from 'ink';
 import figureSet from 'figures';
 import {Colors} from './Colors.js';
 
-type Control = 'up' | 'down' | 'tab' | 'search' | 'esc' | 'enter' | 'q';
+type Control = 'up' | 'down' | 'tab' | 'search' | 'esc' | 'enter' | 's';
 interface Props {
 	controls: Control[];
 	enterLabel?: string;
@@ -48,10 +48,10 @@ export const Footer = ({
 					<Text color={Colors.DarkGrey}>exit • </Text>
 				</Box>
 			)}
-			{controls.includes('q') && (
+			{controls.includes('s') && (
 				<Box>
-					<Text color={Colors.LightGrey}>q </Text>
-					<Text color={Colors.DarkGrey}>quit • </Text>
+					<Text color={Colors.LightGrey}>s </Text>
+					<Text color={Colors.DarkGrey}>skip • </Text>
 				</Box>
 			)}
 

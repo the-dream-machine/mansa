@@ -1,8 +1,8 @@
 import {fs} from 'zx';
-import {fishcakeRepositoryPath} from './fishcakePath.js';
-import {writeToFile} from './writeToFile.js';
-import {summarizeFile} from './summarizeFile.js';
-import type {FileMapItem} from '../types/FileMapItem.js';
+import {fishcakeRepositoryPath} from '../fishcakePath.js';
+import {writeToFile} from '../writeToFile.js';
+import {summarizeFile} from '../api/summarizeFile.js';
+import type {FileMapItem} from '../../types/FileMapItem.js';
 import {getRepositoryMap} from './getRepositoryMap.js';
 
 interface Args {
