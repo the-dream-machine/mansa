@@ -50,7 +50,6 @@ export const ScrollContainer = ({children}: Props) => {
 			height={20}
 			// height={rows}
 			borderStyle={'single'}
-			borderColor={'red'}
 			flexShrink={0}
 			flexGrow={0}
 			flexDirection="column"

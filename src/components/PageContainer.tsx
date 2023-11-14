@@ -14,8 +14,6 @@ export const PageContainer = ({children}: Props) => {
 			flexDirection="column"
 			width="100%"
 			height="100%"
-			borderStyle="single"
-			borderColor={'blue'}
 			overflow="hidden"
 		>
 			{children}

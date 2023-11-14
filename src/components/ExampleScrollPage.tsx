@@ -1,11 +1,12 @@
 import {Box, Text} from 'ink';
 import React from 'react';
 import {ScrollArea} from './ScrollArea.js';
+import {useStdoutDimensions} from '../utils/useStdDimensions.js';
 
 export const ExampleScrollPage = () => {
 	return (
-		<ScrollArea height={20}>
-			{Array.from({length: 3})
+		<ScrollArea>
+			{Array.from({length: 20})
 				.fill(true)
 				.map((_, index) => (
 					<Box

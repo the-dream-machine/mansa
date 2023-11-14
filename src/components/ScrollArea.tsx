@@ -1,12 +1,15 @@
 import {Box, measureElement, useInput, Text} from 'ink';
 import React, {useEffect, useRef, useState} from 'react';
+import {useStdoutDimensions} from '../utils/useStdDimensions.js';
 
 interface Props {
-	height: number;
 	children: React.ReactNode;
 }
+const FOOTER_HEIGHT = 4;
 
-export const ScrollArea = ({height, children}: Props) => {
+export const ScrollArea = ({children}: Props) => {
+	const [, columns] = useStdoutDimensions();
+	const height = columns - FOOTER_HEIGHT;
 	const [innerHeight, setInnerHeight] = useState(height);
 	const [scrollTop, setScrollTop] = useState(0);
 	const innerRef = useRef();
@@ -16,7 +19,7 @@ export const ScrollArea = ({height, children}: Props) => {
 		// @ts-ignore
 		const dimensions = measureElement(innerRef.current);
 		setInnerHeight(dimensions.height);
-	}, []);
+	}, [children]);
 
 	useInput((_input, key) => {
 		if (key.downArrow) {
@@ -34,13 +37,7 @@ export const ScrollArea = ({height, children}: Props) => {
 	});
 
 	return (
-		<Box
-			height={height}
-			flexDirection="column"
-			overflow="hidden"
-			borderStyle="single"
-			borderColor="greenBright"
-		>
+		<Box height={height} flexDirection="column" overflow="hidden">
 			<Box
 				// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 				// @ts-ignore
@@ -48,12 +45,7 @@ export const ScrollArea = ({height, children}: Props) => {
 				flexShrink={0}
 				flexDirection="column"
 				marginTop={-scrollTop}
-				borderStyle="single"
-				borderColor="magenta"
 			>
-				<Text>height: {height}</Text>
-				<Text>innerHeight: {innerHeight}</Text>
-				<Text>scrollTop: {scrollTop}</Text>
 				{children}
 			</Box>
 		</Box>

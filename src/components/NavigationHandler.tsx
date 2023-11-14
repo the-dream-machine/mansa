@@ -22,8 +22,8 @@ const NavigationHandler = () => {
 		<>
 			{state.matches(NavigationPage.CREATE_CONFIG) && <SelectPackageManager />}
 			{state.matches(NavigationPage.INDEX_REPOSITORY) && <IndexRepository />}
-			{/* {state.matches(NavigationPage.SELECT_OPTION) && <SelectAction />} */}
-			{state.matches(NavigationPage.SELECT_OPTION) && <ExampleScrollPage />}
+			{state.matches(NavigationPage.SELECT_OPTION) && <SelectAction />}
+			{/* {state.matches(NavigationPage.SELECT_OPTION) && <ExampleScrollPage />} */}
 		</>
 	);
 };

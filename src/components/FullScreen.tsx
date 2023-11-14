@@ -19,15 +19,8 @@ export const FullScreen = ({children}: Props) => {
 	}, [stdout]);
 
 	return (
-		<Box
-			borderStyle="single"
-			borderColor="cyan"
-			width={columns}
-			height={rows}
-			flexDirection="column"
-		>
+		<Box width={columns} height={rows} flexDirection="column">
 			{children}
-			<Text>Fullscreen: {rows}</Text>
 		</Box>
 	);
 };

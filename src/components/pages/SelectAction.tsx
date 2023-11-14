@@ -139,33 +139,28 @@ export const SelectAction = () => {
 	});
 
 	return (
-		<Box
-			flexDirection="column"
-			paddingBottom={1}
-			borderStyle="single"
-			borderColor="red"
-		>
-			<ScrollArea height={30}>
-				<>
-					{/* <Body> */}
-					<Box paddingX={0} gap={1}>
-						<Text color="#FFFFFF" backgroundColor="#4eb03a" bold>
-							{' '}
-							Trigger.dev{' '}
-						</Text>
-						{isLoading && (
-							<Box paddingX={1}>
-								<Spinner type="dots" />
-								<Text color={Colors.LightGrey}> Running command...</Text>
-							</Box>
-						)}
-						{isSuccess && (
-							<Box paddingX={1}>
-								<Text color={Colors.LightGreen}>●</Text>
-								<Text color={Colors.White}> Run successful</Text>
-							</Box>
-						)}
+		<Box flexDirection="column">
+			{/* Header */}
+			<Box paddingY={1} gap={1}>
+				<Text color="#FFFFFF" backgroundColor="#4eb03a" bold>
+					{' '}
+					Trigger.dev{' '}
+				</Text>
+				{isLoading && (
+					<Box paddingX={1}>
+						<Spinner type="dots" />
+						<Text color={Colors.LightGrey}> Running command...</Text>
 					</Box>
+				)}
+				{isSuccess && (
+					<Box paddingX={1}>
+						<Text color={Colors.LightGreen}>●</Text>
+						<Text color={Colors.White}> Run successful</Text>
+					</Box>
+				)}
+			</Box>
+			<ScrollArea>
+				<Box flexShrink={0} flexDirection="column">
 					<Box gap={1} flexDirection="column">
 						<Box>
 							<Text color={Colors.LightGrey}>{firstStep?.step_title}</Text>
@@ -175,7 +170,7 @@ export const SelectAction = () => {
 							<Text color={Colors.DarkGrey}>{firstStep?.step_description}</Text>
 						</Box>
 
-						<Box borderColor="gray" paddingX={1} flexGrow={0}>
+						<Box paddingX={1} flexGrow={0}>
 							<Text>{highlightedBashCommand}</Text>
 						</Box>
 
@@ -188,14 +183,12 @@ export const SelectAction = () => {
 							</>
 						)}
 					</Box>
-					{/* </Body> */}
-
-					{/* <Footer
-					controls={['esc', 'enter', 'up', 'down']}
-					enterLabel={'run command'}
-				/> */}
-				</>
+				</Box>
 			</ScrollArea>
+			<Footer
+				controls={['esc', 'enter', 'up', 'down']}
+				enterLabel={'run command'}
+			/>
 		</Box>
 	);
 };
