@@ -14,14 +14,15 @@ export const Header = ({title, subtitle}: Props) => {
 					🍥 {title} {subtitle && <Text color="gray">({subtitle})</Text>}
 				</Text>
 			</Box>
-			<Box
+			{/* <Box
+				borderColor="gray"
 				paddingBottom={1}
 				borderStyle="single"
 				borderTop={false}
 				borderRight={false}
 				borderLeft={false}
 				width="100%"
-			/>
+			/> */}
 		</Box>
 	);
 };

@@ -1,8 +1,9 @@
 import React from 'react';
 import {Box, Spacer, Text} from 'ink';
 import figureSet from 'figures';
+import {Colors} from './Colors.js';
 
-type Control = 'up' | 'down' | 'tab' | 'search' | 'esc' | 'enter';
+type Control = 'up' | 'down' | 'tab' | 'search' | 'esc' | 'enter' | 'q';
 interface Props {
 	controls: Control[];
 	enterLabel?: string;
@@ -19,15 +20,16 @@ export const Footer = ({
 			<Spacer />
 			<Box>
 				{controls.includes('up') && (
-					<Text color="gray">
-						<Text color="white">{figureSet.triangleUp}</Text> up
-					</Text>
+					<Box>
+						<Text color={Colors.LightGrey}>{figureSet.triangleUp} </Text>
+						<Text color={Colors.DarkGrey}>up • </Text>
+					</Box>
 				)}
 				{controls.includes('up') && (
-					<Text color="gray">
-						{' '}
-						• <Text color="white">{figureSet.triangleDown}</Text> down
-					</Text>
+					<Box>
+						<Text color={Colors.LightGrey}>{figureSet.triangleDown} </Text>
+						<Text color={Colors.DarkGrey}>down • </Text>
+					</Box>
 				)}
 				{controls.includes('tab') && (
 					<Text color="gray">
@@ -42,21 +44,29 @@ export const Footer = ({
 					</Text>
 				)}
 
-				<Spacer />
-
 				{controls.includes('esc') && (
-					<Text color="gray">
-						<Text color="white">esc </Text>
-						exit •{' '}
-					</Text>
+					<Box>
+						<Text color={Colors.LightGrey}>esc </Text>
+						<Text color={Colors.DarkGrey}>exit • </Text>
+					</Box>
+				)}
+				{controls.includes('q') && (
+					<Box>
+						<Text color={Colors.LightGrey}>q </Text>
+						<Text color={Colors.DarkGrey}>quit • </Text>
+					</Box>
 				)}
 
 				{controls.includes('enter') && (
-					<Text color="gray" strikethrough={enterDisabled}>
-						<Text color={enterDisabled ? 'gray' : 'white'}>enter </Text>
-						{enterLabel}
-					</Text>
+					<Box>
+						<Text color={Colors.LightGreen}>enter </Text>
+						<Text color={Colors.DarkGreen} strikethrough={enterDisabled}>
+							{enterLabel}
+						</Text>
+					</Box>
 				)}
+				<Spacer />
+				<Text>🍥</Text>
 			</Box>
 		</>
 	);

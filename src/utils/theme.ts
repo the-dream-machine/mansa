@@ -1,6 +1,7 @@
 import {defaultTheme, extendTheme} from '@inkjs/ui';
 import type {ColorName} from 'chalk';
 import type {BoxProps, TextProps} from 'ink';
+import {Colors} from '../components/Colors.js';
 
 interface SelectState {
 	isFocused: boolean;
@@ -12,7 +13,7 @@ export const theme = extendTheme(defaultTheme, {
 		Spinner: {
 			styles: {
 				frame: (): TextProps => ({
-					color: 'cyanBright',
+					color: Colors.White,
 				}),
 			},
 		},

@@ -1,4 +1,4 @@
-import {Box, useStdout} from 'ink';
+import {Box, useStdout, Text} from 'ink';
 import React, {useLayoutEffect, useMemo} from 'react';
 import {useStdoutDimensions} from '../utils/useStdDimensions.js';
 
@@ -19,8 +19,15 @@ export const FullScreen = ({children}: Props) => {
 	}, [stdout]);
 
 	return (
-		<Box width={columns} height={rows}>
+		<Box
+			borderStyle="single"
+			borderColor="cyan"
+			width={columns}
+			height={rows}
+			flexDirection="column"
+		>
 			{children}
+			<Text>Fullscreen: {rows}</Text>
 		</Box>
 	);
 };

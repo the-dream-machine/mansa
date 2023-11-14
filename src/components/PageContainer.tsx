@@ -7,7 +7,17 @@ interface Props {
 
 export const PageContainer = ({children}: Props) => {
 	return (
-		<Box gap={1} flexDirection="column">
+		<Box
+			gap={1}
+			paddingX={1}
+			paddingY={1}
+			flexDirection="column"
+			width="100%"
+			height="100%"
+			borderStyle="single"
+			borderColor={'blue'}
+			overflow="hidden"
+		>
 			{children}
 		</Box>
 	);

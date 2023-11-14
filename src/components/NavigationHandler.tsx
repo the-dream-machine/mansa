@@ -5,6 +5,7 @@ import {SelectAction} from './pages/SelectAction.js';
 import {AppState, NavigationPage} from '../machines/navigationMachine.js';
 import {GlobalLoader} from './GlobalLoader.js';
 import SelectPackageManager from './pages/SelectPackageManager.js';
+import {ExampleScrollPage} from './ExampleScrollPage.js';
 
 const NavigationHandler = () => {
 	const [state] = NavigationContext.useActor();
@@ -21,7 +22,8 @@ const NavigationHandler = () => {
 		<>
 			{state.matches(NavigationPage.CREATE_CONFIG) && <SelectPackageManager />}
 			{state.matches(NavigationPage.INDEX_REPOSITORY) && <IndexRepository />}
-			{state.matches(NavigationPage.SELECT_OPTION) && <SelectAction />}
+			{/* {state.matches(NavigationPage.SELECT_OPTION) && <SelectAction />} */}
+			{state.matches(NavigationPage.SELECT_OPTION) && <ExampleScrollPage />}
 		</>
 	);
 };
