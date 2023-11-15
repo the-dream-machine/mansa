@@ -1,7 +1,9 @@
 import React, {useState} from 'react';
 import {Spinner} from '@inkjs/ui';
 import {useApp, useInput, Text, Box} from 'ink';
-import highlight from 'prism-cli';
+// import highlight from 'prism-cli';
+import {highlight} from 'prismjs-terminal';
+
 import {$, sleep} from 'zx';
 
 import {Footer} from '../Footer.js';
@@ -10,7 +12,12 @@ import {Body} from '../Body.js';
 import {type Step} from '../../types/Step.js';
 import {Colors} from '../Colors.js';
 import {ScrollContainer} from '../ScrollContainer.js';
-import winston from 'winston';
+import figureSet from 'figures';
+import loadLanguages from 'prismjs/components/index.js';
+import {bashDark} from '../../utils/prismThemes.js';
+
+// eslint-disable-next-line @typescript-eslint/no-unsafe-call
+loadLanguages(['bash']);
 
 const steps: Step[] = [
 	{
@@ -102,10 +109,14 @@ const steps: Step[] = [
 ];
 
 const firstStep = steps[0];
+
 // eslint-disable-next-line @typescript-eslint/no-unsafe-call
 const highlightedBashCommand = highlight(
-	firstStep?.bash_command_to_run,
-	'javascript',
+	firstStep?.bash_command_to_run?.trim() ?? '',
+	{
+		language: 'bash',
+		theme: bashDark,
+	},
 );
 console.log('🌱 # highlightedBashCommand:', highlightedBashCommand);
 
@@ -179,11 +190,14 @@ export const StepsHandler = () => {
 						{output && (
 							<Box gap={0} flexDirection="column">
 								<Box paddingY={1}>
-									<Text color={Colors.LightGrey}>Logs:</Text>
+									<Text color={Colors.LightGrey}>
+										{figureSet.triangleDown}{' '}
+									</Text>
+									<Text color={Colors.LightGrey}>Logs</Text>
 								</Box>
 								<Box
 									paddingY={0}
-									paddingX={3}
+									paddingX={2}
 									borderStyle={'single'}
 									borderColor={Colors.LightGrey}
 									borderTop={false}

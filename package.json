@@ -24,7 +24,8 @@
 		"ignore": "^5.2.4",
 		"ink": "^4.1.0",
 		"pastel": "^2.0.0",
-		"prism-cli": "^0.5.3",
+		"prismjs": "^1.29.0",
+		"prismjs-terminal": "^1.2.3",
 		"react": "^18.2.0",
 		"uuid": "^9.0.1",
 		"xstate": "^4.38.3",
@@ -34,6 +35,7 @@
 	"devDependencies": {
 		"@sindresorhus/tsconfig": "^3.0.1",
 		"@types/ink-divider": "^2.0.3",
+		"@types/prismjs": "^1.26.3",
 		"@types/react": "^18.0.32",
 		"@types/uuid": "^9.0.7",
 		"@typescript-eslint/eslint-plugin": "^6.9.0",
