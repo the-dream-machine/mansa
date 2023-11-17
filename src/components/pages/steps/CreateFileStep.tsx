@@ -29,6 +29,7 @@ export const CreateFileStep = () => {
 	const isLoading = state.matches(StepsState.ACTIVE_STEP_RUNNING);
 	const isSuccess = state.matches(StepsState.ACTIVE_STEP_SUCCESS_IDLE);
 	const isError = state.matches(StepsState.ACTIVE_STEP_ERROR_IDLE);
+	const isLanguageSupported = !['local', 'example'].includes(fileExtension);
 	const getStateColor = (color: Colors) =>
 		isSuccess ? Colors.DarkGray : color;
 	const getEnterLabel = () => {
@@ -42,21 +43,28 @@ export const CreateFileStep = () => {
 	};
 
 	useEffect(() => {
-		// eslint-disable-next-line @typescript-eslint/no-floating-promises
-		(async () => {
-			const formattedCodeChanges = await prettier.format(rawCodeChanges, {
-				filepath,
-			});
-			setFormattedCodeChanges(formattedCodeChanges);
-		})();
-	}, [rawCodeChanges]);
+		if (isLanguageSupported) {
+			// eslint-disable-next-line @typescript-eslint/no-floating-promises
+			(async () => {
+				const formattedCodeChanges = await prettier.format(rawCodeChanges, {
+					filepath,
+				});
+				setFormattedCodeChanges(formattedCodeChanges);
+			})();
+		} else {
+			setFormattedCodeChanges(rawCodeChanges);
+		}
+	}, []);
 
-	loadLanguages([fileExtension]);
+	let codeChanges = rawCodeChanges;
+	if (isLanguageSupported) {
+		loadLanguages([fileExtension]);
 
-	const codeChanges = highlight(formattedCodeChanges, {
-		language: fileExtension,
-		theme: defaultTheme,
-	});
+		codeChanges = highlight(formattedCodeChanges, {
+			language: fileExtension,
+			theme: defaultTheme,
+		});
+	}
 
 	const {exit} = useApp();
 	useInput((_, key) => {
