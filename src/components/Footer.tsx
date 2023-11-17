@@ -1,7 +1,7 @@
 import React from 'react';
 import {Box, Spacer, Text} from 'ink';
 import figureSet from 'figures';
-import {Colors} from './Colors.js';
+import {BaseColors, Colors} from './Colors.js';
 
 type Control = 'up' | 'down' | 'tab' | 'search' | 'esc' | 'enter' | 's';
 interface Props {
@@ -16,17 +16,17 @@ export const Footer = ({
 	enterDisabled = false,
 }: Props) => {
 	return (
-		<Box paddingY={1}>
+		<Box paddingY={1} flexShrink={0} width={'100%'}>
 			{controls.includes('up') && (
 				<Box>
-					<Text color={Colors.LightGrey}>{figureSet.triangleUp} </Text>
-					<Text color={Colors.DarkGrey}>up • </Text>
+					<Text color={BaseColors.Gray500}>{figureSet.triangleUp} </Text>
+					<Text color={Colors.DarkGray}>up • </Text>
 				</Box>
 			)}
 			{controls.includes('up') && (
 				<Box>
-					<Text color={Colors.LightGrey}>{figureSet.triangleDown} </Text>
-					<Text color={Colors.DarkGrey}>down • </Text>
+					<Text color={BaseColors.Gray500}>{figureSet.triangleDown} </Text>
+					<Text color={Colors.DarkGray}>down • </Text>
 				</Box>
 			)}
 			{controls.includes('tab') && (
@@ -44,21 +44,23 @@ export const Footer = ({
 
 			{controls.includes('esc') && (
 				<Box>
-					<Text color={Colors.LightGrey}>esc </Text>
-					<Text color={Colors.DarkGrey}>exit • </Text>
+					<Text color={BaseColors.Gray500}>esc </Text>
+					<Text color={Colors.DarkGray}>exit • </Text>
 				</Box>
 			)}
 			{controls.includes('s') && (
 				<Box>
-					<Text color={Colors.LightGrey}>s </Text>
-					<Text color={Colors.DarkGrey}>skip • </Text>
+					<Text color={BaseColors.Gray400}>s </Text>
+					<Text color={Colors.DarkGray}>skip • </Text>
 				</Box>
 			)}
 
 			{controls.includes('enter') && (
 				<Box>
-					<Text color={Colors.LightGreen}>enter </Text>
-					<Text color={Colors.DarkGreen} strikethrough={enterDisabled}>
+					<Text color={enterDisabled ? Colors.DarkGray : BaseColors.Green700}>
+						enter{' '}
+					</Text>
+					<Text color={enterDisabled ? Colors.DarkGray : BaseColors.Green900}>
 						{enterLabel}
 					</Text>
 				</Box>

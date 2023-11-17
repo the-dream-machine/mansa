@@ -1,6 +1,7 @@
 import {Box, measureElement, useInput, Text} from 'ink';
 import React, {useEffect, useRef, useState} from 'react';
 import {useStdoutDimensions} from '../utils/useStdDimensions.js';
+import {BaseColors} from './Colors.js';
 
 interface Props {
 	children: React.ReactNode;

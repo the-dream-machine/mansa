@@ -1,10 +1,11 @@
 import React from 'react';
 import {NavigationContext} from './NavigationProvider.js';
 import {IndexRepository} from './pages/IndexRepository.js';
-import {StepsHandler} from './pages/ExecuteCommandStep.js';
 import {AppState, NavigationPage} from '../machines/navigationMachine.js';
 import {GlobalLoader} from './GlobalLoader.js';
 import SelectPackageManager from './pages/SelectPackageManager.js';
+import {StepsProvider} from './StepsProvider.js';
+import {StepsHandler} from './StepsHandler.js';
 
 const NavigationHandler = () => {
 	const [state] = NavigationContext.useActor();
@@ -21,7 +22,11 @@ const NavigationHandler = () => {
 		<>
 			{state.matches(NavigationPage.CREATE_CONFIG) && <SelectPackageManager />}
 			{state.matches(NavigationPage.INDEX_REPOSITORY) && <IndexRepository />}
-			{state.matches(NavigationPage.SELECT_OPTION) && <StepsHandler />}
+			{state.matches(NavigationPage.SELECT_OPTION) && (
+				<StepsProvider>
+					<StepsHandler />
+				</StepsProvider>
+			)}
 		</>
 	);
 };

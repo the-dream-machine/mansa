@@ -1,7 +1,7 @@
 import {defaultTheme, extendTheme} from '@inkjs/ui';
 import type {ColorName} from 'chalk';
 import type {BoxProps, TextProps} from 'ink';
-import {Colors} from '../components/Colors.js';
+import {BaseColors, Colors} from '../components/Colors.js';
 
 interface SelectState {
 	isFocused: boolean;

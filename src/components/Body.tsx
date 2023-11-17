@@ -7,13 +7,7 @@ interface Props {
 
 export const Body = ({children}: Props) => {
 	return (
-		<Box
-			borderStyle="single"
-			borderColor="magenta"
-			flexDirection="column"
-			paddingX={1}
-			gap={1}
-		>
+		<Box flexDirection="column" paddingX={1} gap={1}>
 			{children}
 		</Box>
 	);
