@@ -1,5 +1,6 @@
 import type {Theme} from 'prismjs-terminal';
 import chalk from 'chalk';
+import {BaseColors} from '../components/Colors.js';
 
 export const defaultTheme: Theme = {
 	// default style
@@ -16,4 +17,5 @@ export const defaultTheme: Theme = {
 	'important, statement, bold': chalk.bold,
 	punctuation: chalk.hex('#bebec5'),
 	italic: chalk.italic,
+	function: chalk.hex(BaseColors.Yellow400).bold,
 };

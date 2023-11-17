@@ -19,13 +19,13 @@ export const Footer = ({
 		<Box paddingY={1} flexShrink={0} width={'100%'}>
 			{controls.includes('up') && (
 				<Box>
-					<Text color={BaseColors.Gray500}>{figureSet.triangleUp} </Text>
+					<Text color={BaseColors.Gray600}>{figureSet.triangleUp} </Text>
 					<Text color={Colors.DarkGray}>up • </Text>
 				</Box>
 			)}
 			{controls.includes('up') && (
 				<Box>
-					<Text color={BaseColors.Gray500}>{figureSet.triangleDown} </Text>
+					<Text color={BaseColors.Gray600}>{figureSet.triangleDown} </Text>
 					<Text color={Colors.DarkGray}>down • </Text>
 				</Box>
 			)}
@@ -44,13 +44,13 @@ export const Footer = ({
 
 			{controls.includes('esc') && (
 				<Box>
-					<Text color={BaseColors.Gray500}>esc </Text>
+					<Text color={BaseColors.Gray600}>esc </Text>
 					<Text color={Colors.DarkGray}>exit • </Text>
 				</Box>
 			)}
 			{controls.includes('s') && (
 				<Box>
-					<Text color={BaseColors.Gray400}>s </Text>
+					<Text color={BaseColors.Gray600}>s </Text>
 					<Text color={Colors.DarkGray}>skip • </Text>
 				</Box>
 			)}

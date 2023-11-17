@@ -26,8 +26,8 @@ export const Header = ({
 		</Text>
 		{isLoading && (
 			<Box paddingX={1}>
-				<Spinner type="dots" />
-				<Text color={Colors.LightGray}> {loadingMessage}</Text>
+				<Spinner type="dots12" />
+				<Text color={Colors.DarkYellow}> {loadingMessage}</Text>
 			</Box>
 		)}
 		{isSuccess && (

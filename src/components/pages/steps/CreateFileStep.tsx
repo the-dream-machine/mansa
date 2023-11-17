@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from 'react';
-import {Box, Text, useApp, useInput} from 'ink';
+import {Box, Spacer, Text, useApp, useInput} from 'ink';
 import * as prettier from 'prettier';
 
 import {StepsContext} from '../../StepsProvider.js';
@@ -30,7 +30,7 @@ export const CreateFileStep = () => {
 	const isSuccess = state.matches(StepsState.ACTIVE_STEP_SUCCESS_IDLE);
 	const isError = state.matches(StepsState.ACTIVE_STEP_ERROR_IDLE);
 	const isLanguageSupported = !['local', 'example'].includes(fileExtension);
-	const getStateColor = (color: Colors) =>
+	const getStateColor = (color: Colors | BaseColors) =>
 		isSuccess ? Colors.DarkGray : color;
 	const getEnterLabel = () => {
 		if (isSuccess) {
@@ -85,12 +85,13 @@ export const CreateFileStep = () => {
 				successMessage="Created successfully"
 			/>
 			<Box>
-				<Box flexDirection="row" gap={2}>
+				<Box flexDirection="row" gap={4}>
+					{/* Left Block */}
 					<Box flexDirection="column" gap={1}>
 						{/* Title */}
 						<Text color={BaseColors.White}>
 							{activeStep?.step_title}{' '}
-							<Text color={Colors.LightGray}>
+							<Text color={Colors.DarkGray}>
 								(Step {activeStepIndex + 1} of {totalSteps})
 							</Text>
 						</Text>
@@ -102,10 +103,11 @@ export const CreateFileStep = () => {
 								<Text color={getStateColor(Colors.LightGray)}>
 									{activeStep?.step_description}
 								</Text>
-								<Text color={getStateColor(Colors.LightGray)}>
-									Press <Text color={getStateColor(Colors.White)}>enter</Text>{' '}
+								<Text color={getStateColor(Colors.DarkGray)}>
+									Press{' '}
+									<Text color={getStateColor(BaseColors.Gray500)}>enter</Text>{' '}
 									to create{' '}
-									<Text color={getStateColor(Colors.White)} italic>
+									<Text color={getStateColor(BaseColors.Gray500)} italic>
 										{filepath}
 									</Text>{' '}
 									and apply the code changes.
@@ -133,7 +135,8 @@ export const CreateFileStep = () => {
 						gap={1}
 						paddingTop={1}
 						paddingX={2}
-						borderColor={BaseColors.Gray700}
+						marginTop={2}
+						borderColor={BaseColors.Gray800}
 						borderStyle="round"
 					>
 						<Text color={BaseColors.Gray700} italic>
@@ -147,6 +150,7 @@ export const CreateFileStep = () => {
 					</Box>
 				</Box>
 			</Box>
+			<Spacer />
 			<Footer
 				controls={['enter', 'esc', 'up', 'down']}
 				enterLabel={getEnterLabel()}
