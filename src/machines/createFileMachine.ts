@@ -3,6 +3,7 @@ import {createMachine, assign, type DoneInvokeEvent} from 'xstate';
 import * as prettier from 'prettier';
 import {highlightAsync} from '../utils/highlightAsync.js';
 import loadLanguages from 'prismjs/components/index.js';
+import {writeToFile} from '../utils/writeToFile.js';
 
 // Context
 export interface CreateFileMachineContext {
@@ -16,19 +17,17 @@ export interface CreateFileMachineContext {
 
 // States
 export enum CreateFileState {
-	WAITING_CONTEXT_UPDATE = 'WAITING_CONTEXT_UPDATE',
 	FORMATTING_CODE = 'FORMATTING_CODE',
 	HIGHLIGHTING_CODE = 'HIGHLIGHTING_CODE',
 	HIGHLIGHTING_UNSUPPORTED_CODE = 'HIGHLIGHTING_UNSUPPORTED_CODE',
 	IDLE = 'IDLE',
+	CREATING_FILE = 'CREATING_FILE',
+	CREATE_FILE_SUCCESS_IDLE = 'CREATE_FILE_SUCCESS_IDLE',
+	CREATE_FILE_ERROR_IDLE = 'CREATE_FILE_ERROR_IDLE',
 }
 
 //  State machine states
 export type CreateFileMachineState =
-	| {
-			value: CreateFileState.WAITING_CONTEXT_UPDATE;
-			context: CreateFileMachineContext;
-	  }
 	| {value: CreateFileState.FORMATTING_CODE; context: CreateFileMachineContext}
 	| {
 			value: CreateFileState.HIGHLIGHTING_CODE;
@@ -38,29 +37,30 @@ export type CreateFileMachineState =
 			value: CreateFileState.HIGHLIGHTING_UNSUPPORTED_CODE;
 			context: CreateFileMachineContext;
 	  }
-	| {value: CreateFileState.IDLE; context: CreateFileMachineContext};
+	| {value: CreateFileState.IDLE; context: CreateFileMachineContext}
+	| {value: CreateFileState.CREATING_FILE; context: CreateFileMachineContext}
+	| {
+			value: CreateFileState.CREATE_FILE_SUCCESS_IDLE;
+			context: CreateFileMachineContext;
+	  }
+	| {
+			value: CreateFileState.CREATE_FILE_ERROR_IDLE;
+			context: CreateFileMachineContext;
+	  };
 
 export enum CreateFileEvent {
-	ENTER_PRESSED = 'ENTER_PRESSED',
-	UPDATE_CONTEXT = 'UPDATE_CONTEXT',
+	CREATE_FILE = 'CREATE_FILE',
 }
 
 //  State machine events
-export type CreateFileMachineEvent =
-	| {type: CreateFileEvent.ENTER_PRESSED}
-	| {
-			type: CreateFileEvent.UPDATE_CONTEXT;
-			ctx: Pick<
-				CreateFileMachineContext,
-				'rawCode' | 'filePath' | 'fileExtension'
-			>;
-	  };
+export type CreateFileMachineEvent = {type: CreateFileEvent.CREATE_FILE};
 
 export const createFileMachine = createMachine<
 	CreateFileMachineContext,
 	CreateFileMachineEvent,
 	CreateFileMachineState
 >({
+	/** @xstate-layout N4IgpgJg5mDOIC5QGMBOYCGAXMAxAlgDZgCyGyAFvgHZgB0uA8gEokCCAKhwJIByA4gH0AwowAiAUQDEEAPa06NAG6yA1vTSYcBYmUo16TVpx4CR4iQmWzk2fPIDaABgC6zl4lAAHWbHxZ7ak8QAA9EACYAFki6cPCANgBWeKd4gEYATkiAdkSADniAGhAAT0Q0vOy6NNTExPCMhIrIp0iAXzbizWw8IlJyKgUjdi4+IVFJKTBUVFlUOi9CbAAzOYBbOm7tPr1BwxYR03GLK2oVWwDHV3dgnz9LoKRQiOjYhOTUzJz8otLELLo2ScGQAzI08hknHUwWkOl10D0dP19AoABLcfiogAyGNRR3MkzkCms6k2CO2ugGBjo6MxOMx+ImlmsF0C7huTzu-kCwTCCBSILoiScMPiuXiGTS8XCxTKCBBaUSdEiFXikTyILyKpBIOycJAW16lJR9Fp2NxjIsUxmcwWSywq1QG0NSN21LN9LxYwJzLONjsVzcrluvm58l5iAFQpFkrFyVjMr+CDSFToIIacQyavS4TSkRB+pdOypaNxnvxAFVeABlCsABTrLA4EjEPpk8noJI05KNyL2NLLFu9VdrDabLZ9p3OAeo7ODnNDDwjyacGuqkXyufiEIKGVl5Wyguy4ScqQ18XiCoKBc6Bp7rpLpsHDOHNfrjeYzdbTOts3mixWdYyS0Xs3VLOkhzMEd33Hb8ThZGc5w8Bd7h5J4+RqNc803KUdwlfcEDyNI00zVcdTPPJEkLe9ixNOhuDELFpGEZgJE4CRBFwbgmI5bxFzQ0AMIVcI6AyYVEjSKJsnSeo9yTTIlVPRJIQyXInFzcJEnaW8i2NfsWLY-EuKY9tiT9UldL7akDM4b1jN9acHiQkNUPDdDyjVJxYjqXNgTEuo1QIioRPCApjxBS81WySjtPhECHzomyjO46Rpj-O1AKdYDEVo-TWNssx7Knf0nOuec+Ncx5BI8lpvPqGoMn85JIgIqIvOyaSItU3JwhBYUb1vahZAgOBgkssCwBcsMqueBAAFpfjlOalUa1a1vWm84pyvTqWGExvSZKal3chBIkTOUaniUTt3CaSUjOk9NrveLcvdZ8vTMQ6UOm5cwS84EIRSUENzyVIgqcKpQalPzdWhbdqJenbwPNF8oLfMdPwnL6Kp+k7snVa70hVE9QvVRICNBIUiMozTpUu2EdJopH6AYpijoE2bJISWINUoiSOrSaK8iCsTqkPPJNIVb4tKoxnEashQkrslL2bc6rkxyESUzPaL02yLMguyYjcklGNbtNoiEe2hX6CSjj7MEWthGECRq2rQRWYkVWZow-XBV6iUxR6lJFvKUHRMSMEBelbcUytikbboO3OJSwQJGYZgWA9xive+471cFymA6zDr6hD1qwWVfNpXIvNdT1Do2iAA */
 	id: 'createFileMachine',
 	predictableActionArguments: true,
 	initial: CreateFileState.FORMATTING_CODE,
@@ -73,18 +73,6 @@ export const createFileMachine = createMachine<
 		enterLabel: 'create file',
 	},
 	states: {
-		[CreateFileState.WAITING_CONTEXT_UPDATE]: {
-			on: {
-				[CreateFileEvent.UPDATE_CONTEXT]: {
-					target: CreateFileState.FORMATTING_CODE,
-					actions: assign({
-						filePath: (_, event) => event.ctx.filePath,
-						fileExtension: (_, event) => event.ctx.fileExtension,
-						rawCode: (_, event) => event.ctx.rawCode,
-					}),
-				},
-			},
-		},
 		[CreateFileState.FORMATTING_CODE]: {
 			invoke: {
 				src: async context =>
@@ -143,6 +131,29 @@ export const createFileMachine = createMachine<
 				},
 			},
 		},
-		[CreateFileState.IDLE]: {},
+		[CreateFileState.IDLE]: {
+			on: {
+				[CreateFileEvent.CREATE_FILE]: {
+					target: CreateFileState.CREATING_FILE,
+				},
+			},
+		},
+		[CreateFileState.CREATING_FILE]: {
+			invoke: {
+				src: async context =>
+					await writeToFile({
+						filePath: context.filePath,
+						fileContent: context.formattedCode,
+					}),
+				onDone: {
+					target: CreateFileState.CREATE_FILE_SUCCESS_IDLE,
+				},
+				onError: {
+					target: CreateFileState.CREATE_FILE_ERROR_IDLE,
+				},
+			},
+		},
+		[CreateFileState.CREATE_FILE_SUCCESS_IDLE]: {},
+		[CreateFileState.CREATE_FILE_ERROR_IDLE]: {},
 	},
 });

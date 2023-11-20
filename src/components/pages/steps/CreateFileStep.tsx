@@ -6,28 +6,45 @@ import {StepsContext} from '../../StepsProvider.js';
 import {BaseColors, Colors} from '../../Colors.js';
 import {PageContainer} from '../../PageContainer.js';
 import {Footer} from '../../Footer.js';
-import {StepsEvent, StepsState} from '../../../machines/stepsMachine.js';
 import {Header} from '../../Header.js';
-import {type CreateFileMachineContext} from '../../../machines/createFileMachine.js';
+import {
+	CreateFileState,
+	CreateFileEvent,
+	type CreateFileMachineContext,
+	type CreateFileMachineState,
+	type CreateFileMachineEvent,
+} from '../../../machines/createFileMachine.js';
 import {ScrollContainer} from '../../ScrollContainer.js';
+import type {Actor} from '../../../types/Actor.js';
 
 export const CreateFileStep = () => {
-	const [stepState, stepSend] = StepsContext.useActor();
-	const activeStepIndex = stepState.context.activeStepIndex;
-	const activeStep = stepState.context.steps?.[activeStepIndex];
-	const activeStepActor = stepState.context.activeStepActor;
-	const totalSteps = stepState.context.steps?.length;
+	const [stepsState] = StepsContext.useActor();
+	const activeStepIndex = stepsState.context.activeStepIndex;
+	const activeStep = stepsState.context.steps?.[activeStepIndex];
+	const activeStepActor = stepsState.context.activeStepActor;
+	const totalSteps = stepsState.context.steps?.length;
 
-	const isLoading = stepState.matches(StepsState.ACTIVE_STEP_RUNNING);
-	const isSuccess = stepState.matches(StepsState.ACTIVE_STEP_SUCCESS_IDLE);
-	// const isError = stepState.matches(StepsState.ACTIVE_STEP_ERROR_IDLE);
+	const [createFileMachineState, createFileMachineSend] = useActor(
+		activeStepActor!,
+	) as Actor<
+		CreateFileMachineContext,
+		CreateFileMachineEvent,
+		CreateFileMachineState
+	>;
 
-	const [createFileState] = useActor(activeStepActor!);
-	// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-	const createFileContext: CreateFileMachineContext = createFileState.context;
-	const highlightedCode = createFileContext.highlightedCode;
-	const filepath = createFileContext.filePath;
-	const enterLabel = createFileContext.enterLabel;
+	const highlightedCode = createFileMachineState.context.highlightedCode;
+	const filepath = createFileMachineState.context.filePath;
+	const enterLabel = createFileMachineState.context.enterLabel;
+
+	const isLoading = createFileMachineState.matches(
+		CreateFileState.CREATING_FILE,
+	);
+	const isSuccess = createFileMachineState.matches(
+		CreateFileState.CREATE_FILE_SUCCESS_IDLE,
+	);
+	const isError = createFileMachineState.matches(
+		CreateFileState.CREATE_FILE_ERROR_IDLE,
+	);
 
 	const {exit} = useApp();
 	useInput((_, key) => {
@@ -35,7 +52,7 @@ export const CreateFileStep = () => {
 			exit();
 		}
 		if (key.return) {
-			stepSend(StepsEvent.ENTER_PRESSED);
+			createFileMachineSend(CreateFileEvent.CREATE_FILE);
 		}
 	});
 
@@ -47,6 +64,7 @@ export const CreateFileStep = () => {
 			<Header
 				isLoading={isLoading}
 				isSuccess={isSuccess}
+				isError={isError}
 				loadingMessage={`Creating ${filepath}`}
 				successMessage="Created successfully"
 			/>

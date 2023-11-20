@@ -10,7 +10,6 @@ import {
 import {generateSteps} from '../utils/api/generateSteps.js';
 import {type NavigationMachineEvent} from './navigationMachine.js';
 import {StepType, type Step} from '../types/Step.js';
-import {sleep} from 'zx';
 import {
 	type CreateFileMachineEvent,
 	createFileMachine,
@@ -30,9 +29,6 @@ export enum StepsState {
 	GENERATING_STEPS = 'GENERATING_STEPS',
 	SPAWNING_ACTIVE_STEP_MACHINE = 'SPAWNING_ACTIVE_STEP_MACHINE',
 	ACTIVE_STEP_IDLE = 'ACTIVE_STEP_IDLE',
-	ACTIVE_STEP_RUNNING = 'ACTIVE_STEP_RUNNING',
-	ACTIVE_STEP_SUCCESS_IDLE = 'ACTIVE_STEP_SUCCESS_IDLE',
-	ACTIVE_STEP_ERROR_IDLE = 'ACTIVE_STEP_ERROR_IDLE',
 	FETCHING_NEXT_STEP = 'FETCHING_NEXT_STEP',
 	STEPS_COMPLETE = 'STEPS_COMPLETE',
 }
@@ -45,20 +41,25 @@ export type StepsMachineState =
 			context: StepsMachineContext;
 	  }
 	| {value: StepsState.ACTIVE_STEP_IDLE; context: StepsMachineContext}
-	| {value: StepsState.ACTIVE_STEP_RUNNING; context: StepsMachineContext}
-	| {value: StepsState.ACTIVE_STEP_SUCCESS_IDLE; context: StepsMachineContext}
-	| {value: StepsState.ACTIVE_STEP_ERROR_IDLE; context: StepsMachineContext}
 	| {value: StepsState.FETCHING_NEXT_STEP; context: StepsMachineContext}
 	| {value: StepsState.STEPS_COMPLETE; context: StepsMachineContext};
 
 export enum StepsEvent {
-	ENTER_PRESSED = 'ENTER_PRESSED',
+	NAVIGATE_NEXT_STEP = 'NAVIGATE_NEXT_STEP',
 }
 
 //  State machine events
-export type StepsMachineEvent = {type: StepsEvent.ENTER_PRESSED};
+export type StepsMachineEvent = {type: StepsEvent.NAVIGATE_NEXT_STEP};
 
 // Guards
+
+const isCreateFile = (context: StepsMachineContext) =>
+	context.steps?.[context.activeStepIndex]?.step_type === StepType.CREATE_FILE;
+const isRunBashCommand = (context: StepsMachineContext) =>
+	context.steps?.[context.activeStepIndex]?.step_type ===
+	StepType.RUN_BASH_COMMAND;
+const isModifyFile = (context: StepsMachineContext) =>
+	context.steps?.[context.activeStepIndex]?.step_type === StepType.MODIFY_FILE;
 
 export const stepsMachine = createMachine<
 	StepsMachineContext,
@@ -94,9 +95,8 @@ export const stepsMachine = createMachine<
 		[StepsState.SPAWNING_ACTIVE_STEP_MACHINE]: {
 			always: [
 				{
-					cond: context =>
-						context.steps?.[context.activeStepIndex]?.step_type ===
-						StepType.CREATE_FILE,
+					cond: isCreateFile,
+					target: StepsState.ACTIVE_STEP_IDLE,
 					actions: assign({
 						activeStepActor: context =>
 							spawn(
@@ -116,34 +116,20 @@ export const stepsMachine = createMachine<
 								}),
 							),
 					}),
+				},
+				{
+					cond: isRunBashCommand,
 					target: StepsState.ACTIVE_STEP_IDLE,
 				},
 				{
-					cond: context =>
-						context.steps?.[context.activeStepIndex]?.step_type ===
-						StepType.RUN_BASH_COMMAND,
+					cond: isModifyFile,
 					target: StepsState.ACTIVE_STEP_IDLE,
 				},
 			],
 		},
 		[StepsState.ACTIVE_STEP_IDLE]: {
 			on: {
-				[StepsEvent.ENTER_PRESSED]: {
-					target: StepsState.ACTIVE_STEP_RUNNING,
-				},
-			},
-		},
-		[StepsState.ACTIVE_STEP_RUNNING]: {
-			invoke: {
-				src: async () => await sleep(3500),
-				onDone: {
-					target: StepsState.ACTIVE_STEP_SUCCESS_IDLE,
-				},
-			},
-		},
-		[StepsState.ACTIVE_STEP_SUCCESS_IDLE]: {
-			on: {
-				[StepsEvent.ENTER_PRESSED]: {
+				[StepsEvent.NAVIGATE_NEXT_STEP]: {
 					target: StepsState.FETCHING_NEXT_STEP,
 				},
 			},
