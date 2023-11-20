@@ -2,13 +2,14 @@ import {fs} from 'zx';
 import * as prettier from 'prettier';
 import {createMachine, assign, type DoneInvokeEvent} from 'xstate';
 
-import {highlightAsync} from '../utils/highlightAsync.js';
-import loadLanguages from 'prismjs/components/index.js';
+import {generateFileEdits} from '../utils/api/generateFileEdits.js';
 
 // Context
 export interface ModifyFileMachineContext {
 	filePath?: string;
 	fileExtension?: string;
+	fileSummary?: string;
+	fileChangesSummary?: string;
 	rawCode?: string;
 	formattedRawCode?: string;
 	highlightedCode?: string;
@@ -52,19 +53,10 @@ export type ModifyFileMachineState =
 
 export enum ModifyFileEvent {
 	ENTER_PRESSED = 'ENTER_PRESSED',
-	UPDATE_CONTEXT = 'UPDATE_CONTEXT',
 }
 
 //  State machine events
-export type ModifyFileMachineEvent =
-	| {type: ModifyFileEvent.ENTER_PRESSED}
-	| {
-			type: ModifyFileEvent.UPDATE_CONTEXT;
-			ctx: Pick<
-				ModifyFileMachineContext,
-				'rawCode' | 'filePath' | 'fileExtension'
-			>;
-	  };
+export type ModifyFileMachineEvent = {type: ModifyFileEvent.ENTER_PRESSED};
 
 export const modifyFileMachine = createMachine<
 	ModifyFileMachineContext,
@@ -77,6 +69,8 @@ export const modifyFileMachine = createMachine<
 	context: {
 		filePath: '',
 		fileExtension: '',
+		fileSummary: '',
+		fileChangesSummary: '',
 		rawCode: '',
 		formattedRawCode: '',
 		highlightedCode: '',
@@ -119,6 +113,26 @@ export const modifyFileMachine = createMachine<
 				},
 			},
 		},
-		[ModifyFileState.IDLE]: {},
+		[ModifyFileState.IDLE]: {
+			on: {
+				[ModifyFileEvent.ENTER_PRESSED]: {
+					target: ModifyFileState.FETCHING_FILE_EDITS,
+				},
+			},
+		},
+
+		[ModifyFileState.FETCHING_FILE_EDITS]: {
+			invoke: {
+				src: async context => {
+					context.filePath;
+					return await generateFileEdits({
+						filePath: context.filePath ?? '',
+						fileContent: context.formattedRawCode ?? '',
+						fileSummary: context.fileSummary ?? '',
+						fileChangesSummary: context.fileChangesSummary ?? '',
+					});
+				},
+			},
+		},
 	},
 });

@@ -131,8 +131,12 @@ export const stepsMachine = createMachine<
 							return spawn(
 								modifyFileMachine.withContext({
 									enterLabel: 'generate changes',
-									filePath: existingFileToModify?.file_path ?? '',
-									fileExtension: existingFileToModify?.file_extension ?? '',
+									filePath: existingFileToModify?.file_path,
+									fileExtension: existingFileToModify?.file_extension,
+									fileSummary:
+										existingFileToModify?.current_file_content_summary,
+									fileChangesSummary:
+										existingFileToModify?.file_content_summary,
 								}),
 							);
 						},

@@ -7,11 +7,11 @@ import {writeToFile} from '../utils/writeToFile.js';
 
 // Context
 export interface CreateFileMachineContext {
-	filePath: string;
-	fileExtension: string;
-	rawCode: string;
-	formattedCode: string;
-	highlightedCode: string;
+	filePath?: string;
+	fileExtension?: string;
+	rawCode?: string;
+	formattedCode?: string;
+	highlightedCode?: string;
 	enterLabel: string;
 }
 
@@ -76,7 +76,7 @@ export const createFileMachine = createMachine<
 		[CreateFileState.FORMATTING_CODE]: {
 			invoke: {
 				src: async context =>
-					await prettier.format(context.rawCode, {
+					await prettier.format(context.rawCode ?? '', {
 						filepath: context.filePath,
 					}),
 				onDone: {
@@ -98,7 +98,7 @@ export const createFileMachine = createMachine<
 				src: async context => {
 					loadLanguages(context.fileExtension);
 					return await highlightAsync({
-						code: context.formattedCode,
+						code: context?.formattedCode ?? '',
 						language: context.fileExtension,
 					});
 				},
@@ -116,7 +116,10 @@ export const createFileMachine = createMachine<
 		[CreateFileState.HIGHLIGHTING_UNSUPPORTED_CODE]: {
 			invoke: {
 				src: async context =>
-					await highlightAsync({code: context.formattedCode, language: 'tsx'}),
+					await highlightAsync({
+						code: context?.formattedCode ?? '',
+						language: 'ts',
+					}),
 				onDone: {
 					target: CreateFileState.IDLE,
 					actions: assign({
@@ -142,8 +145,8 @@ export const createFileMachine = createMachine<
 			invoke: {
 				src: async context =>
 					await writeToFile({
-						filePath: context.filePath,
-						fileContent: context.formattedCode,
+						filePath: context?.filePath ?? '',
+						fileContent: context?.formattedCode ?? '',
 					}),
 				onDone: {
 					target: CreateFileState.CREATE_FILE_SUCCESS_IDLE,

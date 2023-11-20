@@ -15,6 +15,7 @@ import {
 	type ModifyFileMachineEvent,
 	type ModifyFileMachineState,
 	ModifyFileState,
+	ModifyFileEvent,
 } from '../../../machines/modifyFileMachine.js';
 
 export const ModifyFileStep = () => {
@@ -54,7 +55,7 @@ export const ModifyFileStep = () => {
 			exit();
 		}
 		if (key.return) {
-			modifyFileMachineSend(CreateFileEvent.CREATE_FILE);
+			modifyFileMachineSend(ModifyFileEvent.ENTER_PRESSED);
 		}
 	});
 

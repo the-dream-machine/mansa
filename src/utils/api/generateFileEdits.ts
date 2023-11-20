@@ -6,10 +6,21 @@ interface Args {
 	filePath: string;
 	fileContent: string;
 	fileSummary: string;
+	fileChangesSummary: string;
 }
 
-export const generateFileEdits = async ({filePath, fileContent}: Args) => {
-	const data = JSON.stringify({filePath, fileContent});
+export const generateFileEdits = async ({
+	filePath,
+	fileContent,
+	fileSummary,
+	fileChangesSummary,
+}: Args) => {
+	const data = JSON.stringify({
+		filePath,
+		fileContent,
+		fileSummary,
+		fileChangesSummary,
+	});
 	const config = {
 		method: 'post',
 		maxBodyLength: Infinity,

@@ -8,7 +8,6 @@ import type {
 	TypegenDisabled,
 	Typestate,
 } from 'xstate';
-import type {CreateFileMachineEvent} from '../machines/createFileMachine.js';
 
 export type Actor<
 	TMachineContext,
@@ -28,5 +27,5 @@ export type Actor<
 			ServiceMap
 		>
 	>,
-	Sender<CreateFileMachineEvent>,
+	Sender<TMachineEvent>,
 ];
