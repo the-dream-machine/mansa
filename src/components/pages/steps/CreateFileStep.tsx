@@ -1,70 +1,33 @@
-import React, {useEffect, useState} from 'react';
+import React from 'react';
 import {Box, Spacer, Text, useApp, useInput} from 'ink';
-import * as prettier from 'prettier';
+import {useActor} from '@xstate/react';
 
 import {StepsContext} from '../../StepsProvider.js';
 import {BaseColors, Colors} from '../../Colors.js';
 import {PageContainer} from '../../PageContainer.js';
-import {ScrollContainer} from '../../ScrollContainer.js';
 import {Footer} from '../../Footer.js';
-import {highlight} from 'prismjs-terminal';
-import loadLanguages from 'prismjs/components/index.js';
 import {StepsEvent, StepsState} from '../../../machines/stepsMachine.js';
 import {Header} from '../../Header.js';
-import {defaultTheme} from '../../../utils/prismThemes.js';
-
-// eslint-disable-next-line @typescript-eslint/no-unsafe-call
+import {type CreateFileMachineContext} from '../../../machines/createFileMachine.js';
+import {ScrollContainer} from '../../ScrollContainer.js';
 
 export const CreateFileStep = () => {
-	const [formattedCodeChanges, setFormattedCodeChanges] = useState('');
-	const [state, send] = StepsContext.useActor();
-	const activeStepIndex = state.context.activeStepIndex;
-	const activeStep = state.context.steps?.[activeStepIndex];
-	const rawCodeChanges =
-		activeStep?.new_file_path_to_create?.file_code_changes ?? '';
-	const fileExtension =
-		activeStep?.new_file_path_to_create?.file_extension ?? '';
-	const filepath = activeStep?.new_file_path_to_create?.file_path ?? '';
-	const totalSteps = state.context.steps?.length;
-	const isLoading = state.matches(StepsState.ACTIVE_STEP_RUNNING);
-	const isSuccess = state.matches(StepsState.ACTIVE_STEP_SUCCESS_IDLE);
-	const isError = state.matches(StepsState.ACTIVE_STEP_ERROR_IDLE);
-	const isLanguageSupported = !['local', 'example'].includes(fileExtension);
-	const getStateColor = (color: Colors | BaseColors) =>
-		isSuccess ? Colors.DarkGray : color;
-	const getEnterLabel = () => {
-		if (isSuccess) {
-			return 'next step';
-		} else if (isError) {
-			return 'retry';
-		} else {
-			return 'create file';
-		}
-	};
+	const [stepState, stepSend] = StepsContext.useActor();
+	const activeStepIndex = stepState.context.activeStepIndex;
+	const activeStep = stepState.context.steps?.[activeStepIndex];
+	const activeStepActor = stepState.context.activeStepActor;
+	const totalSteps = stepState.context.steps?.length;
 
-	useEffect(() => {
-		if (isLanguageSupported) {
-			// eslint-disable-next-line @typescript-eslint/no-floating-promises
-			(async () => {
-				const formattedCodeChanges = await prettier.format(rawCodeChanges, {
-					filepath,
-				});
-				setFormattedCodeChanges(formattedCodeChanges);
-			})();
-		} else {
-			setFormattedCodeChanges(rawCodeChanges);
-		}
-	}, []);
+	const isLoading = stepState.matches(StepsState.ACTIVE_STEP_RUNNING);
+	const isSuccess = stepState.matches(StepsState.ACTIVE_STEP_SUCCESS_IDLE);
+	// const isError = stepState.matches(StepsState.ACTIVE_STEP_ERROR_IDLE);
 
-	let codeChanges = rawCodeChanges;
-	if (isLanguageSupported) {
-		loadLanguages([fileExtension]);
-
-		codeChanges = highlight(formattedCodeChanges, {
-			language: fileExtension,
-			theme: defaultTheme,
-		});
-	}
+	const [createFileState] = useActor(activeStepActor!);
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+	const createFileContext: CreateFileMachineContext = createFileState.context;
+	const highlightedCode = createFileContext.highlightedCode;
+	const filepath = createFileContext.filePath;
+	const enterLabel = createFileContext.enterLabel;
 
 	const {exit} = useApp();
 	useInput((_, key) => {
@@ -72,9 +35,12 @@ export const CreateFileStep = () => {
 			exit();
 		}
 		if (key.return) {
-			send(StepsEvent.ENTER_PRESSED);
+			stepSend(StepsEvent.ENTER_PRESSED);
 		}
 	});
+
+	const getStateColor = (color: Colors | BaseColors) =>
+		isSuccess ? Colors.DarkGray : color;
 
 	return (
 		<PageContainer>
@@ -126,6 +92,7 @@ export const CreateFileStep = () => {
 							</Box>
 						)}
 					</Box>
+					<Spacer />
 
 					{/* Code block */}
 					<Box
@@ -140,11 +107,12 @@ export const CreateFileStep = () => {
 						borderStyle="round"
 					>
 						<Text color={BaseColors.Gray700} italic>
-							{activeStep?.new_file_path_to_create?.file_path}
+							{filepath}
 						</Text>
+
 						<ScrollContainer>
 							<Box paddingBottom={8}>
-								<Text>{codeChanges}</Text>
+								<Text>{highlightedCode}</Text>
 							</Box>
 						</ScrollContainer>
 					</Box>
@@ -153,7 +121,7 @@ export const CreateFileStep = () => {
 			<Spacer />
 			<Footer
 				controls={['enter', 'esc', 'up', 'down']}
-				enterLabel={getEnterLabel()}
+				enterLabel={enterLabel}
 				enterDisabled={isLoading}
 			/>
 		</PageContainer>

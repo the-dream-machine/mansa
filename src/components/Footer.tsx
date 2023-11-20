@@ -42,16 +42,17 @@ export const Footer = ({
 				</Text>
 			)}
 
-			{controls.includes('esc') && (
-				<Box>
-					<Text color={BaseColors.Gray600}>esc </Text>
-					<Text color={Colors.DarkGray}>exit • </Text>
-				</Box>
-			)}
 			{controls.includes('s') && (
 				<Box>
 					<Text color={BaseColors.Gray600}>s </Text>
 					<Text color={Colors.DarkGray}>skip • </Text>
+				</Box>
+			)}
+
+			{controls.includes('esc') && (
+				<Box>
+					<Text color={BaseColors.Gray600}>esc </Text>
+					<Text color={Colors.DarkGray}>exit • </Text>
 				</Box>
 			)}
 

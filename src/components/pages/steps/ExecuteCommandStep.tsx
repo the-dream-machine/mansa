@@ -144,6 +144,7 @@ export const ExecuteCommandStep = () => {
 									>
 										<Text color={Colors.DarkGray}>{output}</Text>
 									</Box>
+									<Text color={Colors.DarkGray}>{figureSet.triangleUp}</Text>
 								</Box>
 							</ScrollContainer>
 						)}
