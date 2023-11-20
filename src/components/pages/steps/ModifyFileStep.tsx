@@ -1,30 +1,52 @@
 import React from 'react';
-import {Box, Text, useApp, useInput} from 'ink';
+import {Box, Spacer, Text, useApp, useInput} from 'ink';
 import {useActor} from '@xstate/react';
+
 import {StepsContext} from '../../StepsProvider.js';
-import {Spinner} from '@inkjs/ui';
-import {BaseColors} from '../../Colors.js';
+import {BaseColors, Colors} from '../../Colors.js';
 import {PageContainer} from '../../PageContainer.js';
-import {ScrollContainer} from '../../ScrollContainer.js';
 import {Footer} from '../../Footer.js';
-import {highlight, highlightFile, highlightFileSync} from 'prismjs-terminal';
-import loadLanguages from 'prismjs/components/index.js';
-
-import figureSet from 'figures';
-import {StepsEvent, StepsState} from '../../../machines/stepsMachine.js';
 import {Header} from '../../Header.js';
-
-// eslint-disable-next-line @typescript-eslint/no-unsafe-call
-loadLanguages(['bash']);
+import {CreateFileEvent} from '../../../machines/createFileMachine.js';
+import {ScrollContainer} from '../../ScrollContainer.js';
+import type {Actor} from '../../../types/Actor.js';
+import {
+	type ModifyFileMachineContext,
+	type ModifyFileMachineEvent,
+	type ModifyFileMachineState,
+	ModifyFileState,
+} from '../../../machines/modifyFileMachine.js';
 
 export const ModifyFileStep = () => {
-	const [state, send] = StepsContext.useActor();
-	const activeStepIndex = state.context.activeStepIndex;
-	const activeStep = state.context.steps?.[activeStepIndex];
-	const totalSteps = state.context.steps?.length;
-	const fileToModify = highlightFileSync(
-		activeStep?.new_file_path_to_create?.file_path ?? '',
+	const [stepsState] = StepsContext.useActor();
+	const activeStepIndex = stepsState.context.activeStepIndex;
+	const activeStep = stepsState.context.steps?.[activeStepIndex];
+	const activeStepActor = stepsState.context.activeStepActor;
+	const totalSteps = stepsState.context.steps?.length;
+
+	const [modifyFileMachineState, modifyFileMachineSend] = useActor(
+		activeStepActor!,
+	) as Actor<
+		ModifyFileMachineContext,
+		ModifyFileMachineEvent,
+		ModifyFileMachineState
+	>;
+
+	const formattedRawCode = modifyFileMachineState.context.formattedRawCode;
+	const filepath = modifyFileMachineState.context.filePath;
+	const enterLabel = modifyFileMachineState.context.enterLabel;
+
+	const isLoading = modifyFileMachineState.matches(
+		ModifyFileState.FETCHING_FILE_EDITS,
 	);
+	// const isSuccess = modifyFileMachineState.matches(
+	// 	ModifyFileState.CREATE_FILE_SUCCESS_IDLE,
+	// );
+	const isSuccess = false;
+	const isError = false;
+	// const isError = modifyFileMachineState.matches(
+	// 	CreateFileState.CREATE_FILE_ERROR_IDLE,
+	// );
 
 	const {exit} = useApp();
 	useInput((_, key) => {
@@ -32,37 +54,96 @@ export const ModifyFileStep = () => {
 			exit();
 		}
 		if (key.return) {
-			send(StepsEvent.ENTER_PRESSED);
+			modifyFileMachineSend(CreateFileEvent.CREATE_FILE);
 		}
 	});
 
+	const getStateColor = (color: Colors | BaseColors) =>
+		isSuccess ? Colors.DarkGray : color;
+
 	return (
 		<PageContainer>
-			<Header />
-			<ScrollContainer>
-				<Box flexDirection="row" gap={1}>
+			<Header
+				isLoading={isLoading}
+				isSuccess={isSuccess}
+				isError={isError}
+				loadingMessage={`Creating ${filepath}`}
+				successMessage="Created successfully"
+			/>
+			<Box>
+				<Box flexDirection="row" gap={4}>
+					{/* Left Block */}
 					<Box flexDirection="column" gap={1}>
+						{/* Title */}
 						<Text color={BaseColors.White}>
-							{activeStep?.step_title}
-							<Text color={BaseColors.Gray200}>
-								{' '}
+							{activeStep?.step_title}{' '}
+							<Text color={Colors.DarkGray}>
 								(Step {activeStepIndex + 1} of {totalSteps})
 							</Text>
 						</Text>
-						<Text color={BaseColors.Gray600}>
-							{activeStep?.step_description}
-						</Text>
+
+						{/* Description step */}
+						<Box gap={1}>
+							<Text color={getStateColor(Colors.LightGreen)}>•</Text>
+							<Box flexDirection="column" gap={1}>
+								<Text color={getStateColor(Colors.LightGray)}>
+									{activeStep?.step_description}
+								</Text>
+								<Text color={getStateColor(Colors.DarkGray)}>
+									Press{' '}
+									<Text color={getStateColor(BaseColors.Gray500)}>enter</Text>{' '}
+									to generate the code changes for{' '}
+									<Text color={getStateColor(BaseColors.Gray500)} italic>
+										{filepath}
+									</Text>
+									.
+								</Text>
+							</Box>
+						</Box>
+
+						{/* Success step */}
+						{isSuccess && (
+							<Box gap={1} flexShrink={0} marginTop={1}>
+								<Text color={Colors.LightGreen}>•</Text>
+								<Text color={Colors.LightGray}>
+									Press <Text color={Colors.White}>enter</Text> to go to the
+									next step.
+								</Text>
+							</Box>
+						)}
 					</Box>
-					<Box flexDirection="column" gap={1}>
+					<Spacer />
+
+					{/* Code block */}
+					<Box
+						minWidth={50}
+						flexDirection="column"
+						flexShrink={0}
+						gap={1}
+						paddingTop={1}
+						paddingX={2}
+						marginTop={2}
+						borderColor={BaseColors.Gray800}
+						borderStyle="round"
+					>
 						<Text color={BaseColors.Gray700} italic>
-							<Text color={BaseColors.Green500}>•</Text> New file:{' '}
-							{activeStep?.new_file_path_to_create?.file_path}
+							{filepath} (Original file, no edits made yet.)
 						</Text>
-						<Text>{fileToModify}</Text>
+
+						<ScrollContainer>
+							<Box paddingBottom={8}>
+								<Text color={Colors.DarkGray}>{formattedRawCode}</Text>
+							</Box>
+						</ScrollContainer>
 					</Box>
 				</Box>
-			</ScrollContainer>
-			<Footer controls={['enter', 'esc']} enterLabel="apply" />
+			</Box>
+			<Spacer />
+			<Footer
+				controls={['enter', 'esc', 'up', 'down']}
+				enterLabel={enterLabel}
+				enterDisabled={isLoading}
+			/>
 		</PageContainer>
 	);
 };

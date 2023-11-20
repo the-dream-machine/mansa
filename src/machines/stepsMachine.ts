@@ -14,13 +14,19 @@ import {
 	type CreateFileMachineEvent,
 	createFileMachine,
 } from './createFileMachine.js';
+import {
+	type ModifyFileMachineEvent,
+	modifyFileMachine,
+} from './modifyFileMachine.js';
 
 // Context
 export interface StepsMachineContext {
 	steps?: Step[];
 	activeStepIndex: number;
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	activeStepActor: ActorRef<CreateFileMachineEvent> | undefined;
+	activeStepActor?:
+		| ActorRef<CreateFileMachineEvent>
+		| ActorRef<ModifyFileMachineEvent>;
 	navigate?: Sender<NavigationMachineEvent>;
 }
 
@@ -71,7 +77,7 @@ export const stepsMachine = createMachine<
 	initial: StepsState.GENERATING_STEPS,
 	context: {
 		steps: [],
-		activeStepIndex: 4,
+		activeStepIndex: 7,
 		activeStepActor: undefined,
 	},
 	states: {
@@ -98,31 +104,42 @@ export const stepsMachine = createMachine<
 					cond: isCreateFile,
 					target: StepsState.ACTIVE_STEP_IDLE,
 					actions: assign({
-						activeStepActor: context =>
-							spawn(
+						activeStepActor: context => {
+							const newFileToCreate =
+								context.steps?.[context.activeStepIndex]
+									?.new_file_path_to_create;
+							return spawn(
 								createFileMachine.withContext({
-									rawCode:
-										context.steps?.[context.activeStepIndex]
-											?.new_file_path_to_create?.file_code_changes ?? '',
-									filePath:
-										context.steps?.[context.activeStepIndex]
-											?.new_file_path_to_create?.file_path ?? '',
-									fileExtension:
-										context.steps?.[context.activeStepIndex]
-											?.new_file_path_to_create?.file_extension ?? '',
-									formattedCode: '',
-									highlightedCode: '',
 									enterLabel: 'create file',
+									rawCode: newFileToCreate?.file_code_changes,
+									filePath: newFileToCreate?.file_path,
+									fileExtension: newFileToCreate?.file_extension,
 								}),
-							),
+							);
+						},
+					}),
+				},
+				{
+					cond: isModifyFile,
+					target: StepsState.ACTIVE_STEP_IDLE,
+					actions: assign({
+						activeStepActor: context => {
+							const existingFileToModify =
+								context.steps?.[context.activeStepIndex]
+									?.existing_file_path_to_modify;
+
+							return spawn(
+								modifyFileMachine.withContext({
+									enterLabel: 'generate changes',
+									filePath: existingFileToModify?.file_path ?? '',
+									fileExtension: existingFileToModify?.file_extension ?? '',
+								}),
+							);
+						},
 					}),
 				},
 				{
 					cond: isRunBashCommand,
-					target: StepsState.ACTIVE_STEP_IDLE,
-				},
-				{
-					cond: isModifyFile,
 					target: StepsState.ACTIVE_STEP_IDLE,
 				},
 			],

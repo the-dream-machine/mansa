@@ -15,7 +15,7 @@ export interface Step {
 		file_content_summary: string;
 		file_code_changes: string;
 	};
-	existing_file_paths_to_modify?: {
+	existing_file_path_to_modify?: {
 		file_path: string;
 		file_extension: string;
 		current_file_content_summary: string;
