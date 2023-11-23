@@ -20,6 +20,11 @@ import {
 } from './modifyFileMachine.js';
 import {modifyFileMachine} from './modifyFileMachine.js';
 import {StepsEvent} from '../types/Steps.js';
+import {
+	type ExecuteCommandMachineEvent,
+	executeCommandMachine,
+	initialExecuteCommandMachineContext,
+} from './executeCommandMachine.js';
 
 // Context
 export interface StepsMachineContext {
@@ -28,7 +33,8 @@ export interface StepsMachineContext {
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	activeStepActor?:
 		| ActorRef<CreateFileMachineEvent>
-		| ActorRef<ModifyFileMachineEvent>;
+		| ActorRef<ModifyFileMachineEvent>
+		| ActorRef<ExecuteCommandMachineEvent>;
 	navigate?: Sender<NavigationMachineEvent>;
 }
 
@@ -56,7 +62,6 @@ export type StepsMachineState =
 export type StepsMachineEvent = {type: StepsEvent.NAVIGATE_NEXT_STEP};
 
 // Guards
-
 const isCreateFile = (context: StepsMachineContext) =>
 	context.steps?.[context.activeStepIndex]?.step_type === StepType.CREATE_FILE;
 const isRunBashCommand = (context: StepsMachineContext) =>
@@ -75,7 +80,7 @@ export const stepsMachine = createMachine<
 	initial: StepsState.GENERATING_STEPS,
 	context: {
 		steps: [],
-		activeStepIndex: 5,
+		activeStepIndex: 0,
 		activeStepActor: undefined,
 	},
 	states: {
@@ -136,7 +141,6 @@ export const stepsMachine = createMachine<
 										existingFileToModify?.current_file_content_summary ?? '',
 									editedFileChangesSummary:
 										existingFileToModify?.file_content_summary ?? '',
-									editedFileHighlightedCode: '',
 								}),
 							);
 						},
@@ -145,6 +149,17 @@ export const stepsMachine = createMachine<
 				{
 					cond: isRunBashCommand,
 					target: StepsState.ACTIVE_STEP_IDLE,
+					actions: assign({
+						activeStepActor: context =>
+							spawn(
+								executeCommandMachine.withContext({
+									...initialExecuteCommandMachineContext,
+									bashCommand:
+										context.steps?.[context.activeStepIndex]
+											?.bash_command_to_run ?? '',
+								}),
+							),
+					}),
 				},
 			],
 		},

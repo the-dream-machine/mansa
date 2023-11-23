@@ -363,7 +363,7 @@ export const modifyFileMachine = createMachine<
 				const currentDiff =
 					context?.diffs?.[context?.currentDiffHighlightingIndex ?? 0];
 				loadLanguages(context.originalFileExtension);
-				if (currentDiff?.added || currentDiff?.removed) {
+				if (currentDiff?.added ?? currentDiff?.removed) {
 					return await highlightAsync({
 						code: currentDiff?.value ?? '',
 						language: context.originalFileExtension,
