@@ -16,8 +16,10 @@ import {
 } from './createFileMachine.js';
 import {
 	type ModifyFileMachineEvent,
-	modifyFileMachine,
+	initialModifyFileMachineContext,
 } from './modifyFileMachine.js';
+import {modifyFileMachine} from './modifyFileMachine.js';
+import {StepsEvent} from '../types/Steps.js';
 
 // Context
 export interface StepsMachineContext {
@@ -50,10 +52,6 @@ export type StepsMachineState =
 	| {value: StepsState.FETCHING_NEXT_STEP; context: StepsMachineContext}
 	| {value: StepsState.STEPS_COMPLETE; context: StepsMachineContext};
 
-export enum StepsEvent {
-	NAVIGATE_NEXT_STEP = 'NAVIGATE_NEXT_STEP',
-}
-
 //  State machine events
 export type StepsMachineEvent = {type: StepsEvent.NAVIGATE_NEXT_STEP};
 
@@ -77,7 +75,7 @@ export const stepsMachine = createMachine<
 	initial: StepsState.GENERATING_STEPS,
 	context: {
 		steps: [],
-		activeStepIndex: 7,
+		activeStepIndex: 5,
 		activeStepActor: undefined,
 	},
 	states: {
@@ -130,13 +128,15 @@ export const stepsMachine = createMachine<
 
 							return spawn(
 								modifyFileMachine.withContext({
-									enterLabel: 'generate changes',
-									filePath: existingFileToModify?.file_path,
-									fileExtension: existingFileToModify?.file_extension,
-									fileSummary:
-										existingFileToModify?.current_file_content_summary,
-									fileChangesSummary:
-										existingFileToModify?.file_content_summary,
+									...initialModifyFileMachineContext,
+									originalFilePath: existingFileToModify?.file_path ?? '',
+									originalFileExtension:
+										existingFileToModify?.file_extension ?? '',
+									originalFileSummary:
+										existingFileToModify?.current_file_content_summary ?? '',
+									editedFileChangesSummary:
+										existingFileToModify?.file_content_summary ?? '',
+									editedFileHighlightedCode: '',
 								}),
 							);
 						},

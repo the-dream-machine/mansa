@@ -70,7 +70,6 @@ export enum IndexRepositoryEvent {
 type IndexRepositoryMachineEvent = {type: IndexRepositoryEvent.ENTER_PRESSED};
 
 // Guards
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const isLastFilePath = (context: IndexRepositoryMachineContext) =>
 	context.filePaths.length - 1 === context.currentFileIndexing;
 

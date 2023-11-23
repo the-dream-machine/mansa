@@ -4,6 +4,8 @@ import * as prettier from 'prettier';
 import {highlightAsync} from '../utils/highlightAsync.js';
 import loadLanguages from 'prismjs/components/index.js';
 import {writeToFile} from '../utils/writeToFile.js';
+import {sendParent} from 'xstate/lib/actions.js';
+import {StepsEvent} from '../types/Steps.js';
 
 // Context
 export interface CreateFileMachineContext {
@@ -49,11 +51,11 @@ export type CreateFileMachineState =
 	  };
 
 export enum CreateFileEvent {
-	CREATE_FILE = 'CREATE_FILE',
+	ENTER_KEY_PRESSED = 'ENTER_KEY_PRESSED',
 }
 
 //  State machine events
-export type CreateFileMachineEvent = {type: CreateFileEvent.CREATE_FILE};
+export type CreateFileMachineEvent = {type: CreateFileEvent.ENTER_KEY_PRESSED};
 
 export const createFileMachine = createMachine<
 	CreateFileMachineContext,
@@ -136,7 +138,7 @@ export const createFileMachine = createMachine<
 		},
 		[CreateFileState.IDLE]: {
 			on: {
-				[CreateFileEvent.CREATE_FILE]: {
+				[CreateFileEvent.ENTER_KEY_PRESSED]: {
 					target: CreateFileState.CREATING_FILE,
 				},
 			},
@@ -151,12 +153,19 @@ export const createFileMachine = createMachine<
 				onDone: {
 					target: CreateFileState.CREATE_FILE_SUCCESS_IDLE,
 				},
-				onError: {
-					target: CreateFileState.CREATE_FILE_ERROR_IDLE,
+			},
+		},
+		[CreateFileState.CREATE_FILE_SUCCESS_IDLE]: {
+			entry: [
+				assign({
+					enterLabel: 'next step',
+				}),
+			],
+			on: {
+				[CreateFileEvent.ENTER_KEY_PRESSED]: {
+					actions: sendParent({type: StepsEvent.NAVIGATE_NEXT_STEP}),
 				},
 			},
 		},
-		[CreateFileState.CREATE_FILE_SUCCESS_IDLE]: {},
-		[CreateFileState.CREATE_FILE_ERROR_IDLE]: {},
 	},
 });

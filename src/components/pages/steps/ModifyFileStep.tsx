@@ -1,29 +1,28 @@
 import React from 'react';
-import {Box, Spacer, Text, useApp, useInput} from 'ink';
 import {useActor} from '@xstate/react';
+import {Box, Spacer, Text, useApp, useInput} from 'ink';
 
 import {StepsContext} from '../../StepsProvider.js';
 import {BaseColors, Colors} from '../../Colors.js';
 import {PageContainer} from '../../PageContainer.js';
 import {Footer} from '../../Footer.js';
 import {Header} from '../../Header.js';
-import {CreateFileEvent} from '../../../machines/createFileMachine.js';
-import {ScrollContainer} from '../../ScrollContainer.js';
 import type {Actor} from '../../../types/Actor.js';
 import {
 	type ModifyFileMachineContext,
 	type ModifyFileMachineEvent,
 	type ModifyFileMachineState,
-	ModifyFileState,
 	ModifyFileEvent,
 } from '../../../machines/modifyFileMachine.js';
+import {ScrollContainer} from '../../ScrollContainer.js';
 
 export const ModifyFileStep = () => {
 	const [stepsState] = StepsContext.useActor();
-	const activeStepIndex = stepsState.context.activeStepIndex;
-	const activeStep = stepsState.context.steps?.[activeStepIndex];
-	const activeStepActor = stepsState.context.activeStepActor;
-	const totalSteps = stepsState.context.steps?.length;
+	const stepsContext = stepsState.context;
+	const activeStepIndex = stepsContext.activeStepIndex;
+	const activeStep = stepsContext.steps?.[activeStepIndex];
+	const activeStepActor = stepsContext.activeStepActor;
+	const totalSteps = stepsContext.steps?.length;
 
 	const [modifyFileMachineState, modifyFileMachineSend] = useActor(
 		activeStepActor!,
@@ -33,21 +32,22 @@ export const ModifyFileStep = () => {
 		ModifyFileMachineState
 	>;
 
-	const formattedRawCode = modifyFileMachineState.context.formattedRawCode;
-	const filepath = modifyFileMachineState.context.filePath;
-	const enterLabel = modifyFileMachineState.context.enterLabel;
+	const modifyFileMachineContext = modifyFileMachineState.context;
 
-	const isLoading = modifyFileMachineState.matches(
-		ModifyFileState.FETCHING_FILE_EDITS,
-	);
-	// const isSuccess = modifyFileMachineState.matches(
-	// 	ModifyFileState.CREATE_FILE_SUCCESS_IDLE,
-	// );
-	const isSuccess = false;
-	const isError = false;
-	// const isError = modifyFileMachineState.matches(
-	// 	CreateFileState.CREATE_FILE_ERROR_IDLE,
-	// );
+	const originalFileFormattedCode =
+		modifyFileMachineContext.originalFileFormattedCode;
+	const filepath = modifyFileMachineContext.originalFilePath;
+	const editedFileHighlightedCode =
+		modifyFileMachineContext.editedFileHighlightedCode;
+	const enterLabel = modifyFileMachineContext.enterLabel;
+	const isLoading = modifyFileMachineContext.isLoading;
+	const isError = modifyFileMachineContext.isError;
+	const isFetchEditsSuccess = modifyFileMachineContext.isFetchEditsSuccess;
+	const isApplyEditsSuccess = modifyFileMachineContext.isApplyEditsSuccess;
+	const isSuccess = isFetchEditsSuccess || isApplyEditsSuccess;
+	const loadingMessage = modifyFileMachineContext.loadingMessage;
+	const successMessage = modifyFileMachineContext.successMessage;
+	const errorMessage = modifyFileMachineContext.errorMessage;
 
 	const {exit} = useApp();
 	useInput((_, key) => {
@@ -55,12 +55,12 @@ export const ModifyFileStep = () => {
 			exit();
 		}
 		if (key.return) {
-			modifyFileMachineSend(ModifyFileEvent.ENTER_PRESSED);
+			modifyFileMachineSend(ModifyFileEvent.ENTER_KEY_PRESSED);
 		}
 	});
 
-	const getStateColor = (color: Colors | BaseColors) =>
-		isSuccess ? Colors.DarkGray : color;
+	const getStateColor = (color: Colors | BaseColors, condition: boolean) =>
+		condition ? Colors.DarkGray : color;
 
 	return (
 		<PageContainer>
@@ -68,8 +68,9 @@ export const ModifyFileStep = () => {
 				isLoading={isLoading}
 				isSuccess={isSuccess}
 				isError={isError}
-				loadingMessage={`Creating ${filepath}`}
-				successMessage="Created successfully"
+				loadingMessage={loadingMessage}
+				successMessage={successMessage}
+				errorMessage={errorMessage}
 			/>
 			<Box>
 				<Box flexDirection="row" gap={4}>
@@ -85,16 +86,37 @@ export const ModifyFileStep = () => {
 
 						{/* Description step */}
 						<Box gap={1}>
-							<Text color={getStateColor(Colors.LightGreen)}>•</Text>
+							<Text
+								color={getStateColor(Colors.LightGreen, isFetchEditsSuccess)}
+							>
+								•
+							</Text>
 							<Box flexDirection="column" gap={1}>
-								<Text color={getStateColor(Colors.LightGray)}>
+								<Text
+									color={getStateColor(Colors.LightGray, isFetchEditsSuccess)}
+								>
 									{activeStep?.step_description}
 								</Text>
-								<Text color={getStateColor(Colors.DarkGray)}>
+								<Text
+									color={getStateColor(Colors.DarkGray, isFetchEditsSuccess)}
+								>
 									Press{' '}
-									<Text color={getStateColor(BaseColors.Gray500)}>enter</Text>{' '}
+									<Text
+										color={getStateColor(
+											BaseColors.Gray500,
+											isFetchEditsSuccess,
+										)}
+									>
+										enter
+									</Text>{' '}
 									to generate the code changes for{' '}
-									<Text color={getStateColor(BaseColors.Gray500)} italic>
+									<Text
+										color={getStateColor(
+											BaseColors.Gray500,
+											isFetchEditsSuccess,
+										)}
+										italic
+									>
 										{filepath}
 									</Text>
 									.
@@ -102,8 +124,40 @@ export const ModifyFileStep = () => {
 							</Box>
 						</Box>
 
-						{/* Success step */}
-						{isSuccess && (
+						{/* Preview changes */}
+						{isFetchEditsSuccess && (
+							<Box gap={1} flexShrink={0} marginTop={1}>
+								<Text
+									color={getStateColor(Colors.LightGreen, isApplyEditsSuccess)}
+								>
+									•
+								</Text>
+								<Box flexDirection="column" gap={1}>
+									<Text
+										color={getStateColor(Colors.LightGray, isApplyEditsSuccess)}
+									>
+										Scroll up or down to preview changes.
+									</Text>
+									<Text
+										color={getStateColor(Colors.DarkGray, isApplyEditsSuccess)}
+									>
+										Press{' '}
+										<Text
+											color={getStateColor(
+												Colors.LightGray,
+												isApplyEditsSuccess,
+											)}
+										>
+											enter
+										</Text>{' '}
+										to apply changes
+									</Text>
+								</Box>
+							</Box>
+						)}
+
+						{/* Go to next step */}
+						{isApplyEditsSuccess && (
 							<Box gap={1} flexShrink={0} marginTop={1}>
 								<Text color={Colors.LightGreen}>•</Text>
 								<Text color={Colors.LightGray}>
@@ -128,12 +182,18 @@ export const ModifyFileStep = () => {
 						borderStyle="round"
 					>
 						<Text color={BaseColors.Gray700} italic>
-							{filepath} (Original file, no edits made yet.)
+							{filepath}
 						</Text>
 
 						<ScrollContainer>
 							<Box paddingBottom={8}>
-								<Text color={Colors.DarkGray}>{formattedRawCode}</Text>
+								{editedFileHighlightedCode ? (
+									<Text>{editedFileHighlightedCode}</Text>
+								) : (
+									<Text color={Colors.DarkGray}>
+										{originalFileFormattedCode}
+									</Text>
+								)}
 							</Box>
 						</ScrollContainer>
 					</Box>

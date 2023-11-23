@@ -30,7 +30,8 @@ export const generateFileEdits = async ({
 	};
 
 	try {
-		const response: AxiosResponse<FileMapItem> = await axios.request(config);
+		const response: AxiosResponse<{editedFile: string}> =
+			await axios.request(config);
 		return response.data;
 	} catch (error) {
 		throw error;

@@ -52,7 +52,7 @@ export const CreateFileStep = () => {
 			exit();
 		}
 		if (key.return) {
-			createFileMachineSend(CreateFileEvent.CREATE_FILE);
+			createFileMachineSend(CreateFileEvent.ENTER_KEY_PRESSED);
 		}
 	});
 

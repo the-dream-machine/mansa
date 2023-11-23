@@ -1,7 +1,6 @@
-import {Spinner} from '@inkjs/ui';
 import {Box, Text} from 'ink';
 import React from 'react';
-import {BaseColors, Colors} from './Colors.js';
+import {Colors} from './Colors.js';
 
 interface Props {
 	isLoading?: boolean;
@@ -26,7 +25,7 @@ export const Header = ({
 		</Text>
 		{isLoading && (
 			<Box paddingX={1}>
-				<Spinner type="dots12" />
+				<Text color={Colors.LightYellow}>•</Text>
 				<Text color={Colors.DarkYellow}> {loadingMessage}</Text>
 			</Box>
 		)}
