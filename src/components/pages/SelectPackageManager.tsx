@@ -24,7 +24,7 @@ const options: Option[] = [
 
 const SelectPackageManager = () => {
 	const [, navigate] = NavigationContext.useActor();
-	const [state, send] = useMachine(selectPackageManagerMachine, {
+	const [, send] = useMachine(selectPackageManagerMachine, {
 		context: {navigate},
 	});
 

@@ -14,7 +14,7 @@ import {
 	indexRepositoryMachine,
 } from '../../machines/indexRepositoryMachine.js';
 import {NavigationContext} from '../NavigationProvider.js';
-import {BaseColors} from '../Colors.js';
+import {BaseColors, Colors} from '../Colors.js';
 
 export const IndexRepository = () => {
 	const [, navigate] = NavigationContext.useActor();
@@ -66,6 +66,9 @@ export const IndexRepository = () => {
 				isLoading={showLoader}
 			/>
 			<Body>
+				<Text color={Colors.White}>
+					Set up fishcake <Text color={Colors.DarkGray}>(Step 2 of 2)</Text>
+				</Text>
 				<Text color={'gray'}>
 					Fishcake uses your <Text color="white">.gitignore</Text> file to
 					figure out which files and folders should be ignored when parsing and
@@ -73,9 +76,9 @@ export const IndexRepository = () => {
 					can't be parsed like image, video and audio files.
 				</Text>
 				<Text color="gray">
-					🔐 <Text color="white">Security:</Text> your files remain on your
-					device, they are never stored on fishcake's servers. Only code
-					snippets are sent to our server at the time of processing.
+					👀 <Text color="white">Privacy:</Text> All your files remain on your
+					device, they are never stored on fishcake's servers. Fishcake may send
+					snippets of your code to the server for processing.
 				</Text>
 
 				{(!showSuccessMessage || !showErrorMessage) && (

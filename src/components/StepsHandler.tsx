@@ -1,4 +1,6 @@
 import React from 'react';
+import {Text} from 'ink';
+
 import {StepsContext} from './StepsProvider.js';
 import {StepsState} from '../machines/stepsMachine.js';
 import {GlobalLoader} from './GlobalLoader.js';
@@ -7,13 +9,20 @@ import {ExecuteCommandStep} from './pages/steps/ExecuteCommandStep.js';
 import {CreateFileStep} from './pages/steps/CreateFileStep.js';
 
 import {ModifyFileStep} from './pages/steps/ModifyFileStep.js';
+import {PageContainer} from './PageContainer.js';
+import {Header} from './Header.js';
+import {Body} from './Body.js';
 
 export const StepsHandler = () => {
 	const [state] = StepsContext.useActor();
 	const showLoader = state.matches(StepsState.GENERATING_STEPS);
 
 	if (showLoader) {
-		return <GlobalLoader />;
+		return (
+			<PageContainer>
+				<Header isLoading loadingMessage={'Generating steps'} />
+			</PageContainer>
+		);
 	}
 
 	const activeStepIndex = state.context.activeStepIndex;
