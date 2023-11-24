@@ -28,7 +28,7 @@ export enum IndexRepositoryState {
 	IDLE = 'IDLE',
 	FETCHING_REPO_DETAILS = 'FETCHING_REPO_DETAILS',
 	FETCHING_FILE_PATHS = 'FETCHING_FILE_PATHS',
-	INDEXING_REPO_FILE = 'INDEXING_REPO_FILE',
+	INDEXING_REPO_FILES = 'INDEXING_REPO_FILES',
 	INDEXING_SUCCESS_IDLE = 'INDEXING_SUCCESS_IDLE',
 	INDEXING_ERROR_IDLE = 'INDEXING_ERROR_IDLE',
 	WRITING_ERROR_FILE = 'WRITING_ERROR_FILE',
@@ -46,7 +46,7 @@ type IndexRepositoryMachineState =
 			context: IndexRepositoryMachineContext;
 	  }
 	| {
-			value: IndexRepositoryState.INDEXING_REPO_FILE;
+			value: IndexRepositoryState.INDEXING_REPO_FILES;
 			context: IndexRepositoryMachineContext;
 	  }
 	| {
@@ -120,7 +120,7 @@ export const indexRepositoryMachine = createMachine<
 			invoke: {
 				src: async () => await getRepositoryFilePaths(),
 				onDone: {
-					target: IndexRepositoryState.INDEXING_REPO_FILE,
+					target: IndexRepositoryState.INDEXING_REPO_FILES,
 					actions: assign({
 						filePaths: (_, event: DoneInvokeEvent<string[]>) => event.data,
 					}),
@@ -138,17 +138,17 @@ export const indexRepositoryMachine = createMachine<
 				},
 			},
 		},
-		[IndexRepositoryState.INDEXING_REPO_FILE]: {
+		[IndexRepositoryState.INDEXING_REPO_FILES]: {
 			invoke: {
 				src: async context => {
 					const filePath = context.filePaths[context.currentFileIndexing] ?? '';
-					await updateRepositoryChecksums({filePath});
 					await updateRepositoryMap({filePath});
+					await updateRepositoryChecksums({filePath});
 				},
 				onDone: [
 					{
 						// Loop until all files are indexed
-						target: IndexRepositoryState.INDEXING_REPO_FILE,
+						target: IndexRepositoryState.INDEXING_REPO_FILES,
 						cond: context => !isLastFilePath(context),
 						actions: assign({
 							currentFileIndexing: context => context.currentFileIndexing + 1,

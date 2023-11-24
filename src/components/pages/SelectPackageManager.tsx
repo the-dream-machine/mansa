@@ -1,5 +1,5 @@
 import React from 'react';
-import {Text, useApp, useInput} from 'ink';
+import {Spacer, Text, useApp, useInput} from 'ink';
 import {type Option, Select} from '@inkjs/ui';
 import {useMachine} from '@xstate/react';
 
@@ -13,6 +13,7 @@ import {
 	selectPackageManagerMachine,
 } from '../../machines/selectPackageManagerMachine.js';
 import {type PackageManager} from '../../types/PackageManager.js';
+import {BaseColors, Colors} from '../Colors.js';
 
 const options: Option[] = [
 	{label: 'npm', value: 'npm'},
@@ -34,13 +35,14 @@ const SelectPackageManager = () => {
 		}
 	});
 
-	const repositoryName = state.context.repositoryName;
-
 	return (
 		<PageContainer>
-			{/* <Header title={`Set up fishcake for ${repositoryName}`} subtitle="1/2" /> */}
+			<Header title="Fishcake" titleBackgroundColor={BaseColors.Pink500} />
 			<Body>
-				<Text color="gray">
+				<Text color={Colors.White}>
+					Set up fishcake <Text color={Colors.DarkGray}>(Step 1 of 2)</Text>
+				</Text>
+				<Text color={Colors.LightGray}>
 					Which package manager are you currently using for this project?
 				</Text>
 
@@ -54,6 +56,7 @@ const SelectPackageManager = () => {
 					}}
 				/>
 			</Body>
+			<Spacer />
 			<Footer controls={['esc', 'enter', 'up', 'down']} />
 		</PageContainer>
 	);

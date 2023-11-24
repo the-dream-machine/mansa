@@ -2,16 +2,20 @@ import {createMachine} from 'xstate';
 import {getRepositoryConfig} from '../utils/repository/getRepositoryConfig.js';
 import {getRepositoryMap} from '../utils/repository/getRepositoryMap.js';
 import {getRepositoryChecksums} from '../utils/repository/getRepositoryChecksums.js';
+import {repositoryChecksumsMatch} from '../utils/repository/repositoryChecksumsMatch.js';
 
 export enum NavigationPage {
+	ABOUT = 'ABOUT',
 	CREATE_CONFIG = 'CREATE_CONFIG',
 	INDEX_REPOSITORY = 'INDEX_REPOSITORY',
-	SELECT_OPTION = 'SELECT_OPTION',
+	INDEX_NEW_FILES = 'INDEX_NEW_FILES',
+	STEPS = 'STEPS',
 }
 
 export enum AppState {
 	DOES_CONFIG_EXIST = 'DOES_CONFIG_EXIST',
-	DOES_CHECKSUMS_EXIST = 'DOES_CHECKSUMS_EXIST',
+	DO_CHECKSUMS_EXIST = 'DO_CHECKSUMS_EXIST',
+	DO_CHECKSUMS_MATCH = 'DO_CHECKSUMS_MATCH',
 	DOES_MAP_EXIST = 'DOES_MAP_EXIST',
 }
 
@@ -26,7 +30,15 @@ export type NavigationMachineState =
 			context: never;
 	  }
 	| {
-			value: AppState.DOES_CHECKSUMS_EXIST;
+			value: AppState.DO_CHECKSUMS_EXIST;
+			context: never;
+	  }
+	| {
+			value: AppState.DO_CHECKSUMS_MATCH;
+			context: never;
+	  }
+	| {
+			value: NavigationPage.ABOUT;
 			context: never;
 	  }
 	| {
@@ -38,7 +50,11 @@ export type NavigationMachineState =
 			context: never;
 	  }
 	| {
-			value: NavigationPage.SELECT_OPTION;
+			value: NavigationPage.INDEX_NEW_FILES;
+			context: never;
+	  }
+	| {
+			value: NavigationPage.STEPS;
 			context: never;
 	  };
 
@@ -72,28 +88,41 @@ export const navigationMachine = createMachine<
 			invoke: {
 				src: async () => await getRepositoryMap(),
 				onDone: {
-					target: NavigationPage.SELECT_OPTION,
+					target: AppState.DO_CHECKSUMS_EXIST,
 				},
 				onError: {
 					target: NavigationPage.INDEX_REPOSITORY,
 				},
 			},
 		},
-		[AppState.DOES_CHECKSUMS_EXIST]: {
+		[AppState.DO_CHECKSUMS_EXIST]: {
 			invoke: {
 				src: async () => await getRepositoryChecksums(),
 				onDone: {
-					target: NavigationPage.SELECT_OPTION,
+					target: AppState.DO_CHECKSUMS_MATCH,
 				},
 				onError: {
 					target: NavigationPage.INDEX_REPOSITORY,
+				},
+			},
+		},
+		[AppState.DO_CHECKSUMS_MATCH]: {
+			invoke: {
+				src: async () => await repositoryChecksumsMatch(),
+				onDone: {
+					target: NavigationPage.STEPS,
+				},
+				onError: {
+					target: NavigationPage.INDEX_NEW_FILES,
 				},
 			},
 		},
 
+		[NavigationPage.ABOUT]: {},
 		[NavigationPage.CREATE_CONFIG]: {},
 		[NavigationPage.INDEX_REPOSITORY]: {},
-		[NavigationPage.SELECT_OPTION]: {},
+		[NavigationPage.INDEX_NEW_FILES]: {},
+		[NavigationPage.STEPS]: {},
 	},
 	on: {
 		[AppState.DOES_CONFIG_EXIST]: {
@@ -102,8 +131,14 @@ export const navigationMachine = createMachine<
 		[AppState.DOES_MAP_EXIST]: {
 			target: AppState.DOES_MAP_EXIST,
 		},
-		[AppState.DOES_CHECKSUMS_EXIST]: {
-			target: AppState.DOES_CHECKSUMS_EXIST,
+		[AppState.DO_CHECKSUMS_EXIST]: {
+			target: AppState.DO_CHECKSUMS_EXIST,
+		},
+		[AppState.DO_CHECKSUMS_MATCH]: {
+			target: AppState.DO_CHECKSUMS_MATCH,
+		},
+		[NavigationPage.ABOUT]: {
+			target: NavigationPage.ABOUT,
 		},
 		[NavigationPage.CREATE_CONFIG]: {
 			target: NavigationPage.CREATE_CONFIG,
@@ -111,8 +146,11 @@ export const navigationMachine = createMachine<
 		[NavigationPage.INDEX_REPOSITORY]: {
 			target: NavigationPage.INDEX_REPOSITORY,
 		},
-		[NavigationPage.SELECT_OPTION]: {
-			target: NavigationPage.SELECT_OPTION,
+		[NavigationPage.INDEX_NEW_FILES]: {
+			target: NavigationPage.INDEX_NEW_FILES,
+		},
+		[NavigationPage.STEPS]: {
+			target: NavigationPage.STEPS,
 		},
 	},
 });

@@ -14,9 +14,23 @@ export const updateRepositoryMap = async ({filePath}: Args) => {
 	const repositoryMapFilePath = `${fishcakeRepositoryPath}/map.json`;
 	let updatedMap: FileMapItem[] = [];
 
+	// If map file exists
 	if (await fs.exists(repositoryMapFilePath)) {
 		const savedFileMapItems = await getRepositoryMap();
-		updatedMap = [...savedFileMapItems, fileMapItem];
+
+		// Find the index of the existing item with the same filePath
+		const existingFileIndex = savedFileMapItems.findIndex(
+			item => item.filePath === fileMapItem.filePath,
+		);
+
+		// If an item with the same filePath exists, replace it
+		if (existingFileIndex !== -1) {
+			savedFileMapItems[existingFileIndex] = fileMapItem;
+			updatedMap = savedFileMapItems;
+		} else {
+			// If no item with the same filePath exists, add the new item
+			updatedMap = [...savedFileMapItems, fileMapItem];
+		}
 	} else {
 		updatedMap = [fileMapItem];
 	}

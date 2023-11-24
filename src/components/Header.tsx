@@ -3,6 +3,10 @@ import React from 'react';
 import {Colors} from './Colors.js';
 
 interface Props {
+	title?: string;
+	titleTextColor?: string;
+	titleBackgroundColor?: string;
+
 	isLoading?: boolean;
 	isSuccess?: boolean;
 	isError?: boolean;
@@ -11,6 +15,10 @@ interface Props {
 	errorMessage?: string;
 }
 export const Header = ({
+	title = 'Trigger.dev',
+	titleTextColor = '#ffffff',
+	titleBackgroundColor = '#4eb03a',
+
 	isLoading = false,
 	isSuccess = false,
 	isError = false,
@@ -19,9 +27,9 @@ export const Header = ({
 	errorMessage = 'Error',
 }: Props) => (
 	<Box paddingY={1} gap={1} width={'100%'} flexShrink={0}>
-		<Text color="#FFFFFF" backgroundColor="#4eb03a" bold>
+		<Text color={titleTextColor} backgroundColor={titleBackgroundColor} bold>
 			{' '}
-			Trigger.dev{' '}
+			{title}{' '}
 		</Text>
 		{isLoading && (
 			<Box paddingX={1}>

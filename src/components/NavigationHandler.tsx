@@ -6,12 +6,14 @@ import {GlobalLoader} from './GlobalLoader.js';
 import SelectPackageManager from './pages/SelectPackageManager.js';
 import {StepsProvider} from './StepsProvider.js';
 import {StepsHandler} from './StepsHandler.js';
+import {About} from './pages/About.js';
+import {IndexNewFiles} from './pages/IndexNewFiles.js';
 
 const NavigationHandler = () => {
 	const [state] = NavigationContext.useActor();
 	const showLoader =
 		state.matches(AppState.DOES_CONFIG_EXIST) ||
-		state.matches(AppState.DOES_CHECKSUMS_EXIST) ||
+		state.matches(AppState.DO_CHECKSUMS_EXIST) ||
 		state.matches(AppState.DOES_MAP_EXIST);
 
 	if (showLoader) {
@@ -20,9 +22,11 @@ const NavigationHandler = () => {
 
 	return (
 		<>
+			{state.matches(NavigationPage.ABOUT) && <About />}
 			{state.matches(NavigationPage.CREATE_CONFIG) && <SelectPackageManager />}
 			{state.matches(NavigationPage.INDEX_REPOSITORY) && <IndexRepository />}
-			{state.matches(NavigationPage.SELECT_OPTION) && (
+			{state.matches(NavigationPage.INDEX_NEW_FILES) && <IndexNewFiles />}
+			{state.matches(NavigationPage.STEPS) && (
 				<StepsProvider>
 					<StepsHandler />
 				</StepsProvider>

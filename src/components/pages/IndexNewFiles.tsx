@@ -8,17 +8,17 @@ import {Header} from '../Header.js';
 import {Footer} from '../Footer.js';
 import {Body} from '../Body.js';
 import {PageContainer} from '../PageContainer.js';
-import {
-	IndexRepositoryEvent,
-	IndexRepositoryState,
-	indexRepositoryMachine,
-} from '../../machines/indexRepositoryMachine.js';
 import {NavigationContext} from '../NavigationProvider.js';
-import {BaseColors} from '../Colors.js';
+import {BaseColors, Colors} from '../Colors.js';
+import {
+	IndexNewFileEvent,
+	IndexNewFileState,
+	indexNewFileMachine,
+} from '../../machines/indexNewFileMachine.js';
 
-export const IndexRepository = () => {
+export const IndexNewFiles = () => {
 	const [, navigate] = NavigationContext.useActor();
-	const [state, send] = useMachine(indexRepositoryMachine, {
+	const [state, send] = useMachine(indexNewFileMachine, {
 		context: {navigate},
 	});
 
@@ -32,21 +32,19 @@ export const IndexRepository = () => {
 		(currentIndexingFileCount / totalFiles) * 100,
 	);
 
-	const showLoader = state.matches(IndexRepositoryState.FETCHING_REPO_DETAILS);
+	const showLoader = state.matches(IndexNewFileState.INDEXING_NEW_FILES);
 	const showProgressBar =
-		state.matches(IndexRepositoryState.INDEXING_REPO_FILES) ||
-		state.matches(IndexRepositoryState.INDEXING_SUCCESS_IDLE) ||
-		state.matches(IndexRepositoryState.INDEXING_ERROR_IDLE);
+		state.matches(IndexNewFileState.INDEXING_NEW_FILES) ||
+		state.matches(IndexNewFileState.INDEXING_SUCCESS_IDLE) ||
+		state.matches(IndexNewFileState.INDEXING_ERROR_IDLE);
 	const showSuccessMessage = state.matches(
-		IndexRepositoryState.INDEXING_SUCCESS_IDLE,
+		IndexNewFileState.INDEXING_SUCCESS_IDLE,
 	);
-	const showErrorMessage = state.matches(
-		IndexRepositoryState.INDEXING_ERROR_IDLE,
-	);
+	const showErrorMessage = state.matches(IndexNewFileState.INDEXING_ERROR_IDLE);
 	const showCurrentIndexingFile = state.matches(
-		IndexRepositoryState.INDEXING_REPO_FILES,
+		IndexNewFileState.INDEXING_NEW_FILES,
 	);
-	const enterDisabled = state.matches(IndexRepositoryState.INDEXING_REPO_FILES);
+	const enterDisabled = state.matches(IndexNewFileState.INDEXING_NEW_FILES);
 
 	const {exit} = useApp();
 	useInput((_, key) => {
@@ -54,7 +52,7 @@ export const IndexRepository = () => {
 			exit();
 		}
 		if (key.return) {
-			send(IndexRepositoryEvent.ENTER_PRESSED);
+			send(IndexNewFileEvent.ENTER_KEY_PRESSED);
 		}
 	});
 
@@ -62,24 +60,16 @@ export const IndexRepository = () => {
 		<PageContainer>
 			<Header
 				title="Fishcake"
-				titleBackgroundColor={BaseColors.Pink500}
+				titleBackgroundColor={BaseColors.Pink600}
 				isLoading={showLoader}
 			/>
 			<Body>
-				<Text color={'gray'}>
-					Fishcake uses your <Text color="white">.gitignore</Text> file to
-					figure out which files and folders should be ignored when parsing and
-					indexing your code. Also, fishcake ignores file formats whose content
-					can't be parsed like image, video and audio files.
-				</Text>
-				<Text color="gray">
-					🔐 <Text color="white">Security:</Text> your files remain on your
-					device, they are never stored on fishcake's servers. Only code
-					snippets are sent to our server at the time of processing.
+				<Text color={Colors.LightGray}>
+					Found {totalFiles} files that have changed since last sync.
 				</Text>
 
 				{(!showSuccessMessage || !showErrorMessage) && (
-					<Text color="gray">
+					<Text color={Colors.LightGray}>
 						Press <Text color="white">enter</Text> to start indexing.
 					</Text>
 				)}

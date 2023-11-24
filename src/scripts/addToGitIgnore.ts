@@ -5,7 +5,7 @@ export const addToGitIgnore = async () => {
 	const result = await $`
 	# Define the words you want to add to .gitignore
 	header="# fishcake"
-	firstItem="/.fishcake"
+	firstItem=".fishcake"
 
 	# Check if .gitignore exists
 	if [ -f .gitignore ]; then

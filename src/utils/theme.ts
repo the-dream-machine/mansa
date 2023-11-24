@@ -36,7 +36,7 @@ export const theme = extendTheme(defaultTheme, {
 		MultiSelect: {
 			styles: {
 				focusIndicator: (): TextProps => ({
-					color: 'magenta',
+					color: Colors.LightPink,
 				}),
 				label: ({isFocused, isSelected}: SelectState): TextProps => {
 					let color: ColorName = 'gray';
@@ -70,6 +70,13 @@ export const theme = extendTheme(defaultTheme, {
 			styles: {
 				value: (): TextProps => ({
 					color: 'yellow',
+				}),
+			},
+		},
+		ProgressBar: {
+			styles: {
+				completed: () => ({
+					color: Colors.LightPink,
 				}),
 			},
 		},

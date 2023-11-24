@@ -97,4 +97,5 @@ export enum Colors {
 	DarkBlue = BaseColors.Blue800,
 	LightYellow = BaseColors.Yellow400,
 	DarkYellow = BaseColors.Yellow600,
+	LightPink = BaseColors.Pink500,
 }
