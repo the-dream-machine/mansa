@@ -6,6 +6,7 @@ import {repositoryChecksumsMatch} from '../utils/repository/repositoryChecksumsM
 import {getRepositoryFilePaths} from '../utils/repository/getRepositoryFilePaths.js';
 import {writeToFile} from '../utils/writeToFile.js';
 import {fishcakeRepositoryPath} from '../utils/fishcakePath.js';
+import {sleep} from 'zx';
 
 export enum NavigationPage {
 	ABOUT = 'ABOUT',
@@ -118,17 +119,17 @@ export const navigationMachine = createMachine<
 					const removedFilePaths = indexedFilePaths.filter(
 						filePath => !allFilePaths.includes(filePath),
 					);
-					const updatedFilePaths = indexedFilePaths.filter(
-						filePath => !removedFilePaths.includes(filePath),
-					);
 
-					if (updatedFilePaths.length > 0) {
-						// Un-index files that don't exist in the repo
+					// Un-index files that don't exist in the repo
+					if (removedFilePaths.length > 0) {
+						const updatedFilePaths = repositoryMapFiles.filter(
+							fileMapItem => !removedFilePaths.includes(fileMapItem.filePath),
+						);
+
 						await writeToFile({
 							filePath: `${fishcakeRepositoryPath}/map.json`,
 							fileContent: JSON.stringify(updatedFilePaths),
 						});
-						return;
 					}
 					return;
 				},
@@ -160,17 +161,17 @@ export const navigationMachine = createMachine<
 					const removedFilePaths = indexedFilePaths.filter(
 						filePath => !allFilePaths.includes(filePath),
 					);
-					const updatedFilePaths = indexedFilePaths.filter(
-						filePath => !removedFilePaths.includes(filePath),
-					);
 
-					if (updatedFilePaths.length > 0) {
+					if (removedFilePaths.length > 0) {
+						const updatedFilePaths = repositoryChecksums.filter(
+							fileChecksum => !removedFilePaths.includes(fileChecksum.filePath),
+						);
+
 						// Un-index files that don't exist in the repo
 						await writeToFile({
 							filePath: `${fishcakeRepositoryPath}/checksums.json`,
 							fileContent: JSON.stringify(updatedFilePaths),
 						});
-						return;
 					}
 					return;
 				},

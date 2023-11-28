@@ -26,7 +26,7 @@ import {
 	initialExecuteCommandMachineContext,
 } from './executeCommandMachine.js';
 import type {Run, RunStatusResponse} from '../types/Run.js';
-import {generateStepsStatus} from '../utils/api/pollGenerateSteps.js';
+import {generateStepsStatus} from '../utils/api/generateStepsStatus.js';
 import {fetchAllSteps} from '../utils/api/fetchAllSteps.js';
 import {sleep} from 'zx';
 
