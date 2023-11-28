@@ -25,9 +25,14 @@ import {
 	executeCommandMachine,
 	initialExecuteCommandMachineContext,
 } from './executeCommandMachine.js';
+import type {Run, RunStatusResponse} from '../types/Run.js';
+import {generateStepsStatus} from '../utils/api/pollGenerateSteps.js';
+import {fetchAllSteps} from '../utils/api/fetchAllSteps.js';
+import {sleep} from 'zx';
 
 // Context
 export interface StepsMachineContext {
+	run?: Run;
 	steps?: Step[];
 	activeStepIndex: number;
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -38,9 +43,18 @@ export interface StepsMachineContext {
 	navigate?: Sender<NavigationMachineEvent>;
 }
 
+const initialContext: StepsMachineContext = {
+	run: undefined,
+	steps: [],
+	activeStepIndex: 0,
+	activeStepActor: undefined,
+};
+
 // States
 export enum StepsState {
-	GENERATING_STEPS = 'GENERATING_STEPS',
+	GENERATE_STEPS = 'GENERATE_STEPS',
+	POLLING_GENERATE_STEPS_STATUS = 'POLLING_GENERATE_STEPS_STATUS',
+	FETCHING_ALL_STEPS = 'FETCHING_ALL_STEPS',
 	SPAWNING_ACTIVE_STEP_MACHINE = 'SPAWNING_ACTIVE_STEP_MACHINE',
 	ACTIVE_STEP_IDLE = 'ACTIVE_STEP_IDLE',
 	FETCHING_NEXT_STEP = 'FETCHING_NEXT_STEP',
@@ -49,7 +63,18 @@ export enum StepsState {
 
 //  State machine states
 export type StepsMachineState =
-	| {value: StepsState.GENERATING_STEPS; context: StepsMachineContext}
+	| {
+			value: StepsState.GENERATE_STEPS;
+			context: StepsMachineContext;
+	  }
+	| {
+			value: StepsState.POLLING_GENERATE_STEPS_STATUS;
+			context: StepsMachineContext;
+	  }
+	| {
+			value: StepsState.FETCHING_ALL_STEPS;
+			context: StepsMachineContext;
+	  }
 	| {
 			value: StepsState.SPAWNING_ACTIVE_STEP_MACHINE;
 			context: StepsMachineContext;
@@ -77,27 +102,62 @@ export const stepsMachine = createMachine<
 >({
 	id: 'stepsMachine',
 	predictableActionArguments: true,
-	initial: StepsState.GENERATING_STEPS,
-	context: {
-		steps: [],
-		activeStepIndex: 0,
-		activeStepActor: undefined,
-	},
+	initial: StepsState.GENERATE_STEPS,
+	context: initialContext,
 	states: {
-		[StepsState.GENERATING_STEPS]: {
+		[StepsState.GENERATE_STEPS]: {
 			invoke: {
 				src: async () => await generateSteps(),
-				onDone: [
-					{
-						target: StepsState.SPAWNING_ACTIVE_STEP_MACHINE,
-						actions: assign({
-							steps: (_, event: DoneInvokeEvent<Step[]>) => event.data,
-						}),
-					},
-				],
+				onDone: {
+					target: StepsState.POLLING_GENERATE_STEPS_STATUS,
+					actions: assign({
+						run: (_, event: DoneInvokeEvent<Run>) => event.data,
+					}),
+				},
 				onError: {
 					actions: (_, event: DoneInvokeEvent<Error>) =>
 						console.log('generate steps error: ', event.data),
+				},
+			},
+		},
+		[StepsState.POLLING_GENERATE_STEPS_STATUS]: {
+			invoke: {
+				src: async context => {
+					if (context.run) {
+						await sleep(1000);
+						return await generateStepsStatus(context.run);
+					} else {
+						throw new Error('Run ID not found in context');
+					}
+				},
+				onDone: [
+					{
+						cond: (_, event: DoneInvokeEvent<RunStatusResponse>) =>
+							event.data.status !== 'completed',
+						target: StepsState.POLLING_GENERATE_STEPS_STATUS,
+					},
+					{
+						cond: (_, event: DoneInvokeEvent<RunStatusResponse>) =>
+							event.data.status === 'completed',
+						target: StepsState.FETCHING_ALL_STEPS,
+					},
+				],
+			},
+		},
+		[StepsState.FETCHING_ALL_STEPS]: {
+			invoke: {
+				src: async context => {
+					if (context.run) {
+						return await fetchAllSteps(context.run);
+					} else {
+						throw new Error('Thread ID not found in context');
+					}
+				},
+				onDone: {
+					target: StepsState.SPAWNING_ACTIVE_STEP_MACHINE,
+					actions: assign({
+						steps: (_, event: DoneInvokeEvent<Step[]>) => event.data,
+					}),
 				},
 			},
 		},

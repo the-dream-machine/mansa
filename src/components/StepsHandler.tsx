@@ -1,9 +1,7 @@
 import React from 'react';
-import {Text} from 'ink';
 
 import {StepsContext} from './StepsProvider.js';
 import {StepsState} from '../machines/stepsMachine.js';
-import {GlobalLoader} from './GlobalLoader.js';
 import {StepType} from '../types/Step.js';
 import {ExecuteCommandStep} from './pages/steps/ExecuteCommandStep.js';
 import {CreateFileStep} from './pages/steps/CreateFileStep.js';
@@ -11,16 +9,21 @@ import {CreateFileStep} from './pages/steps/CreateFileStep.js';
 import {ModifyFileStep} from './pages/steps/ModifyFileStep.js';
 import {PageContainer} from './PageContainer.js';
 import {Header} from './Header.js';
-import {Body} from './Body.js';
+import {Spinner} from '@inkjs/ui';
 
 export const StepsHandler = () => {
 	const [state] = StepsContext.useActor();
-	const showLoader = state.matches(StepsState.GENERATING_STEPS);
+	const showLoader =
+		state.matches(StepsState.GENERATE_STEPS) ||
+		state.matches(StepsState.POLLING_GENERATE_STEPS_STATUS) ||
+		state.matches(StepsState.FETCHING_ALL_STEPS) ||
+		state.matches(StepsState.SPAWNING_ACTIVE_STEP_MACHINE);
 
 	if (showLoader) {
 		return (
 			<PageContainer>
 				<Header isLoading loadingMessage={'Generating steps'} />
+				<Spinner type="dwarfFortress" />
 			</PageContainer>
 		);
 	}

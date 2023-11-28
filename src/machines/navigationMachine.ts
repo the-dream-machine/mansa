@@ -3,6 +3,9 @@ import {getRepositoryConfig} from '../utils/repository/getRepositoryConfig.js';
 import {getRepositoryMap} from '../utils/repository/getRepositoryMap.js';
 import {getRepositoryChecksums} from '../utils/repository/getRepositoryChecksums.js';
 import {repositoryChecksumsMatch} from '../utils/repository/repositoryChecksumsMatch.js';
+import {getRepositoryFilePaths} from '../utils/repository/getRepositoryFilePaths.js';
+import {writeToFile} from '../utils/writeToFile.js';
+import {fishcakeRepositoryPath} from '../utils/fishcakePath.js';
 
 export enum NavigationPage {
 	ABOUT = 'ABOUT',
@@ -14,9 +17,11 @@ export enum NavigationPage {
 
 export enum AppState {
 	DOES_CONFIG_EXIST = 'DOES_CONFIG_EXIST',
-	DO_CHECKSUMS_EXIST = 'DO_CHECKSUMS_EXIST',
-	DO_CHECKSUMS_MATCH = 'DO_CHECKSUMS_MATCH',
 	DOES_MAP_EXIST = 'DOES_MAP_EXIST',
+	DO_MAP_FILE_PATHS_EXIST = 'DO_MAP_FILE_PATHS_EXIST',
+	DO_CHECKSUMS_EXIST = 'DO_CHECKSUMS_EXIST',
+	DO_CHECKSUM_FILE_PATHS_EXIST = 'DO_CHECKSUM_FILE_PATHS_EXIST',
+	DO_CHECKSUMS_MATCH = 'DO_CHECKSUMS_MATCH',
 }
 
 // State machine states
@@ -30,7 +35,15 @@ export type NavigationMachineState =
 			context: never;
 	  }
 	| {
+			value: AppState.DO_MAP_FILE_PATHS_EXIST;
+			context: never;
+	  }
+	| {
 			value: AppState.DO_CHECKSUMS_EXIST;
+			context: never;
+	  }
+	| {
+			value: AppState.DO_CHECKSUM_FILE_PATHS_EXIST;
 			context: never;
 	  }
 	| {
@@ -68,7 +81,6 @@ export const navigationMachine = createMachine<
 	NavigationMachineEvent,
 	NavigationMachineState
 >({
-	/** @xstate-layout N4IgpgJg5mDOIC5QDsCGA3AllVAXTA9sgLKoDGAFpsmAMQCSAcgMoAqAggDKcD6AIuw4AhdswCiAbQAMAXUSgADgViZ8ReSAAeiACwAmADQgAnogCMAZjMA6MzoAcOnVPsBWM69d6A7PYC+fkZoWDhqJORUNAwsHNw8YsRCYnx8TADiPMQA8nxinNJySCBKKmEa2gj6RqaVAGze1hbetVIAnFI6Hva1ra61AUEY2HiE4ZTUdEy5ABo8AEpiAApZBRolqqPluoYmiK7erY3eei06PVJ6ZrWuAyDBw2Gk41HinGIAwqw8WYus9FmMVZFdZlIoVKq7BD2GwWPR6VpXewHCwWeyo273UKjJ6RMDWejMfiCdgicQ8JhsLhvPi0CBEPHUdAEADWeMxIyIOIm+MJAmEojE5JiVOSCEZBDIHOQBSBimUG3UYMQVns1k6Pnqrg6Tg61WVJ2sl2O+jM9hcnW83gxQyxnIi3IJRP5ZIpsWptDAACdPQRPdYFAAbPAAM19AFtrOzHvaaDynSSBULKdxReLJWEZbI1vLQaAKiq1WYNd4tU5nDo9Qg9O5rH0ixc0c1XK1etaQlKubHHQkkil0pkcnkk27krT6dZxazIzaOzG8d3EslUowMtlcrxXSK+GLkEz06NM4U5aVNkqEL5DtqTvYEfZuhXIfCLNZakW3K5YVIP5d+oE7jPo2eedCR7Jd+zXIdNxTGkvR9P1AxDcNp3bQDcTjUC+xXAd12HLcdz3KVD2zE9FTzRAL2sK9ahvU170rCxnDVJopBLVwdFaHpYRuP8o2xOc4wWZYhRmUc6VjSc2QAvigIEpYsmEsRplTXcJUI2RZWKHNTzIhB61qWtvCkFEDhLRwzErE4bCkc1qLOC44W4wYUOktDHUE+SpkU0dYN9f0g1wUNPQjXi7Rkty5IUpTtzTNSZA0kFtK0cw9CkfT9iMppWlMzp6JY6w0Wvbob1RCxah0AIeIICA4A0EKxlxYiFWQLYEAAWlqStWtcawW16vq+rKxz-2c0LXN5YlSUFKDqUa3MkvPfSHD6eoEROWodhqPQkUNdiWyfT8eiGurO2A+JF0w1dBw3YVoNmxLwRLSi3FaOzmzvaFcpsM5WjcS53pWo6pNGh1CXcyLkju0j5p+w4zB+0rUXqMqHAs6j8uuM5v3fNFyp4oH6odG7eD5BNxEh5qzx0R6XGbV6frvczH30HqzT0BiqZvNxal-JyHhcwnk14DDl0u9dyZa1oUTVS1730JpmlaSs7MNXp7DZtxYTVrK2z54Gu0YGZ5jk8Wz0sVxVXsq5TWbbwLF1SF9j0FW2dRItmnhK08ZGgnY1eD4vh+P4ARNnSzYtuEree237c2rw1R8TxrMstoPAqvwgA */
 	id: 'navigationMachine',
 	predictableActionArguments: true,
 	initial: AppState.DOES_CONFIG_EXIST,
@@ -88,10 +100,41 @@ export const navigationMachine = createMachine<
 			invoke: {
 				src: async () => await getRepositoryMap(),
 				onDone: {
-					target: AppState.DO_CHECKSUMS_EXIST,
+					target: AppState.DO_MAP_FILE_PATHS_EXIST,
 				},
 				onError: {
 					target: NavigationPage.INDEX_REPOSITORY,
+				},
+			},
+		},
+		[AppState.DO_MAP_FILE_PATHS_EXIST]: {
+			invoke: {
+				src: async () => {
+					const repositoryMapFiles = await getRepositoryMap();
+					const indexedFilePaths = repositoryMapFiles.map(
+						fileMapItem => fileMapItem.filePath,
+					);
+					const allFilePaths = await getRepositoryFilePaths();
+					const removedFilePaths = indexedFilePaths.filter(
+						filePath => !allFilePaths.includes(filePath),
+					);
+					const updatedFilePaths = indexedFilePaths.filter(
+						filePath => !removedFilePaths.includes(filePath),
+					);
+
+					if (updatedFilePaths.length > 0) {
+						// Un-index files that don't exist in the repo
+						await writeToFile({
+							filePath: `${fishcakeRepositoryPath}/map.json`,
+							fileContent: JSON.stringify(updatedFilePaths),
+						});
+						return;
+					}
+					return;
+				},
+
+				onDone: {
+					target: AppState.DO_CHECKSUMS_EXIST,
 				},
 			},
 		},
@@ -99,10 +142,40 @@ export const navigationMachine = createMachine<
 			invoke: {
 				src: async () => await getRepositoryChecksums(),
 				onDone: {
-					target: AppState.DO_CHECKSUMS_MATCH,
+					target: AppState.DO_CHECKSUM_FILE_PATHS_EXIST,
 				},
 				onError: {
 					target: NavigationPage.INDEX_REPOSITORY,
+				},
+			},
+		},
+		[AppState.DO_CHECKSUM_FILE_PATHS_EXIST]: {
+			invoke: {
+				src: async () => {
+					const repositoryChecksums = await getRepositoryChecksums();
+					const indexedFilePaths = repositoryChecksums.map(
+						checksumItem => checksumItem.filePath,
+					);
+					const allFilePaths = await getRepositoryFilePaths();
+					const removedFilePaths = indexedFilePaths.filter(
+						filePath => !allFilePaths.includes(filePath),
+					);
+					const updatedFilePaths = indexedFilePaths.filter(
+						filePath => !removedFilePaths.includes(filePath),
+					);
+
+					if (updatedFilePaths.length > 0) {
+						// Un-index files that don't exist in the repo
+						await writeToFile({
+							filePath: `${fishcakeRepositoryPath}/checksums.json`,
+							fileContent: JSON.stringify(updatedFilePaths),
+						});
+						return;
+					}
+					return;
+				},
+				onDone: {
+					target: AppState.DO_CHECKSUMS_MATCH,
 				},
 			},
 		},
@@ -131,9 +204,16 @@ export const navigationMachine = createMachine<
 		[AppState.DOES_MAP_EXIST]: {
 			target: AppState.DOES_MAP_EXIST,
 		},
+		[AppState.DO_MAP_FILE_PATHS_EXIST]: {
+			target: AppState.DO_MAP_FILE_PATHS_EXIST,
+		},
 		[AppState.DO_CHECKSUMS_EXIST]: {
 			target: AppState.DO_CHECKSUMS_EXIST,
 		},
+		[AppState.DO_CHECKSUM_FILE_PATHS_EXIST]: {
+			target: AppState.DO_CHECKSUM_FILE_PATHS_EXIST,
+		},
+
 		[AppState.DO_CHECKSUMS_MATCH]: {
 			target: AppState.DO_CHECKSUMS_MATCH,
 		},
