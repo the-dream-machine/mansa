@@ -8,7 +8,7 @@ import {writeToFile} from '../utils/writeToFile.js';
 import {AppState, type NavigationMachineEvent} from './navigationMachine.js';
 import {compareAllChecksums} from '../utils/compareAllChecksums.js';
 
-interface IndexNewFileMachineContext {
+interface IndexNewFilesMachineContext {
 	filePaths: string[];
 	currentFileIndexing: number;
 	enterLabel: string;
@@ -18,7 +18,7 @@ interface IndexNewFileMachineContext {
 	navigate?: Sender<NavigationMachineEvent>;
 }
 
-export enum IndexNewFileState {
+export enum IndexNewFilesState {
 	COMPARING_CHECKSUMS = 'COMPARING_CHECKSUMS',
 	IDLE = 'IDLE',
 	INDEXING_NEW_FILES = 'INDEXING_NEW_FILES',
@@ -26,50 +26,50 @@ export enum IndexNewFileState {
 	INDEXING_ERROR_IDLE = 'INDEXING_ERROR_IDLE',
 	WRITING_ERROR_FILE = 'WRITING_ERROR_FILE',
 }
-type IndexNewFileMachineState =
+type IndexNewFilesMachineState =
 	| {
-			value: IndexNewFileState.COMPARING_CHECKSUMS;
-			context: IndexNewFileMachineContext;
+			value: IndexNewFilesState.COMPARING_CHECKSUMS;
+			context: IndexNewFilesMachineContext;
 	  }
 	| {
-			value: IndexNewFileState.IDLE;
-			context: IndexNewFileMachineContext;
+			value: IndexNewFilesState.IDLE;
+			context: IndexNewFilesMachineContext;
 	  }
 	| {
-			value: IndexNewFileState.INDEXING_NEW_FILES;
-			context: IndexNewFileMachineContext;
+			value: IndexNewFilesState.INDEXING_NEW_FILES;
+			context: IndexNewFilesMachineContext;
 	  }
 	| {
-			value: IndexNewFileState.INDEXING_SUCCESS_IDLE;
-			context: IndexNewFileMachineContext;
+			value: IndexNewFilesState.INDEXING_SUCCESS_IDLE;
+			context: IndexNewFilesMachineContext;
 	  }
 	| {
-			value: IndexNewFileState.INDEXING_ERROR_IDLE;
-			context: IndexNewFileMachineContext;
+			value: IndexNewFilesState.INDEXING_ERROR_IDLE;
+			context: IndexNewFilesMachineContext;
 	  }
 	| {
-			value: IndexNewFileState.WRITING_ERROR_FILE;
-			context: IndexNewFileMachineContext;
+			value: IndexNewFilesState.WRITING_ERROR_FILE;
+			context: IndexNewFilesMachineContext;
 	  };
 
-export enum IndexNewFileEvent {
+export enum IndexNewFilesEvent {
 	ENTER_KEY_PRESSED = 'ENTER_KEY_PRESSED ',
 }
-type IndexNewFileMachineEvent = {type: IndexNewFileEvent.ENTER_KEY_PRESSED};
+type IndexNewFilesMachineEvent = {type: IndexNewFilesEvent.ENTER_KEY_PRESSED};
 
 // Guards
-const isLastFilePath = (context: IndexNewFileMachineContext) =>
+const isLastFilePath = (context: IndexNewFilesMachineContext) =>
 	context.filePaths.length - 1 === context.currentFileIndexing;
 
-export const indexNewFileMachine = createMachine<
-	IndexNewFileMachineContext,
-	IndexNewFileMachineEvent,
-	IndexNewFileMachineState
+export const indexNewFilesMachine = createMachine<
+	IndexNewFilesMachineContext,
+	IndexNewFilesMachineEvent,
+	IndexNewFilesMachineState
 >({
-	id: 'indexNewFileMachine',
+	id: 'indexNewFilesMachine',
 	predictableActionArguments: true,
 	preserveActionOrder: true,
-	initial: IndexNewFileState.COMPARING_CHECKSUMS,
+	initial: IndexNewFilesState.COMPARING_CHECKSUMS,
 	context: {
 		filePaths: [],
 		currentFileIndexing: 0,
@@ -79,17 +79,17 @@ export const indexNewFileMachine = createMachine<
 		indexRepositoryErrorLogPath: '',
 	},
 	states: {
-		[IndexNewFileState.COMPARING_CHECKSUMS]: {
+		[IndexNewFilesState.COMPARING_CHECKSUMS]: {
 			invoke: {
 				src: async () => await compareAllChecksums(),
 				onDone: {
-					target: IndexNewFileState.IDLE,
+					target: IndexNewFilesState.IDLE,
 					actions: assign({
 						filePaths: (_, event: DoneInvokeEvent<string[]>) => event.data,
 					}),
 				},
 				onError: {
-					target: IndexNewFileState.WRITING_ERROR_FILE,
+					target: IndexNewFilesState.WRITING_ERROR_FILE,
 					actions: assign({
 						indexRepositoryErrorMessage: (_, event: DoneInvokeEvent<Error>) =>
 							event.data.message,
@@ -101,14 +101,14 @@ export const indexNewFileMachine = createMachine<
 				},
 			},
 		},
-		[IndexNewFileState.IDLE]: {
+		[IndexNewFilesState.IDLE]: {
 			on: {
-				[IndexNewFileEvent.ENTER_KEY_PRESSED]: {
-					target: IndexNewFileState.INDEXING_NEW_FILES,
+				[IndexNewFilesEvent.ENTER_KEY_PRESSED]: {
+					target: IndexNewFilesState.INDEXING_NEW_FILES,
 				},
 			},
 		},
-		[IndexNewFileState.INDEXING_NEW_FILES]: {
+		[IndexNewFilesState.INDEXING_NEW_FILES]: {
 			invoke: {
 				src: async context => {
 					const filePath = context.filePaths[context.currentFileIndexing] ?? '';
@@ -118,14 +118,14 @@ export const indexNewFileMachine = createMachine<
 				onDone: [
 					{
 						// Loop until all files are indexed
-						target: IndexNewFileState.INDEXING_NEW_FILES,
+						target: IndexNewFilesState.INDEXING_NEW_FILES,
 						cond: context => !isLastFilePath(context),
 						actions: assign({
 							currentFileIndexing: context => context.currentFileIndexing + 1,
 						}),
 					},
 					{
-						target: IndexNewFileState.INDEXING_SUCCESS_IDLE,
+						target: IndexNewFilesState.INDEXING_SUCCESS_IDLE,
 						cond: context => isLastFilePath(context),
 						actions: assign({
 							enterLabel: 'continue',
@@ -133,7 +133,7 @@ export const indexNewFileMachine = createMachine<
 					},
 				],
 				onError: {
-					target: IndexNewFileState.WRITING_ERROR_FILE,
+					target: IndexNewFilesState.WRITING_ERROR_FILE,
 					actions: assign({
 						indexRepositoryErrorMessage: (_, event: DoneInvokeEvent<Error>) =>
 							event.data.message,
@@ -145,9 +145,9 @@ export const indexNewFileMachine = createMachine<
 				},
 			},
 		},
-		[IndexNewFileState.INDEXING_SUCCESS_IDLE]: {
+		[IndexNewFilesState.INDEXING_SUCCESS_IDLE]: {
 			on: {
-				[IndexNewFileEvent.ENTER_KEY_PRESSED]: {
+				[IndexNewFilesEvent.ENTER_KEY_PRESSED]: {
 					actions: context => {
 						if (context.navigate) {
 							context.navigate(AppState.DO_CHECKSUMS_MATCH);
@@ -156,7 +156,7 @@ export const indexNewFileMachine = createMachine<
 				},
 			},
 		},
-		[IndexNewFileState.WRITING_ERROR_FILE]: {
+		[IndexNewFilesState.WRITING_ERROR_FILE]: {
 			invoke: {
 				src: async context =>
 					await writeToFile({
@@ -164,17 +164,17 @@ export const indexNewFileMachine = createMachine<
 						fileContent: context.indexRepositoryErrorMessage,
 					}),
 				onDone: {
-					target: IndexNewFileState.INDEXING_ERROR_IDLE,
+					target: IndexNewFilesState.INDEXING_ERROR_IDLE,
 					actions: assign({
 						enterLabel: 'retry',
 					}),
 				},
 			},
 		},
-		[IndexNewFileState.INDEXING_ERROR_IDLE]: {
+		[IndexNewFilesState.INDEXING_ERROR_IDLE]: {
 			on: {
-				[IndexNewFileEvent.ENTER_KEY_PRESSED]: {
-					target: IndexNewFileState.INDEXING_NEW_FILES,
+				[IndexNewFilesEvent.ENTER_KEY_PRESSED]: {
+					target: IndexNewFilesState.INDEXING_NEW_FILES,
 				},
 			},
 		},

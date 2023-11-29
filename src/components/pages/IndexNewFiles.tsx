@@ -11,14 +11,14 @@ import {PageContainer} from '../PageContainer.js';
 import {NavigationContext} from '../NavigationProvider.js';
 import {BaseColors, Colors} from '../../utils/Colors.js';
 import {
-	IndexNewFileEvent,
-	IndexNewFileState,
-	indexNewFileMachine,
-} from '../../machines/indexNewFileMachine.js';
+	IndexNewFilesEvent,
+	IndexNewFilesState,
+	indexNewFilesMachine,
+} from '../../machines/indexNewFilesMachine.js';
 
 export const IndexNewFiles = () => {
 	const [, navigate] = NavigationContext.useActor();
-	const [state, send] = useMachine(indexNewFileMachine, {
+	const [state, send] = useMachine(indexNewFilesMachine, {
 		context: {navigate},
 	});
 
@@ -32,19 +32,21 @@ export const IndexNewFiles = () => {
 		(currentIndexingFileCount / totalFiles) * 100,
 	);
 
-	const showLoader = state.matches(IndexNewFileState.INDEXING_NEW_FILES);
+	const showLoader = state.matches(IndexNewFilesState.INDEXING_NEW_FILES);
 	const showProgressBar =
-		state.matches(IndexNewFileState.INDEXING_NEW_FILES) ||
-		state.matches(IndexNewFileState.INDEXING_SUCCESS_IDLE) ||
-		state.matches(IndexNewFileState.INDEXING_ERROR_IDLE);
+		state.matches(IndexNewFilesState.INDEXING_NEW_FILES) ||
+		state.matches(IndexNewFilesState.INDEXING_SUCCESS_IDLE) ||
+		state.matches(IndexNewFilesState.INDEXING_ERROR_IDLE);
 	const showSuccessMessage = state.matches(
-		IndexNewFileState.INDEXING_SUCCESS_IDLE,
+		IndexNewFilesState.INDEXING_SUCCESS_IDLE,
 	);
-	const showErrorMessage = state.matches(IndexNewFileState.INDEXING_ERROR_IDLE);
+	const showErrorMessage = state.matches(
+		IndexNewFilesState.INDEXING_ERROR_IDLE,
+	);
 	const showCurrentIndexingFile = state.matches(
-		IndexNewFileState.INDEXING_NEW_FILES,
+		IndexNewFilesState.INDEXING_NEW_FILES,
 	);
-	const enterDisabled = state.matches(IndexNewFileState.INDEXING_NEW_FILES);
+	const enterDisabled = state.matches(IndexNewFilesState.INDEXING_NEW_FILES);
 
 	const {exit} = useApp();
 	useInput((_, key) => {
@@ -52,7 +54,7 @@ export const IndexNewFiles = () => {
 			exit();
 		}
 		if (key.return) {
-			send(IndexNewFileEvent.ENTER_KEY_PRESSED);
+			send(IndexNewFilesEvent.ENTER_KEY_PRESSED);
 		}
 	});
 

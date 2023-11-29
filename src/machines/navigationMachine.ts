@@ -6,7 +6,6 @@ import {repositoryChecksumsMatch} from '../utils/repository/repositoryChecksumsM
 import {getRepositoryFilePaths} from '../utils/repository/getRepositoryFilePaths.js';
 import {writeToFile} from '../utils/writeToFile.js';
 import {fishcakeRepositoryPath} from '../utils/fishcakePath.js';
-import {sleep} from 'zx';
 
 export enum NavigationPage {
 	ABOUT = 'ABOUT',
