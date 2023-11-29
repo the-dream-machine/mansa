@@ -1,6 +1,6 @@
 import type {Theme} from 'prismjs-terminal';
 import chalk from 'chalk';
-import {BaseColors} from '../components/Colors.js';
+import {BaseColors} from './Colors.js';
 
 export interface ThemeOptions {
 	highlightAddition?: boolean;

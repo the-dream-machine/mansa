@@ -1,4 +1,4 @@
-import {Colors, type BaseColors} from '../components/Colors.js';
+import {Colors, type BaseColors} from './Colors.js';
 
 interface Args {
 	color: Colors | BaseColors;

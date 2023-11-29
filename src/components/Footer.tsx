@@ -1,7 +1,7 @@
 import React from 'react';
 import {Box, Spacer, Text} from 'ink';
 import figureSet from 'figures';
-import {BaseColors, Colors} from './Colors.js';
+import {BaseColors, Colors} from '../utils/Colors.js';
 
 type Control = 'up' | 'down' | 'tab' | 'search' | 'esc' | 'enter' | 's';
 interface Props {

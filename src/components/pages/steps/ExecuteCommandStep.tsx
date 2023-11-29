@@ -4,7 +4,7 @@ import {useActor} from '@xstate/react';
 import {Box, Spacer, Text, useApp, useInput} from 'ink';
 
 import {StepsContext} from '../../StepsProvider.js';
-import {BaseColors, Colors} from '../../Colors.js';
+import {BaseColors, Colors} from '../../../utils/Colors.js';
 import {PageContainer} from '../../PageContainer.js';
 import {ScrollContainer} from '../../ScrollContainer.js';
 import {Footer} from '../../Footer.js';

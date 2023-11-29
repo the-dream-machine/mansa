@@ -13,7 +13,7 @@ import {
 	selectPackageManagerMachine,
 } from '../../machines/selectPackageManagerMachine.js';
 import {type PackageManager} from '../../types/PackageManager.js';
-import {BaseColors, Colors} from '../Colors.js';
+import {BaseColors, Colors} from '../../utils/Colors.js';
 
 const options: Option[] = [
 	{label: 'npm', value: 'npm'},

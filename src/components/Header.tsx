@@ -1,6 +1,6 @@
 import {Box, Text} from 'ink';
 import React from 'react';
-import {Colors} from './Colors.js';
+import {Colors} from '../utils/Colors.js';
 
 interface Props {
 	title?: string;

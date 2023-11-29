@@ -11,7 +11,7 @@ import {
 	indexRepositoryMachine,
 } from '../../machines/indexRepositoryMachine.js';
 import {NavigationContext} from '../NavigationProvider.js';
-import {BaseColors, Colors} from '../Colors.js';
+import {BaseColors, Colors} from '../../utils/Colors.js';
 import {ScrollContainer} from '../ScrollContainer.js';
 
 export const About = () => {

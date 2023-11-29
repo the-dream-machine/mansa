@@ -9,7 +9,7 @@ import {Footer} from '../Footer.js';
 import {Body} from '../Body.js';
 import {PageContainer} from '../PageContainer.js';
 import {NavigationContext} from '../NavigationProvider.js';
-import {BaseColors, Colors} from '../Colors.js';
+import {BaseColors, Colors} from '../../utils/Colors.js';
 import {
 	IndexNewFileEvent,
 	IndexNewFileState,
