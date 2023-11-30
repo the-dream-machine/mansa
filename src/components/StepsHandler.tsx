@@ -13,11 +13,8 @@ import {Spinner} from '@inkjs/ui';
 
 export const StepsHandler = () => {
 	const [state] = StepsContext.useActor();
-	const showLoader =
-		state.matches(StepsState.GENERATE_STEPS) ||
-		state.matches(StepsState.POLLING_GENERATE_STEPS_STATUS) ||
-		state.matches(StepsState.FETCHING_ALL_STEPS) ||
-		state.matches(StepsState.SPAWNING_ACTIVE_STEP_MACHINE);
+	console.log('🌱 # state:', state.value);
+	const showLoader = state.matches(StepsState.GENERATING_STEPS);
 
 	if (showLoader) {
 		return (

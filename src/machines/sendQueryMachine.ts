@@ -11,10 +11,13 @@ import {sendQueryStatus} from '../utils/api/sendQueryStatus.js';
 import {sendQueryResult} from '../utils/api/sendQueryResult.js';
 
 import type {RunStatusResponse, Run} from '../types/Run.js';
+import {initialSendQueryMachineContext} from '../utils/initialSendQueryMachineContext.js';
 
 // Context
 export interface QueryMachineContext {
 	query: string;
+	systemInstructions: string;
+	responseParentKey: string;
 	run: Run;
 	errorMessage?: string;
 	result: string;
@@ -52,14 +55,7 @@ export type QueryMachineState =
 const isStatusCompleted = (event: DoneInvokeEvent<RunStatusResponse>) =>
 	event.data.status === 'completed';
 
-const initialContext: QueryMachineContext = {
-	query: '',
-	run: {thread_id: '', run_id: ''},
-	errorMessage: '',
-	result: '',
-};
-
-export const queryMachine = createMachine<
+export const sendQueryMachine = createMachine<
 	QueryMachineContext,
 	EventObject,
 	QueryMachineState
@@ -67,12 +63,16 @@ export const queryMachine = createMachine<
 	id: 'queryMachine',
 	predictableActionArguments: true,
 	preserveActionOrder: true,
-	context: initialContext,
+	context: initialSendQueryMachineContext,
 	initial: QueryState.SEND_QUERY,
 	states: {
 		[QueryState.SEND_QUERY]: {
 			invoke: {
-				src: async context => await sendQuery({query: context.query}),
+				src: context =>
+					sendQuery({
+						query: context.query,
+						systemInstructions: context.systemInstructions,
+					}),
 				onDone: {
 					target: QueryState.POLLING_QUERY_STATUS,
 					actions: assign({
@@ -92,7 +92,9 @@ export const queryMachine = createMachine<
 			invoke: {
 				src: async context => {
 					await sleep(1000);
-					return await sendQueryStatus(context.run);
+					const result = await sendQueryStatus(context.run);
+					console.log('🌱 # result:', result);
+					return result;
 				},
 				onDone: [
 					// If status is not completed, keep polling
@@ -118,9 +120,20 @@ export const queryMachine = createMachine<
 		},
 		[QueryState.FETCHING_QUERY_RESULT]: {
 			invoke: {
-				src: async context => await sendQueryResult(context.run),
+				src: async context => {
+					console.log('FETCHING_RESULT');
+					const result = await sendQueryResult({
+						thread_id: context.run.thread_id,
+						responseParentKey: context.responseParentKey,
+					});
+					console.log('🌱 # result:', result);
+					return result;
+				},
 				onDone: {
-					// actions: {type: },
+					target: QueryState.QUERY_SUCCESS,
+					actions: assign({
+						result: (_, event: DoneInvokeEvent<string>) => event.data,
+					}),
 				},
 				onError: {
 					target: QueryState.QUERY_ERROR,
@@ -131,7 +144,12 @@ export const queryMachine = createMachine<
 				},
 			},
 		},
-		[QueryState.QUERY_SUCCESS]: {},
-		[QueryState.QUERY_ERROR]: {},
+		[QueryState.QUERY_SUCCESS]: {
+			type: 'final',
+			data: context => JSON.parse(context.result),
+		},
+		[QueryState.QUERY_ERROR]: {
+			entry: [context => console.log('QUERY_ERROR:', context.errorMessage)],
+		},
 	},
 });

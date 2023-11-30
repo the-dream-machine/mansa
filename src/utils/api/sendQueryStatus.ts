@@ -10,7 +10,7 @@ export const sendQueryStatus = async ({run_id, thread_id}: Run) => {
 	const config: AxiosRequestConfig = {
 		method: 'POST',
 		maxBodyLength: Infinity,
-		url: 'http://localhost:3000/send-query-status',
+		url: 'http://localhost:3000/query-status',
 		headers: {'Content-Type': 'application/json'},
 		data,
 	};

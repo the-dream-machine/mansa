@@ -132,7 +132,6 @@ export const navigationMachine = createMachine<
 					}
 					return;
 				},
-
 				onDone: {
 					target: AppState.DO_CHECKSUMS_EXIST,
 				},

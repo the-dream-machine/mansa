@@ -1,12 +1,16 @@
 import axios, {type AxiosRequestConfig, type AxiosResponse} from 'axios';
-import {type Run} from '../../types/Run.js';
 
-export const sendQueryResult = async ({thread_id}: Run) => {
-	const data = JSON.stringify({thread_id});
+interface Args {
+	thread_id: string;
+	responseParentKey: string;
+}
+
+export const sendQueryResult = async ({thread_id, responseParentKey}: Args) => {
+	const data = JSON.stringify({thread_id, responseParentKey});
 	const config: AxiosRequestConfig = {
 		method: 'POST',
 		maxBodyLength: Infinity,
-		url: 'http://localhost:3000/send-query-result',
+		url: 'http://localhost:3000/query-result',
 		headers: {'Content-Type': 'application/json'},
 		data,
 	};
