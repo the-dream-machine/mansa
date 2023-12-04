@@ -6,6 +6,7 @@ import loadLanguages from 'prismjs/components/index.js';
 import {writeToFile} from '../utils/writeToFile.js';
 import {sendParent} from 'xstate/lib/actions.js';
 import {StepsEvent} from '../types/StepsMachine.js';
+import {sleep} from 'zx';
 
 // Context
 export interface CreateFileMachineContext {
@@ -15,6 +16,13 @@ export interface CreateFileMachineContext {
 	formattedCode?: string;
 	highlightedCode?: string;
 	enterLabel: string;
+
+	isLoading: boolean;
+	isSuccess: boolean;
+	isError: boolean;
+	loadingMessage: string;
+	successMessage: string;
+	errorMessage: string;
 }
 
 // States
@@ -57,6 +65,22 @@ export enum CreateFileEvent {
 //  State machine events
 export type CreateFileMachineEvent = {type: CreateFileEvent.ENTER_KEY_PRESSED};
 
+const initialCreateFileMachineContext: CreateFileMachineContext = {
+	filePath: '',
+	fileExtension: '',
+	rawCode: '',
+	formattedCode: '',
+	highlightedCode: '',
+	enterLabel: 'create file',
+
+	isLoading: false,
+	isSuccess: false,
+	isError: false,
+	loadingMessage: '',
+	successMessage: '',
+	errorMessage: '',
+};
+
 export const createFileMachine = createMachine<
 	CreateFileMachineContext,
 	CreateFileMachineEvent,
@@ -66,14 +90,7 @@ export const createFileMachine = createMachine<
 	id: 'createFileMachine',
 	predictableActionArguments: true,
 	initial: CreateFileState.FORMATTING_CODE,
-	context: {
-		filePath: '',
-		fileExtension: '',
-		rawCode: '',
-		formattedCode: '',
-		highlightedCode: '',
-		enterLabel: 'create file',
-	},
+	context: initialCreateFileMachineContext,
 	states: {
 		[CreateFileState.FORMATTING_CODE]: {
 			invoke: {
@@ -144,12 +161,21 @@ export const createFileMachine = createMachine<
 			},
 		},
 		[CreateFileState.CREATING_FILE]: {
+			entry: [
+				assign(context => ({
+					isLoading: true,
+					loadingMessage: `Creating ${context.filePath}`,
+				})),
+			],
+			exit: [assign({isLoading: false})],
 			invoke: {
-				src: async context =>
-					await writeToFile({
+				src: async context => {
+					await sleep(2000);
+					return await writeToFile({
 						filePath: context?.filePath ?? '',
 						fileContent: context?.formattedCode ?? '',
-					}),
+					});
+				},
 				onDone: {
 					target: CreateFileState.CREATE_FILE_SUCCESS_IDLE,
 				},
@@ -157,9 +183,11 @@ export const createFileMachine = createMachine<
 		},
 		[CreateFileState.CREATE_FILE_SUCCESS_IDLE]: {
 			entry: [
-				assign({
+				assign(context => ({
 					enterLabel: 'next step',
-				}),
+					isSuccess: true,
+					successMessage: `Successfully created ${context.filePath}`,
+				})),
 			],
 			on: {
 				[CreateFileEvent.ENTER_KEY_PRESSED]: {

@@ -20,8 +20,6 @@ import {Footer} from './Footer.js';
 
 export const StepsHandler = () => {
 	const [state, send] = StepsContext.useActor();
-	// console.log('🌱 # steps state:', state.value);
-	// console.log('🌱 # highlighted:', state.context.highlightedStepsSummary);
 	const showStep =
 		state.matches(StepsState.ACTIVE_STEP_IDLE) ||
 		state.matches(StepsState.FETCHING_NEXT_STEP);

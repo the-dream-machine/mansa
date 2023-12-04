@@ -139,7 +139,7 @@ const initialContext: StepsMachineContext = {
 			step_description:
 				'This step adds required packages for Trigger.dev and its integration with Next.js to the project. It provides foundational components needed to define and run jobs within the application.',
 			step_type: 'RUN_BASH_COMMAND',
-			bash_command_to_run: 'npm install @trigger.dev/sdk @trigger.dev/nextjs',
+			bash_command_to_run: 'bun add @trigger.dev/sdk @trigger.dev/nextjs',
 		},
 		{
 			step_title: 'Create Trigger Client Configuration File',
@@ -240,7 +240,7 @@ const initialContext: StepsMachineContext = {
 			bash_command_to_run: 'bunx @trigger.dev/cli@latest dev',
 		},
 	],
-	activeStepIndex: 0,
+	activeStepIndex: 1,
 	activeStepActor: undefined,
 
 	isStepsSummaryLoading: false,

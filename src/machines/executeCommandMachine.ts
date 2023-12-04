@@ -15,6 +15,7 @@ export interface ExecuteCommandMachineContext {
 	highlightedBashCommand: string;
 	commandOutput: string;
 	highlightedCommandOutput: string;
+
 	isLoading: boolean;
 	isSuccess: boolean;
 	isError: boolean;

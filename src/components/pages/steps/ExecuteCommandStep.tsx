@@ -80,9 +80,7 @@ export const ExecuteCommandStep = () => {
 						(Step {activeStepIndex + 1} of {totalSteps})
 					</Text>
 				</Text>
-			</SectionContainer>
 
-			<SectionContainer showDivider>
 				{/* Description */}
 				<Box gap={3}>
 					<Text color={getFirstStepStateColor(Colors.LightGreen)}>•</Text>
@@ -135,6 +133,7 @@ export const ExecuteCommandStep = () => {
 							>
 								<Text color={Colors.DarkGray}>{highlightedCommandOutput}</Text>
 							</Box>
+
 							{isSuccess && (
 								<Box flexDirection="column" gap={2} paddingTop={2}>
 									<Box gap={2}>

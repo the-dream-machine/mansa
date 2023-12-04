@@ -14,8 +14,10 @@ import {
 	type CreateFileMachineState,
 	type CreateFileMachineEvent,
 } from '../../../machines/createFileMachine.js';
-import {ScrollContainer} from '../../ScrollContainer.js';
+
 import type {Actor} from '../../../types/Actor.js';
+import {SectionContainer} from '../../SectionContainer.js';
+import {Spinner} from '@inkjs/ui';
 
 export const CreateFileStep = () => {
 	const [stepsState] = StepsContext.useActor();
@@ -35,16 +37,14 @@ export const CreateFileStep = () => {
 	const highlightedCode = createFileMachineState.context.highlightedCode;
 	const filepath = createFileMachineState.context.filePath;
 	const enterLabel = createFileMachineState.context.enterLabel;
+	const isLoading = createFileMachineState.context.isLoading;
+	const isSuccess = createFileMachineState.context.isSuccess;
+	const isError = createFileMachineState.context.isError;
+	const loadingMessage = createFileMachineState.context.loadingMessage;
+	const successMessage = createFileMachineState.context.successMessage;
+	const errorMessage = createFileMachineState.context.errorMessage;
 
-	const isLoading = createFileMachineState.matches(
-		CreateFileState.CREATING_FILE,
-	);
-	const isSuccess = createFileMachineState.matches(
-		CreateFileState.CREATE_FILE_SUCCESS_IDLE,
-	);
-	const isError = createFileMachineState.matches(
-		CreateFileState.CREATE_FILE_ERROR_IDLE,
-	);
+	const showSuccessSection = isLoading || isSuccess || isError;
 
 	const {exit} = useApp();
 	useInput((_, key) => {
@@ -57,88 +57,99 @@ export const CreateFileStep = () => {
 	});
 
 	const getStateColor = (color: Colors | BaseColors) =>
-		isSuccess ? Colors.DarkGray : color;
+		showSuccessSection ? Colors.DarkGray : color;
 
 	return (
 		<PageContainer>
-			<Header
-				isLoading={isLoading}
-				isSuccess={isSuccess}
-				isError={isError}
-				loadingMessage={`Creating ${filepath}`}
-				successMessage="Created successfully"
-			/>
-			<Box>
-				<Box flexDirection="row" gap={4}>
-					{/* Left Block */}
+			<Header />
+			<SectionContainer>
+				{/* Title */}
+				<Text color={Colors.White}>
+					{activeStep?.step_title}{' '}
+					<Text color={Colors.DarkGray}>
+						(Step {activeStepIndex + 1} of {totalSteps})
+					</Text>
+				</Text>
+
+				{/* Description */}
+				<Box gap={2}>
+					<Text color={getStateColor(Colors.LightGreen)}>•</Text>
+					<Text color={getStateColor(Colors.LightGray)}>
+						{activeStep?.step_description}
+					</Text>
+				</Box>
+
+				{/* Code Block */}
+				<Box
+					flexDirection="column"
+					flexShrink={0}
+					gap={1}
+					marginX={3}
+					paddingTop={1}
+					paddingX={2}
+					borderColor={Colors.DarkGray}
+					borderStyle="round"
+				>
+					<Text color={Colors.DarkGray} italic>
+						{filepath}
+					</Text>
+					<Text>{highlightedCode}</Text>
+				</Box>
+
+				{/* Press Enter Create File */}
+				<Box marginLeft={3}>
+					<Text color={getStateColor(Colors.LightGray)}>
+						Press <Text color={getStateColor(Colors.LightGreen)}>enter</Text> to
+						create the{' '}
+						<Text color={getStateColor(Colors.White)} italic>
+							{filepath}
+						</Text>{' '}
+						file and apply the code changes.
+					</Text>
+				</Box>
+			</SectionContainer>
+
+			{showSuccessSection && (
+				<SectionContainer showDivider>
 					<Box flexDirection="column" gap={1}>
-						{/* Title */}
-						<Text color={BaseColors.White}>
-							{activeStep?.step_title}{' '}
-							<Text color={Colors.DarkGray}>
-								(Step {activeStepIndex + 1} of {totalSteps})
-							</Text>
-						</Text>
-
-						{/* Description step */}
-						<Box gap={1}>
-							<Text color={getStateColor(Colors.LightGreen)}>•</Text>
-							<Box flexDirection="column" gap={1}>
-								<Text color={getStateColor(Colors.LightGray)}>
-									{activeStep?.step_description}
-								</Text>
-								<Text color={getStateColor(Colors.DarkGray)}>
-									Press{' '}
-									<Text color={getStateColor(BaseColors.Gray500)}>enter</Text>{' '}
-									to create{' '}
-									<Text color={getStateColor(BaseColors.Gray500)} italic>
-										{filepath}
-									</Text>{' '}
-									and apply the code changes.
-								</Text>
-							</Box>
-						</Box>
-
-						{/* Success step */}
-						{isSuccess && (
-							<Box gap={1} flexShrink={0} marginTop={1}>
-								<Text color={Colors.LightGreen}>•</Text>
-								<Text color={Colors.LightGray}>
-									Press <Text color={Colors.White}>enter</Text> to go to the
-									next step.
-								</Text>
+						{/* Loader */}
+						{isLoading && (
+							<Box gap={2}>
+								<Spinner />
+								<Text color={Colors.LightGray}>{loadingMessage}</Text>
 							</Box>
 						)}
-					</Box>
-					<Spacer />
+						{isSuccess && (
+							<Box flexDirection="column" gap={2} paddingTop={2}>
+								<Box gap={2}>
+									<Text color={Colors.LightGreen}>•</Text>
+									<Text>{successMessage} 🎉</Text>
+								</Box>
 
-					{/* Code block */}
-					<Box
-						minWidth={50}
-						flexDirection="column"
-						flexShrink={0}
-						gap={1}
-						paddingTop={1}
-						paddingX={2}
-						marginTop={2}
-						borderColor={BaseColors.Gray800}
-						borderStyle="round"
-					>
-						<Text color={BaseColors.Gray700} italic>
-							{filepath}
-						</Text>
-
-						<ScrollContainer>
-							<Box paddingBottom={8}>
-								<Text>{highlightedCode}</Text>
+								<Box marginLeft={3}>
+									<Text color={Colors.LightGray}>
+										Press <Text color={Colors.LightGreen}>enter</Text> to go to
+										the next step.
+									</Text>
+								</Box>
 							</Box>
-						</ScrollContainer>
+						)}
+						{/* Success */}
+						{/* {isSuccess && (
+							<Box flexDirection="column" gap={2} paddingTop={2}>
+								<Text>🎉 {successMessage}</Text>
+								<Text color={Colors.LightGray}>
+									Press <Text color={Colors.LightGreen}>enter</Text> to go to
+									the next step.
+								</Text>
+							</Box>
+						)} */}
 					</Box>
-				</Box>
-			</Box>
+				</SectionContainer>
+			)}
 			<Spacer />
 			<Footer
-				controls={['enter', 'esc', 'up', 'down']}
+				controls={['enter', 'esc']}
 				enterLabel={enterLabel}
 				enterDisabled={isLoading}
 			/>
