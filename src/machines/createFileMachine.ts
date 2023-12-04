@@ -5,7 +5,7 @@ import {highlightAsync} from '../utils/highlightAsync.js';
 import loadLanguages from 'prismjs/components/index.js';
 import {writeToFile} from '../utils/writeToFile.js';
 import {sendParent} from 'xstate/lib/actions.js';
-import {StepsEvent} from '../types/Steps.js';
+import {StepsEvent} from '../types/StepsMachine.js';
 
 // Context
 export interface CreateFileMachineContext {

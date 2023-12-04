@@ -1,5 +1,5 @@
 import {highlight} from 'prismjs-terminal';
-import {ThemeOptions, defaultPrismTheme} from './prismThemes.js';
+import {type ThemeOptions, defaultPrismTheme} from './prismThemes.js';
 
 interface Args {
 	code: string;

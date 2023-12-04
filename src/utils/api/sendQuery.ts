@@ -4,10 +4,15 @@ import {type Run} from '../../types/Run.js';
 interface Args {
 	query: string;
 	systemInstructions: string;
+	thread_id?: string;
 }
 
-export const sendQuery = async ({query, systemInstructions}: Args) => {
-	const data = JSON.stringify({query, systemInstructions});
+export const sendQuery = async ({
+	query,
+	systemInstructions,
+	thread_id,
+}: Args) => {
+	const data = JSON.stringify({query, systemInstructions, thread_id});
 	const config = {
 		method: 'POST',
 		maxBodyLength: Infinity,

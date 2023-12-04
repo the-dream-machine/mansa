@@ -1,6 +1,6 @@
 import React from 'react';
 import {Box, Spacer, Text, useApp, useInput} from 'ink';
-import {ProgressBar} from '@inkjs/ui';
+import {ProgressBar, Spinner} from '@inkjs/ui';
 import figureSet from 'figures';
 import {useMachine} from '@xstate/react';
 
@@ -90,7 +90,10 @@ export const IndexNewFiles = () => {
 							</Text>
 						</Box>
 						{showCurrentIndexingFile && (
-							<Text color="gray">Indexing: {currentIndexingFilePath}</Text>
+							<Box gap={1}>
+								<Spinner />
+								<Text color="gray">Indexing: {currentIndexingFilePath}</Text>
+							</Box>
 						)}
 					</Box>
 				)}
@@ -101,6 +104,7 @@ export const IndexNewFiles = () => {
 							<Text color="green">{figureSet.tick} </Text>
 							Indexing complete! 🎉
 						</Text>
+
 						<Text color="gray">
 							Press <Text color="white">enter</Text> to continue.
 						</Text>

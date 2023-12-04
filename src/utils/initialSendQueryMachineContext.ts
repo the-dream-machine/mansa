@@ -7,4 +7,5 @@ export const initialSendQueryMachineContext: QueryMachineContext = {
 	run: {thread_id: '', run_id: ''},
 	errorMessage: '',
 	result: '',
+	skipTransform: false,
 };

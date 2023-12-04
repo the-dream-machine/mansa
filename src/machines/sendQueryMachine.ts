@@ -21,6 +21,8 @@ export interface QueryMachineContext {
 	run: Run;
 	errorMessage?: string;
 	result: string;
+	skipTransform: boolean;
+	thread_id?: string;
 }
 
 // States
@@ -60,7 +62,7 @@ export const sendQueryMachine = createMachine<
 	EventObject,
 	QueryMachineState
 >({
-	id: 'queryMachine',
+	id: 'sendQueryMachine',
 	predictableActionArguments: true,
 	preserveActionOrder: true,
 	context: initialSendQueryMachineContext,
@@ -72,6 +74,7 @@ export const sendQueryMachine = createMachine<
 					sendQuery({
 						query: context.query,
 						systemInstructions: context.systemInstructions,
+						thread_id: context.thread_id,
 					}),
 				onDone: {
 					target: QueryState.POLLING_QUERY_STATUS,
@@ -91,6 +94,8 @@ export const sendQueryMachine = createMachine<
 		[QueryState.POLLING_QUERY_STATUS]: {
 			invoke: {
 				src: async context => {
+					console.log('POLLING_QUERY_STATUS');
+					console.log(context.run);
 					await sleep(1000);
 					const result = await sendQueryStatus(context.run);
 					console.log('🌱 # result:', result);
@@ -125,8 +130,8 @@ export const sendQueryMachine = createMachine<
 					const result = await sendQueryResult({
 						thread_id: context.run.thread_id,
 						responseParentKey: context.responseParentKey,
+						skipTransform: context.skipTransform,
 					});
-					console.log('🌱 # result:', result);
 					return result;
 				},
 				onDone: {
@@ -146,7 +151,10 @@ export const sendQueryMachine = createMachine<
 		},
 		[QueryState.QUERY_SUCCESS]: {
 			type: 'final',
-			data: context => JSON.parse(context.result),
+			data: context => ({
+				run: context.run,
+				result: JSON.parse(context.result),
+			}),
 		},
 		[QueryState.QUERY_ERROR]: {
 			entry: [context => console.log('QUERY_ERROR:', context.errorMessage)],

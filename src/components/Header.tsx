@@ -26,7 +26,7 @@ export const Header = ({
 	successMessage = 'Success',
 	errorMessage = 'Error',
 }: Props) => (
-	<Box paddingY={1} gap={1} width={'100%'} flexShrink={0}>
+	<Box paddingY={1} paddingX={3} gap={1} width={'100%'} flexShrink={0}>
 		<Text color={titleTextColor} backgroundColor={titleBackgroundColor} bold>
 			{' '}
 			{title}{' '}

@@ -43,7 +43,7 @@ const SelectPackageManager = () => {
 					Set up fishcake <Text color={Colors.DarkGray}>(Step 1 of 2)</Text>
 				</Text>
 				<Text color={Colors.LightGray}>
-					Which package manager are you currently using for this project?
+					Which package manager are you using for this project?
 				</Text>
 
 				<Select

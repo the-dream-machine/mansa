@@ -10,9 +10,9 @@ export default function App() {
 	return (
 		<ThemeProvider theme={theme}>
 			<NavigationProvider>
-				<FullScreen>
-					<NavigationHandler />
-				</FullScreen>
+				{/* <FullScreen> */}
+				<NavigationHandler />
+				{/* </FullScreen> */}
 			</NavigationProvider>
 		</ThemeProvider>
 	);

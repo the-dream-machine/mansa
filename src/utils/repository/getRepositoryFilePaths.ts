@@ -12,6 +12,7 @@ const ignoreFileExtensions = [
 	'*.jpg',
 	'*.jpeg',
 	'*.gif',
+	'*.webp',
 	'*.bmp',
 	'*.tiff',
 	'*.ico',

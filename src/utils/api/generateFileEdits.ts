@@ -1,6 +1,5 @@
 import axios, {type AxiosResponse} from 'axios';
-import {fs} from 'zx';
-import type {FileMapItem} from '../../types/FileMapItem.js';
+import {type Run} from '../../types/Run.js';
 
 interface Args {
 	filePath: string;
@@ -30,8 +29,7 @@ export const generateFileEdits = async ({
 	};
 
 	try {
-		const response: AxiosResponse<{editedFile: string}> =
-			await axios.request(config);
+		const response: AxiosResponse<Run> = await axios.request(config);
 		return response.data;
 	} catch (error) {
 		throw error;

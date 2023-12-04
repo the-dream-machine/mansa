@@ -6,7 +6,7 @@ import loadLanguages from 'prismjs/components/index.js';
 import {highlight} from 'prismjs-terminal';
 import {defaultPrismTheme} from '../utils/prismThemes.js';
 import {sendParent} from 'xstate/lib/actions.js';
-import {StepsEvent} from '../types/Steps.js';
+import {StepsEvent} from '../types/StepsMachine.js';
 
 // Context
 export interface ExecuteCommandMachineContext {
@@ -93,7 +93,7 @@ export const executeCommandMachine = createMachine<
 				src: async context => {
 					loadLanguages('bash');
 					return await highlightAsync({
-						code: context.bashCommand,
+						code: context.bashCommand.trim(),
 						language: 'bash',
 					});
 				},

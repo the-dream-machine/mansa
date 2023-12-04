@@ -7,6 +7,7 @@ interface Args {
 }
 
 export const summarizeFile = async ({filePath}: Args) => {
+	console.log('🌱 # filePath:', filePath);
 	const fileContent = (await fs.readFile(filePath)).toString();
 	const data = JSON.stringify({filePath, fileContent});
 	const config = {

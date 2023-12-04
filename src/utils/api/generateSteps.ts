@@ -15,8 +15,7 @@ export const generateSteps = async () => {
 		codebaseMap,
 		dependencies: repositoryDetails.dependencies,
 		devDependencies: repositoryDetails.devDependencies,
-		question:
-			'How do I set up trigger.dev in my project using the manual setup guide?',
+		question: 'How do I manually setup trigger.dev in my project?',
 	});
 	const config = {
 		method: 'post',

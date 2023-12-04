@@ -10,7 +10,7 @@ import loadLanguages from 'prismjs/components/index.js';
 import {Colors} from '../utils/Colors.js';
 import {writeToFile} from '../utils/writeToFile.js';
 import {sendParent} from 'xstate/lib/actions.js';
-import {StepsEvent} from '../types/Steps.js';
+import {StepsEvent} from '../types/StepsMachine.js';
 import {type RunStatusResponse, type Run} from '../types/Run.js';
 import {generateFileEditsStatus} from '../utils/api/generateFileEditsStatus.js';
 import {fetchFileEdits} from '../utils/api/fetchFileEdits.js';

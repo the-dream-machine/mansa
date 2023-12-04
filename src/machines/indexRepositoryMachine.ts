@@ -1,16 +1,14 @@
 import {type Sender, assign, createMachine, type DoneInvokeEvent} from 'xstate';
 import {v4 as uuid} from 'uuid';
 
-import {
-	type Repo,
-	getRepositoryDetails,
-} from '../utils/repository/getRepositoryDetails.js';
+import {getRepositoryDetails} from '../utils/repository/getRepositoryDetails.js';
 import {getRepositoryFilePaths} from '../utils/repository/getRepositoryFilePaths.js';
 import {AppState, type NavigationMachineEvent} from './navigationMachine.js';
 import {fishcakeUserPath} from '../utils/fishcakePath.js';
 import {writeToFile} from '../utils/writeToFile.js';
 import {updateRepositoryChecksums} from '../utils/repository/updateRepositoryChecksums.js';
 import {updateRepositoryMap} from '../utils/repository/updateRepositoryMap.js';
+import {type Repo} from '../types/Repo.js';
 
 // Context
 interface IndexRepositoryMachineContext {

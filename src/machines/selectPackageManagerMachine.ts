@@ -3,10 +3,8 @@ import {type Sender, createMachine, assign, type DoneInvokeEvent} from 'xstate';
 import {AppState, type NavigationMachineEvent} from './navigationMachine.js';
 import {createFishcakeConfig} from '../utils/createFishcakeConfig.js';
 import type {PackageManager} from '../types/PackageManager.js';
-import {
-	type Repo,
-	getRepositoryDetails,
-} from '../utils/repository/getRepositoryDetails.js';
+import {getRepositoryDetails} from '../utils/repository/getRepositoryDetails.js';
+import {type Repo} from '../types/Repo.js';
 
 // Context
 interface SelectPackageManagerMachineContext {

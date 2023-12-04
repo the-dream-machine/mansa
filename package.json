@@ -17,6 +17,7 @@
 	],
 	"dependencies": {
 		"@inkjs/ui": "^1.0.0",
+		"@sinclair/typebox": "^0.31.28",
 		"@xstate/react": "^3.2.2",
 		"axios": "^1.6.0",
 		"crypto": "^1.0.1",

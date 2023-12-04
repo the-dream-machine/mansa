@@ -2,6 +2,7 @@ export enum StepType {
 	RUN_BASH_COMMAND = 'RUN_BASH_COMMAND',
 	CREATE_FILE = 'CREATE_FILE',
 	MODIFY_FILE = 'MODIFY_FILE',
+	USER_ACTION = 'USER_ACTION',
 }
 
 export interface Step {

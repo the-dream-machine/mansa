@@ -16,7 +16,16 @@ export const Footer = ({
 	enterDisabled = false,
 }: Props) => {
 	return (
-		<Box paddingY={1} flexShrink={0} width={'100%'}>
+		<Box
+			// borderColor={Colors.DarkGray}
+			// borderStyle="round"
+			// borderRight={false}
+			// borderBottom={false}
+			// borderLeft={false}
+			paddingX={3}
+			paddingY={1}
+			width={'100%'}
+		>
 			{controls.includes('up') && (
 				<Box>
 					<Text color={BaseColors.Gray600}>{figureSet.triangleUp} </Text>
