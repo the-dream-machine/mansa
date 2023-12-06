@@ -20,11 +20,11 @@ export const AIStepsResponseSchema = Type.Array(
 		}),
 		step_description: Type.String({
 			description:
-				'The description should be informative and aim to educate the developer about the purpose of the current step.',
+				'The description should be informative and aim to educate the developer about the purpose of the current step. Your tone should be friendly.',
 		}),
 		step_type: Type.Enum(StepType, {
 			description: `Type of the step. Only use '${StepType.USER_ACTION}' in the following cases:
-1. If the step requires the user to execute a long running command.
+1. If the step requires the user to execute a long running command e.g running the development command or starting an interactive program.
 2. If the user needs to take action in a new terminal window.
 3. If the user needs to do something in the browser to proceed.
 Note: Do NOT use for creating or modifying files.`,
@@ -68,24 +68,30 @@ Note: Do NOT use for creating or modifying files.`,
 			),
 		),
 		existing_file_path_to_modify: Type.Optional(
-			Type.Object({
-				file_path: Type.String({
-					description:
-						"The full filepath from the project root directory. Copy summary from the codebase map e.g './src/utils/foo.ts'",
-				}),
-				file_extension: Type.String({
-					description: "Extension of the file e.g 'tsx' | 'js', | 'env'",
-				}),
-				current_file_content_summary: Type.String({
-					description:
-						'Summary of the current purpose of the file. Copy summary from the codebase map.',
-				}),
-				file_content_summary: Type.String({
-					description: `A detailed, concise and complete summary about the functionality and purpose of the provided file. Use the codebase map to inform your description.
-           e.g 'This file contains the client-side entrypoint for a tRPC API. It creates the 'api' object with
-            type-safe React Query hooks and inference helpers for input and output types. It also includes configuration
-             for data de-serialization, request flow links, and SSR settings.'`,
-				}),
+			Type.Object(
+				{
+					file_path: Type.String({
+						description:
+							"The full filepath from the project root directory. Copy summary from the codebase map e.g './src/utils/foo.ts'",
+					}),
+					file_extension: Type.String({
+						description: "Extension of the file e.g 'tsx' | 'js', | 'env'",
+					}),
+					current_file_content_summary: Type.String({
+						description:
+							'Summary of the current purpose of the file. Copy summary from the codebase map.',
+					}),
+					file_content_summary: Type.String({
+						description: `A detailed, concise and complete summary about the functionality and purpose of the provided file. Use the codebase map to inform your description.`,
+					}),
+				},
+				{description: 'Should be present if the step_type is MODIFY_FILE.'},
+			),
+		),
+		user_action: Type.Optional(
+			Type.String({
+				description:
+					'Bash command that the user needs to run. If the user needs to complete a task on a website return the bash command "open ${url to open}". If they need to run a command in a new terminal, return the full bash command. Should be present if the step_type is USER_ACTION',
 			}),
 		),
 	}),

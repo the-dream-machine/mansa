@@ -65,7 +65,7 @@ export enum CreateFileEvent {
 //  State machine events
 export type CreateFileMachineEvent = {type: CreateFileEvent.ENTER_KEY_PRESSED};
 
-const initialCreateFileMachineContext: CreateFileMachineContext = {
+export const initialCreateFileMachineContext: CreateFileMachineContext = {
 	filePath: '',
 	fileExtension: '',
 	rawCode: '',

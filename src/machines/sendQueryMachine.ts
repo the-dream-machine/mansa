@@ -94,12 +94,8 @@ export const sendQueryMachine = createMachine<
 		[QueryState.POLLING_QUERY_STATUS]: {
 			invoke: {
 				src: async context => {
-					console.log('POLLING_QUERY_STATUS');
-					console.log(context.run);
 					await sleep(1000);
-					const result = await sendQueryStatus(context.run);
-					console.log('🌱 # result:', result);
-					return result;
+					return await sendQueryStatus(context.run);
 				},
 				onDone: [
 					// If status is not completed, keep polling
@@ -125,15 +121,12 @@ export const sendQueryMachine = createMachine<
 		},
 		[QueryState.FETCHING_QUERY_RESULT]: {
 			invoke: {
-				src: async context => {
-					console.log('FETCHING_RESULT');
-					const result = await sendQueryResult({
+				src: async context =>
+					await sendQueryResult({
 						thread_id: context.run.thread_id,
 						responseParentKey: context.responseParentKey,
 						skipTransform: context.skipTransform,
-					});
-					return result;
-				},
+					}),
 				onDone: {
 					target: QueryState.QUERY_SUCCESS,
 					actions: assign({

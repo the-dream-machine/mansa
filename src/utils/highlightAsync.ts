@@ -1,5 +1,6 @@
 import {highlight} from 'prismjs-terminal';
 import {type ThemeOptions, defaultPrismTheme} from './prismThemes.js';
+import {sanitizeLanguage} from './sanitizeLanguage.js';
 
 interface Args {
 	code: string;
@@ -8,10 +9,11 @@ interface Args {
 }
 
 export const highlightAsync = ({code, language, themeOptions}: Args) => {
+	const sanitizedLanguage = sanitizeLanguage(language ?? '');
 	return new Promise((resolve, reject) => {
 		try {
 			const result = highlight(code, {
-				language,
+				language: sanitizedLanguage,
 				theme: defaultPrismTheme({...themeOptions}),
 			});
 			resolve(result);

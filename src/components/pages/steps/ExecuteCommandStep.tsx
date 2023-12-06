@@ -82,7 +82,7 @@ export const ExecuteCommandStep = () => {
 				</Text>
 
 				{/* Description */}
-				<Box gap={3}>
+				<Box gap={2}>
 					<Text color={getFirstStepStateColor(Colors.LightGreen)}>•</Text>
 					<Text color={getFirstStepStateColor(Colors.LightGray)}>
 						{activeStep?.step_description}

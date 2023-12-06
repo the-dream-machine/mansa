@@ -2,7 +2,6 @@ import {chalk, fs, sleep} from 'zx';
 import * as prettier from 'prettier';
 import {createMachine, assign, type DoneInvokeEvent} from 'xstate';
 
-import {generateFileEdits} from '../utils/api/generateFileEdits.js';
 import {type Change} from 'diff';
 import {getDiffsAsync} from '../utils/getDiffsAsync.js';
 import {highlightAsync} from '../utils/highlightAsync.js';
@@ -11,9 +10,11 @@ import {Colors} from '../utils/Colors.js';
 import {writeToFile} from '../utils/writeToFile.js';
 import {sendParent} from 'xstate/lib/actions.js';
 import {StepsEvent} from '../types/StepsMachine.js';
-import {type RunStatusResponse, type Run} from '../types/Run.js';
-import {generateFileEditsStatus} from '../utils/api/generateFileEditsStatus.js';
-import {fetchFileEdits} from '../utils/api/fetchFileEdits.js';
+import {type Run} from '../types/Run.js';
+import {sendQueryMachine} from './sendQueryMachine.js';
+import {initialSendQueryMachineContext} from '../utils/initialSendQueryMachineContext.js';
+import {type SendQueryMachineResult} from '../types/SendQuery.js';
+import {sanitizeLanguage} from '../utils/sanitizeLanguage.js';
 
 // Context
 export interface ModifyFileMachineContext {
@@ -32,16 +33,18 @@ export interface ModifyFileMachineContext {
 
 	// Component states
 	enterLabel?: string;
-	loadingMessage: string;
-	successMessage: string;
-	errorMessage: string;
-	isError: boolean;
-	isLoading: boolean;
+	isFetchEditsLoading: boolean;
 	isFetchEditsSuccess: boolean;
+	isFetchEditsError: boolean;
+	isApplyEditsLoading: boolean;
 	isApplyEditsSuccess: boolean;
+	isApplyEditsError: boolean;
+
+	errorMessage: string;
 }
 
 export const initialModifyFileMachineContext: ModifyFileMachineContext = {
+	run: undefined,
 	originalFilePath: '',
 	originalFileExtension: '',
 	originalFileSummary: '',
@@ -55,14 +58,14 @@ export const initialModifyFileMachineContext: ModifyFileMachineContext = {
 	currentDiffHighlightingIndex: 0,
 
 	// Component states
-	enterLabel: 'generate changes',
-	isLoading: false,
-	isError: false,
+	enterLabel: 'preview changes',
+	isFetchEditsLoading: false,
 	isFetchEditsSuccess: false,
+	isFetchEditsError: false,
+	isApplyEditsLoading: false,
 	isApplyEditsSuccess: false,
-	loadingMessage: '',
+	isApplyEditsError: false,
 	errorMessage: '',
-	successMessage: '',
 };
 
 // States
@@ -71,10 +74,8 @@ export enum ModifyFileState {
 	READING_ORIGINAL_FILE_ERROR_IDLE = 'READING_ORIGINAL_FILE_ERROR_IDLE',
 	FORMATTING_ORIGINAL_FILE_RAW_CODE = 'FORMATTING_ORIGINAL_FILE_RAW_CODE',
 	IDLE = 'IDLE',
-	GENERATE_FILE_EDITS = 'GENERATE_FILE_EDITS',
-	POLLING_GENERATE_FILE_EDITS = 'POLLING_GENERATE_FILE_EDITS',
-	FETCH_ALL_FILE_EDITS = 'FETCH_ALL_FILE_EDITS',
-	FETCHING_EDITED_FILE_ERROR_IDLE = 'FETCHING_EDITED_FILE_ERROR_IDLE',
+	GENERATING_FILE_EDITS = 'GENERATING_FILE_EDITS',
+	GENERATING_FILE_EDITS_ERROR_IDLE = 'GENERATING_FILE_EDITS_ERROR_IDLE',
 	FORMATTING_EDITED_FILE_RAW_CODE = 'FORMATTING_EDITED_FILE_RAW_CODE',
 	GENERATING_FILE_DIFFS = 'GENERATING_FILE_DIFFS',
 	HIGHLIGHTING_FILE_DIFFS = 'HIGHLIGHTING_FILE_DIFFS',
@@ -101,19 +102,11 @@ export type ModifyFileMachineState =
 			context: ModifyFileMachineContext;
 	  }
 	| {
-			value: ModifyFileState.GENERATE_FILE_EDITS;
+			value: ModifyFileState.GENERATING_FILE_EDITS;
 			context: ModifyFileMachineContext;
 	  }
 	| {
-			value: ModifyFileState.POLLING_GENERATE_FILE_EDITS;
-			context: ModifyFileMachineContext;
-	  }
-	| {
-			value: ModifyFileState.FETCH_ALL_FILE_EDITS;
-			context: ModifyFileMachineContext;
-	  }
-	| {
-			value: ModifyFileState.FETCHING_EDITED_FILE_ERROR_IDLE;
+			value: ModifyFileState.GENERATING_FILE_EDITS_ERROR_IDLE;
 			context: ModifyFileMachineContext;
 	  }
 	| {
@@ -181,7 +174,6 @@ export const modifyFileMachine = createMachine<
 		},
 		[ModifyFileState.READING_ORIGINAL_FILE_ERROR_IDLE]: {
 			entry: assign({
-				isError: true,
 				enterLabel: 'retry',
 				errorMessage: context =>
 					`Can't read the file at ${chalk
@@ -191,7 +183,6 @@ export const modifyFileMachine = createMachine<
 						)}. Make sure it can be accessed, then retry.`,
 			}),
 			exit: assign({
-				isError: false,
 				enterLabel: initialModifyFileMachineContext.enterLabel,
 				errorMessage: initialModifyFileMachineContext.errorMessage,
 			}),
@@ -225,82 +216,45 @@ export const modifyFileMachine = createMachine<
 		[ModifyFileState.IDLE]: {
 			on: {
 				[ModifyFileEvent.ENTER_KEY_PRESSED]: {
-					target: ModifyFileState.GENERATE_FILE_EDITS,
+					target: ModifyFileState.GENERATING_FILE_EDITS,
 				},
 			},
 		},
-		[ModifyFileState.GENERATE_FILE_EDITS]: {
-			entry: assign({
-				isLoading: true,
-				loadingMessage: context =>
-					`Generating changes for ${chalk.bold(context.originalFilePath)}`,
-			}),
+		[ModifyFileState.GENERATING_FILE_EDITS]: {
+			entry: assign({isFetchEditsLoading: true}),
 			invoke: {
-				src: async context =>
-					await generateFileEdits({
-						filePath: context.originalFilePath,
-						fileContent: context.originalFileRawCode,
-						fileSummary: context.originalFileSummary,
-						fileChangesSummary: context.editedFileChangesSummary,
+				src: context =>
+					sendQueryMachine.withContext({
+						...initialSendQueryMachineContext,
+						skipTransform: true,
+						query: `Here is a summary of the file ${context.originalFilePath}: ${context.originalFileSummary}
+Here is the file content:
+\`\`\`${context.originalFileExtension}
+${context.originalFileRawCode}
+\`\`\`
+Make the following changes to the file:${context.editedFileChangesSummary}
+No preamble. Only respond with the updated file. Do not truncate anything.`,
 					}),
-				onDone: {
-					target: ModifyFileState.POLLING_GENERATE_FILE_EDITS,
-					actions: assign({
-						run: (_, event: DoneInvokeEvent<Run>) => event.data,
-					}),
-				},
-				onError: {
-					target: ModifyFileState.FETCHING_EDITED_FILE_ERROR_IDLE,
-				},
-			},
-		},
-		[ModifyFileState.POLLING_GENERATE_FILE_EDITS]: {
-			invoke: {
-				src: async context => {
-					if (context.run) {
-						await sleep(1000);
-						return await generateFileEditsStatus(context.run);
-					} else {
-						throw new Error('Run ID not found in context');
-					}
-				},
-				onDone: [
-					{
-						cond: (_, event: DoneInvokeEvent<RunStatusResponse>) =>
-							event.data.status !== 'completed',
-						target: ModifyFileState.POLLING_GENERATE_FILE_EDITS,
-					},
-					{
-						cond: (_, event: DoneInvokeEvent<RunStatusResponse>) =>
-							event.data.status === 'completed',
-						target: ModifyFileState.FETCH_ALL_FILE_EDITS,
-					},
-				],
-			},
-		},
-		[ModifyFileState.FETCH_ALL_FILE_EDITS]: {
-			invoke: {
-				src: async context => {
-					if (context.run) {
-						return await fetchFileEdits(context.run);
-					} else {
-						throw new Error('Thread ID not found in context');
-					}
-				},
 				onDone: {
 					target: ModifyFileState.FORMATTING_EDITED_FILE_RAW_CODE,
-					actions: assign({
-						editedFileRawCode: (
-							_,
-							event: DoneInvokeEvent<{editedFile: string}>,
-						) => event.data.editedFile,
-					}),
+					actions: assign(
+						(_, event: DoneInvokeEvent<SendQueryMachineResult<string>>) => ({
+							editedFileRawCode: event.data.result
+								.replace(/^```[\s\S]*?\n/, '') // Remove backticks
+								.replace(/```$/, ''),
+							run: event.data.run,
+						}),
+					),
+				},
+				onError: {
+					target: ModifyFileState.GENERATING_FILE_EDITS_ERROR_IDLE,
 				},
 			},
+			exit: assign({isFetchEditsLoading: false}),
 		},
-		[ModifyFileState.FETCHING_EDITED_FILE_ERROR_IDLE]: {
+		[ModifyFileState.GENERATING_FILE_EDITS_ERROR_IDLE]: {
 			entry: assign({
-				isError: true,
+				isFetchEditsError: true,
 				enterLabel: 'retry',
 				errorMessage: context =>
 					`Couldn't generate changes for ${chalk.bold(
@@ -309,21 +263,23 @@ export const modifyFileMachine = createMachine<
 			}),
 			on: {
 				[ModifyFileEvent.ENTER_KEY_PRESSED]: {
-					target: ModifyFileState.GENERATE_FILE_EDITS,
+					target: ModifyFileState.GENERATING_FILE_EDITS,
 				},
 			},
 			exit: assign({
-				isError: false,
+				isFetchEditsError: false,
 				enterLabel: initialModifyFileMachineContext.enterLabel,
 				errorMessage: initialModifyFileMachineContext.errorMessage,
 			}),
 		},
 		[ModifyFileState.FORMATTING_EDITED_FILE_RAW_CODE]: {
 			invoke: {
-				src: async context =>
+				src: async context => {
+					const language = sanitizeLanguage(context.originalFileExtension);
 					await prettier.format(context.editedFileRawCode ?? '', {
-						filepath: context.originalFilePath,
-					}),
+						filepath: language,
+					});
+				},
 				onDone: {
 					target: ModifyFileState.GENERATING_FILE_DIFFS,
 					actions: assign({
@@ -417,16 +373,7 @@ export const modifyFileMachine = createMachine<
 			},
 		},
 		[ModifyFileState.PREVIEW_DIFFS_IDLE]: {
-			entry: assign({
-				isLoading: false,
-				loadingMessage: initialModifyFileMachineContext.loadingMessage,
-				isFetchEditsSuccess: true,
-				successMessage: context =>
-					`Successfully generated changes for ${chalk.bold(
-						context.originalFilePath,
-					)}`,
-				enterLabel: 'apply changes',
-			}),
+			entry: assign({isFetchEditsSuccess: true, enterLabel: 'apply changes'}),
 			on: {
 				[ModifyFileEvent.ENTER_KEY_PRESSED]: {
 					target: ModifyFileState.APPLYING_CHANGES,
@@ -434,26 +381,23 @@ export const modifyFileMachine = createMachine<
 			},
 		},
 		[ModifyFileState.APPLYING_CHANGES]: {
+			entry: assign({isApplyEditsLoading: true}),
 			invoke: {
-				src: async context =>
+				src: async context => {
+					await sleep(2000);
 					await writeToFile({
 						filePath: context.originalFilePath ?? '',
 						fileContent: context.editedFileFormattedCode ?? '',
-					}),
+					});
+				},
 				onDone: {
 					target: ModifyFileState.APPLIED_CHANGES_SUCCESS_IDLE,
 				},
 			},
+			exit: assign({isApplyEditsLoading: false}),
 		},
 		[ModifyFileState.APPLIED_CHANGES_SUCCESS_IDLE]: {
-			entry: assign({
-				isApplyEditsSuccess: true,
-				successMessage: context =>
-					`Successfully applied changes to ${chalk.bold(
-						context.originalFilePath,
-					)}`,
-				enterLabel: 'next step',
-			}),
+			entry: assign({isApplyEditsSuccess: true, enterLabel: 'next step'}),
 			on: {
 				[ModifyFileEvent.ENTER_KEY_PRESSED]: {
 					actions: sendParent({type: StepsEvent.NAVIGATE_NEXT_STEP}),

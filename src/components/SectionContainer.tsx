@@ -24,7 +24,7 @@ export const SectionContainer = ({children, showDivider = false}: Props) => {
 			flexDirection="column"
 			paddingX={3}
 			paddingY={2}
-			gap={2}
+			gap={1}
 			{...sectionProps}
 		>
 			{children}

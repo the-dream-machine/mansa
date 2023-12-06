@@ -1,4 +1,4 @@
-import {Box, measureElement, useInput, Text} from 'ink';
+import {Box, measureElement, useInput} from 'ink';
 import React, {useEffect, useRef, useState} from 'react';
 import {useStdoutDimensions} from '../utils/useStdDimensions.js';
 
@@ -45,6 +45,7 @@ export const ScrollContainer = ({children}: Props) => {
 				flexShrink={0}
 				flexDirection="column"
 				marginTop={-scrollTop}
+				paddingBottom={FOOTER_HEIGHT}
 			>
 				{children}
 			</Box>

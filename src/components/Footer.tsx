@@ -3,9 +3,17 @@ import {Box, Spacer, Text} from 'ink';
 import figureSet from 'figures';
 import {BaseColors, Colors} from '../utils/Colors.js';
 
-type Control = 'up' | 'down' | 'tab' | 'search' | 'esc' | 'enter' | 's';
+export type FooterControl =
+	| 'up'
+	| 'down'
+	| 'tab'
+	| 'search'
+	| 'esc'
+	| 'enter'
+	| 's';
+
 interface Props {
-	controls: Control[];
+	controls: FooterControl[];
 	enterLabel?: string;
 	enterDisabled?: boolean;
 }
@@ -16,16 +24,7 @@ export const Footer = ({
 	enterDisabled = false,
 }: Props) => {
 	return (
-		<Box
-			// borderColor={Colors.DarkGray}
-			// borderStyle="round"
-			// borderRight={false}
-			// borderBottom={false}
-			// borderLeft={false}
-			paddingX={3}
-			paddingY={1}
-			width={'100%'}
-		>
+		<Box flexShrink={0} paddingX={3} paddingY={1} width={'100%'}>
 			{controls.includes('up') && (
 				<Box>
 					<Text color={BaseColors.Gray600}>{figureSet.triangleUp} </Text>

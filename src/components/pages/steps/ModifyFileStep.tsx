@@ -14,6 +14,8 @@ import {
 	type ModifyFileMachineState,
 	ModifyFileEvent,
 } from '../../../machines/modifyFileMachine.js';
+import {SectionContainer} from '../../SectionContainer.js';
+import {Spinner} from '@inkjs/ui';
 import {ScrollContainer} from '../../ScrollContainer.js';
 
 export const ModifyFileStep = () => {
@@ -34,20 +36,23 @@ export const ModifyFileStep = () => {
 
 	const modifyFileMachineContext = modifyFileMachineState.context;
 
-	const originalFileFormattedCode =
-		modifyFileMachineContext.originalFileFormattedCode;
 	const filepath = modifyFileMachineContext.originalFilePath;
 	const editedFileHighlightedCode =
 		modifyFileMachineContext.editedFileHighlightedCode;
 	const enterLabel = modifyFileMachineContext.enterLabel;
-	const isLoading = modifyFileMachineContext.isLoading;
-	const isError = modifyFileMachineContext.isError;
+
+	const isFetchEditsLoading = modifyFileMachineContext.isFetchEditsLoading;
 	const isFetchEditsSuccess = modifyFileMachineContext.isFetchEditsSuccess;
+	const isFetchEditsError = modifyFileMachineContext.isFetchEditsError;
+	const isApplyEditsLoading = modifyFileMachineContext.isApplyEditsLoading;
 	const isApplyEditsSuccess = modifyFileMachineContext.isApplyEditsSuccess;
-	const isSuccess = isFetchEditsSuccess || isApplyEditsSuccess;
-	const loadingMessage = modifyFileMachineContext.loadingMessage;
-	const successMessage = modifyFileMachineContext.successMessage;
+	const isApplyEditsError = modifyFileMachineContext.isApplyEditsError;
 	const errorMessage = modifyFileMachineContext.errorMessage;
+
+	const showFetchEditsSection =
+		isFetchEditsLoading || isFetchEditsSuccess || isFetchEditsError;
+	const showApplyEditsSection =
+		isApplyEditsLoading || isApplyEditsSuccess || isApplyEditsError;
 
 	const {exit} = useApp();
 	useInput((_, key) => {
@@ -59,151 +64,159 @@ export const ModifyFileStep = () => {
 		}
 	});
 
-	const getStateColor = (color: Colors | BaseColors, condition: boolean) =>
-		condition ? Colors.DarkGray : color;
+	const getFetchEditsStateColor = (color: Colors) =>
+		showFetchEditsSection ? Colors.DarkGray : color;
+
+	const getApplyStateColor = (color: Colors) =>
+		showApplyEditsSection ? Colors.DarkGray : color;
 
 	return (
 		<PageContainer>
-			<Header
-				isLoading={isLoading}
-				isSuccess={isSuccess}
-				isError={isError}
-				loadingMessage={loadingMessage}
-				successMessage={successMessage}
-				errorMessage={errorMessage}
-			/>
-			<Box>
-				<Box flexDirection="row" gap={4}>
-					{/* Left Block */}
-					<Box flexDirection="column" gap={1}>
-						{/* Title */}
-						<Text color={BaseColors.White}>
-							{activeStep?.step_title}{' '}
-							<Text color={Colors.DarkGray}>
-								(Step {activeStepIndex + 1} of {totalSteps})
+			<Header />
+			<ScrollContainer>
+				<SectionContainer>
+					{/* Title */}
+					<Text color={BaseColors.White}>
+						{activeStep?.step_title}{' '}
+						<Text color={Colors.DarkGray}>
+							(Step {activeStepIndex + 1} of {totalSteps})
+						</Text>
+					</Text>
+
+					{/* Description step */}
+					<Box gap={2} marginTop={1}>
+						<Text color={getFetchEditsStateColor(Colors.LightGreen)}>•</Text>
+						<Text color={getFetchEditsStateColor(Colors.LightGray)}>
+							{activeStep?.step_description}
+						</Text>
+					</Box>
+
+					{/* Press Enter Edit File */}
+					<Box marginLeft={3}>
+						<Text color={getFetchEditsStateColor(Colors.LightGray)}>
+							Press{' '}
+							<Text color={getFetchEditsStateColor(Colors.LightGreen)}>
+								enter
+							</Text>{' '}
+							to preview changes for{' '}
+							<Text color={getFetchEditsStateColor(Colors.White)} italic>
+								{filepath}
 							</Text>
 						</Text>
+					</Box>
+				</SectionContainer>
 
-						{/* Description step */}
-						<Box gap={1}>
-							<Text
-								color={getStateColor(Colors.LightGreen, isFetchEditsSuccess)}
-							>
-								•
-							</Text>
-							<Box flexDirection="column" gap={1}>
-								<Text
-									color={getStateColor(Colors.LightGray, isFetchEditsSuccess)}
-								>
-									{activeStep?.step_description}
-								</Text>
-								<Text
-									color={getStateColor(Colors.DarkGray, isFetchEditsSuccess)}
-								>
-									Press{' '}
-									<Text
-										color={getStateColor(
-											BaseColors.Gray500,
-											isFetchEditsSuccess,
-										)}
-									>
-										enter
-									</Text>{' '}
-									to generate the code changes for{' '}
-									<Text
-										color={getStateColor(
-											BaseColors.Gray500,
-											isFetchEditsSuccess,
-										)}
-										italic
-									>
-										{filepath}
+				{showFetchEditsSection && (
+					<SectionContainer showDivider>
+						<Box flexDirection="column" gap={1}>
+							{/* Loader */}
+							{isFetchEditsLoading && (
+								<Box gap={2}>
+									<Spinner />
+									<Text color={getApplyStateColor(Colors.LightGray)}>
+										Fetching changes for{' '}
+										<Text color={getApplyStateColor(Colors.White)} italic>
+											{filepath}
+										</Text>
 									</Text>
-									.
-								</Text>
-							</Box>
+								</Box>
+							)}
+							{isFetchEditsSuccess && (
+								<Box gap={2}>
+									<Text color={getApplyStateColor(Colors.LightGreen)}>•</Text>
+									<Text color={getApplyStateColor(Colors.LightGray)}>
+										Successfully fetched changes for{' '}
+										<Text color={getApplyStateColor(Colors.White)} italic>
+											{filepath}
+										</Text>
+									</Text>
+								</Box>
+							)}
 						</Box>
 
-						{/* Preview changes */}
-						{isFetchEditsSuccess && (
-							<Box gap={1} flexShrink={0} marginTop={1}>
-								<Text
-									color={getStateColor(Colors.LightGreen, isApplyEditsSuccess)}
+						{/* Code block */}
+						{editedFileHighlightedCode && (
+							<Box paddingX={3}>
+								<Box
+									flexDirection="column"
+									gap={1}
+									paddingX={2}
+									paddingY={1}
+									borderColor={Colors.DarkGray}
+									borderStyle="round"
+									width="100%"
 								>
-									•
-								</Text>
-								<Box flexDirection="column" gap={1}>
-									<Text
-										color={getStateColor(Colors.LightGray, isApplyEditsSuccess)}
-									>
-										Scroll up or down to preview changes.
+									<Text color={Colors.DarkGray} italic>
+										{filepath}
 									</Text>
-									<Text
-										color={getStateColor(Colors.DarkGray, isApplyEditsSuccess)}
-									>
-										Press{' '}
-										<Text
-											color={getStateColor(
-												Colors.LightGray,
-												isApplyEditsSuccess,
-											)}
-										>
-											enter
-										</Text>{' '}
-										to apply changes
-									</Text>
+									<Text>{editedFileHighlightedCode}</Text>
 								</Box>
 							</Box>
 						)}
 
-						{/* Go to next step */}
-						{isApplyEditsSuccess && (
-							<Box gap={1} flexShrink={0} marginTop={1}>
-								<Text color={Colors.LightGreen}>•</Text>
-								<Text color={Colors.LightGray}>
-									Press <Text color={Colors.White}>enter</Text> to go to the
-									next step.
+						{/* Press Enter Apply Changes */}
+						{isFetchEditsSuccess && (
+							<Box marginLeft={3}>
+								<Text color={getApplyStateColor(Colors.LightGray)}>
+									Press{' '}
+									<Text color={getApplyStateColor(Colors.LightGreen)}>
+										enter
+									</Text>{' '}
+									to apply these changes to{' '}
+									<Text color={getApplyStateColor(Colors.White)} italic>
+										{filepath}
+									</Text>
 								</Text>
 							</Box>
 						)}
-					</Box>
-					<Spacer />
+					</SectionContainer>
+				)}
 
-					{/* Code block */}
-					<Box
-						minWidth={50}
-						flexDirection="column"
-						flexShrink={0}
-						gap={1}
-						paddingTop={1}
-						paddingX={2}
-						marginTop={2}
-						borderColor={BaseColors.Gray800}
-						borderStyle="round"
-					>
-						<Text color={BaseColors.Gray700} italic>
-							{filepath}
-						</Text>
-
-						<ScrollContainer>
-							<Box paddingBottom={8}>
-								{editedFileHighlightedCode ? (
-									<Text>{editedFileHighlightedCode}</Text>
-								) : (
-									<Text color={Colors.DarkGray}>
-										{originalFileFormattedCode}
+				{showApplyEditsSection && (
+					<SectionContainer showDivider>
+						<Box flexDirection="column" gap={1}>
+							{/* Loading */}
+							{isApplyEditsLoading && (
+								<Box gap={2} paddingX={2}>
+									<Spinner />
+									<Text color={Colors.LightGray}>
+										Applying changes to{' '}
+										<Text color={Colors.White} italic>
+											{filepath}
+										</Text>
 									</Text>
-								)}
-							</Box>
-						</ScrollContainer>
-					</Box>
-				</Box>
-			</Box>
+								</Box>
+							)}
+
+							{/* Success */}
+							{isApplyEditsSuccess && (
+								<Box flexDirection="column" gap={2}>
+									<Box gap={2} paddingX={2}>
+										<Text color={Colors.LightGreen}>•</Text>
+										<Text color={Colors.LightGray}>
+											Successfully applied changes to{' '}
+											<Text color={Colors.White} italic>
+												{filepath}
+											</Text>
+										</Text>
+									</Box>
+									<Box marginLeft={5}>
+										<Text color={Colors.LightGray}>
+											Press <Text color={Colors.LightGreen}>enter</Text> to go
+											to the next step.
+										</Text>
+									</Box>
+								</Box>
+							)}
+						</Box>
+					</SectionContainer>
+				)}
+			</ScrollContainer>
 			<Spacer />
 			<Footer
-				controls={['enter', 'esc', 'up', 'down']}
+				controls={['up', 'down', 'esc', 'enter']}
 				enterLabel={enterLabel}
-				enterDisabled={isLoading}
+				enterDisabled={isFetchEditsLoading || isApplyEditsLoading}
 			/>
 		</PageContainer>
 	);
