@@ -143,7 +143,7 @@ export const executeCommandMachine = createMachine<
 			invoke: {
 				src: context => (send: Sender<ExecuteCommandMachineEvent>) => {
 					/**
-					 * You have to pass in commmands as an array
+					 * You have to pass in commands as an array
 					 * @see: https://google.github.io/zx/quotes#assembling-commands
 					 */
 					const args = context.bashCommand.split(' ');

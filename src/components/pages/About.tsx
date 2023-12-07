@@ -26,7 +26,7 @@ export const About = () => {
 			exit();
 		}
 		if (key.return) {
-			send(IndexRepositoryEvent.ENTER_PRESSED);
+			send(IndexRepositoryEvent.ENTER_KEY_PRESS);
 		}
 	});
 

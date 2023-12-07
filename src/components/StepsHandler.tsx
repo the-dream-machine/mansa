@@ -2,12 +2,12 @@ import React from 'react';
 
 import {StepsContext} from './StepsProvider.js';
 import {StepsState} from '../machines/stepsMachine.js';
-import {StepType} from '../types/Step.js';
 import {ExecuteCommandStep} from './pages/steps/ExecuteCommandStep.js';
 import {CreateFileStep} from './pages/steps/CreateFileStep.js';
 import {ModifyFileStep} from './pages/steps/ModifyFileStep.js';
 import {UserActionStep} from './pages/steps/UserActionStep.js';
 import {GenerateSteps} from './pages/GenerateSteps.js';
+import {StepType} from '../utils/schema/Steps.js';
 
 export const StepsHandler = () => {
 	const [state] = StepsContext.useActor();
@@ -20,7 +20,7 @@ export const StepsHandler = () => {
 
 	const activeStepIndex = state.context.activeStepIndex;
 	const activeStep = state.context.steps?.[activeStepIndex];
-	const activeStepType = activeStep?.step_type;
+	const activeStepType = activeStep?.step_type as keyof typeof StepType;
 
 	if (showStepsScreen) {
 		return <GenerateSteps />;

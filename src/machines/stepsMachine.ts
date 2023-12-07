@@ -11,7 +11,6 @@ import {
 } from 'xstate';
 
 import {type NavigationMachineEvent} from './navigationMachine.js';
-import {StepType, type Step} from '../types/Step.js';
 import {
 	type CreateFileMachineEvent,
 	createFileMachine,
@@ -39,10 +38,13 @@ import {initialSendQueryMachineContext} from '../utils/initialSendQueryMachineCo
 import {getRepositoryConfig} from '../utils/repository/getRepositoryConfig.js';
 import type {RepoConfig} from '../types/Repo.js';
 import {getRepositoryMap} from '../utils/repository/getRepositoryMap.js';
-import {AIStepsResponseSchema} from '../utils/schema/AISteps.js';
 import {type FileMapItem} from '../types/FileMapItem.js';
 import {type SendQueryMachineResult} from '../types/SendQuery.js';
 import {userActionMachine} from './userActionMachine.js';
+import {StepsSchema, StepType} from '../utils/schema/Steps.js';
+import {type Static} from '@sinclair/typebox';
+
+type Step = Static<typeof StepsSchema>;
 
 // Context
 export interface StepsMachineContext {
@@ -144,38 +146,61 @@ const initialStepsMachineContext: StepsMachineContext = {
 	repositoryConfig: undefined,
 	stepsSummary: '',
 	personalizedSteps: '',
+	// steps: [],
 	steps: [
 		{
-			step_title: 'Install Trigger.dev Packages',
+			step_title: 'Install Trigger.dev SDK and Next.js Library',
 			step_description:
-				'Install the Trigger.dev SDK and Next.js adapter packages using Bun. These are necessary for integrating Trigger.dev functionality into your Next.js application.',
+				"To integrate Trigger.dev with your Next.js project, you'll need to install the SDK and Next.js integration libraries using bun, your project's package manager.",
 			step_type: 'RUN_BASH_COMMAND',
 			bash_command_to_run: 'bun add @trigger.dev/sdk @trigger.dev/nextjs',
 		},
 		{
-			step_title: 'Create Trigger Client Configuration',
+			step_title: 'Obtain Development API Key',
 			step_description:
-				'Create a new TypeScript file to configure the Trigger Client with your application identifier and environment variables.',
+				'Obtain the development API key from the Trigger.dev dashboard to authenticate your application with the Trigger.dev services.',
+			step_type: 'USER_ACTION',
+			user_action: {
+				url: 'https://cloud.trigger.dev/',
+			},
+		},
+		{
+			step_title: 'Create Environment Variables File',
+			step_description:
+				'Create a file to store environment variables, which will include your Trigger.dev API key for secure access within your application.',
 			step_type: 'CREATE_FILE',
 			new_file_path_to_create: {
-				file_path: 'src/trigger.ts',
+				file_path: './.env.local',
+				file_extension: 'env',
+				file_content_summary:
+					'This file stores environment variables such as the Trigger.dev API key and URL required for the Trigger client configuration.',
+				file_code_changes: 'TRIGGER_API_KEY=your_development_api_key_here',
+			},
+		},
+		{
+			step_title: 'Create Trigger Client Configuration',
+			step_description:
+				"This step involves creating a new TypeScript file in your 'src' directory to hold the configuration for the Trigger.dev client. This allows your application to interact with the Trigger.dev services.",
+			step_type: 'CREATE_FILE',
+			new_file_path_to_create: {
+				file_path: './src/trigger.ts',
 				file_extension: 'ts',
 				file_content_summary:
-					'This file initializes the Trigger.dev client with the application identifier and API keys.',
+					'Configuration file for the Trigger.dev client, specifying the project identifier, API key, and API URL.',
 				file_code_changes:
-					"import { TriggerClient } from '@trigger.dev/sdk'; export const client = new TriggerClient({ id: 'YOUR_APP_IDENTIFIER', apiKey: process.env.TRIGGER_API_KEY, apiUrl: process.env.TRIGGER_API_URL, });",
+					"import { TriggerClient } from '@trigger.dev/sdk'; export const client = new TriggerClient({ id: 'my-app', // Replace with an appropriate identifier for your project apiKey: process.env.TRIGGER_API_KEY, apiUrl: process.env.TRIGGER_API_URL });",
 			},
 		},
 		{
 			step_title: 'Create Trigger API Route',
 			step_description:
-				'Create an API route for Trigger.dev within your Next.js application, which will handle requests to your defined jobs.',
+				"In this step, you'll create a new API route that will handle Trigger.dev events. This route is essential for initializing and connecting your backend to the Trigger.dev client.",
 			step_type: 'CREATE_FILE',
 			new_file_path_to_create: {
-				file_path: 'src/pages/api/trigger.ts',
+				file_path: './src/pages/api/trigger.ts',
 				file_extension: 'ts',
 				file_content_summary:
-					'This file sets up a Next.js API route to interact with Trigger.dev jobs.',
+					'API route that initializes and connects to the Trigger.dev client, enabling the invocation of backend jobs.',
 				file_code_changes:
 					"import { createPagesRoute } from '@trigger.dev/nextjs'; import { client } from '../../trigger'; import '../../jobs'; const { handler, config } = createPagesRoute(client); export { config }; export default handler;",
 			},
@@ -183,60 +208,64 @@ const initialStepsMachineContext: StepsMachineContext = {
 		{
 			step_title: 'Define Example Job',
 			step_description:
-				'Create a TypeScript file to define an example job, which serves as a template for your Trigger.dev jobs.',
+				'Setting up an example job will give you a quick start in understanding how to define jobs that can be triggered by events in your application. The example provided should be customized to suit the actual tasks you want to run.',
 			step_type: 'CREATE_FILE',
 			new_file_path_to_create: {
-				file_path: 'src/jobs/example.ts',
+				file_path: './src/jobs/example.ts',
 				file_extension: 'ts',
 				file_content_summary:
-					'This file defines an example job for Trigger.dev with an event trigger and run function.',
+					'This TypeScript file contains an example job definition using the Trigger.dev SDK, which can be triggered by a specific event.',
 				file_code_changes:
 					"import { eventTrigger } from '@trigger.dev/sdk'; import { client } from '../trigger'; client.defineJob({ id: 'example-job', name: 'Example Job', version: '0.0.1', trigger: eventTrigger({ name: 'example.event', }), run: async (payload, io, ctx) => { await io.logger.info('Hello world!', { payload }); return { message: 'Hello world!', }; }, });",
 			},
 		},
 		{
-			step_title: 'Export Jobs',
+			step_title: 'Export Job Definitions',
 			step_description:
-				'Create an index file in the jobs directory to export all your Trigger.dev job definitions.',
+				'This file acts as an index that exports all job definitions, ensuring they are centrally managed and accessible throughout your application. You can add additional job exports here as you create more jobs.',
 			step_type: 'CREATE_FILE',
 			new_file_path_to_create: {
-				file_path: 'src/jobs/index.ts',
+				file_path: './src/jobs/index.ts',
 				file_extension: 'ts',
 				file_content_summary:
-					'This file exports the defined jobs for Trigger.dev to be used by the Trigger.dev API route.',
+					'Central index file for exporting job definitions for easy management and access within the application.',
 				file_code_changes: "export * from './example';",
 			},
 		},
 		{
-			step_title: 'Configure Trigger.dev Endpoint',
+			step_title: 'Configure package.json for Trigger.dev',
 			step_description:
-				'Add a Trigger.dev configuration object to your package.json file to set up the endpoint ID for your application.',
+				'Add a specific configuration to your package.json file that identifies your Trigger.dev endpoint. This allows Trigger.dev to recognize your application and route jobs correctly.',
 			step_type: 'MODIFY_FILE',
 			existing_file_path_to_modify: {
-				file_path: 'package.json',
+				file_path: './package.json',
 				file_extension: 'json',
 				current_file_content_summary:
-					'Node.js project using Next.js framework and several libraries including Prisma for database, React Query for data fetching, TRPC for creating APIs, Zod for data validation, and ESLint for code linting.',
+					'Node.js project using Next.js and TypeScript, with dependencies including Prisma for database, React and React DOM for UI, Zod for data validation, and Trigger.dev for triggering events.',
 				file_content_summary:
-					'This package.json will now contain configuration for Trigger.dev with the specified endpointId that matches the Trigger Client id.',
+					"The modified package.json now includes a Trigger.dev configuration object specifying your application's endpoint identifier. This is used by Trigger.dev to link events to your specific deployment.",
 			},
 		},
 		{
-			step_title: 'Start Development Server',
+			step_title: 'Run the Development Server and Trigger.dev CLI',
 			step_description:
-				'Run the Next.js development server using Bun to start developing with your newly integrated Trigger.dev functionality.',
+				'Launch your Next.js application using the bun package manager to serve the frontend, and start the Trigger.dev CLI in a separate terminal window to handle job execution.',
 			step_type: 'USER_ACTION',
-			user_action: 'bun run dev',
+			user_action: {
+				bash_command: 'bun run dev',
+			},
 		},
 		{
-			step_title: 'Start Trigger.dev CLI',
+			step_title: 'Run the Trigger.dev CLI',
 			step_description:
-				'Launch the Trigger.dev CLI in a new terminal window to manage your Trigger.dev jobs and development workflow.',
+				"In a new terminal window, you'll need to start the Trigger.dev CLI. This tool will manage the execution of jobs and trigger events within your application environment.",
 			step_type: 'USER_ACTION',
-			user_action: 'bunx @trigger.dev/cli@latest dev',
+			user_action: {
+				bash_command: 'bunx @trigger.dev/cli@latest dev',
+			},
 		},
 	],
-	activeStepIndex: 5,
+	activeStepIndex: 0,
 	activeStepActor: undefined,
 
 	isStepsSummaryLoading: false,
@@ -258,6 +287,7 @@ export const stepsMachine = createMachine<
 	StepsMachineState
 >({
 	id: 'stepsMachine',
+	preserveActionOrder: true,
 	predictableActionArguments: true,
 	initial: StepsState.REVIEW_STEPS_IDLE,
 	context: initialStepsMachineContext,
@@ -360,7 +390,7 @@ Question: How do I apply these steps to my project? From the project map, you sh
 					sendQueryMachine.withContext({
 						...initialSendQueryMachineContext,
 						query: `Classify these steps into the following JSON schema: ${JSON.stringify(
-							AIStepsResponseSchema,
+							StepsSchema,
 						)}
 Skip steps where I should create a folder. No preamble, respond with JSON only.`,
 						thread_id: context.run?.thread_id,
@@ -459,10 +489,12 @@ Skip steps where I should create a folder. No preamble, respond with JSON only.`
 					cond: isUserAction,
 					target: StepsState.ACTIVE_STEP_IDLE,
 					actions: assign({
-						activeStepActor: () =>
+						activeStepActor: context =>
 							spawn(
 								userActionMachine.withContext({
 									...initialUserActionContext,
+									user_action:
+										context.steps?.[context.activeStepIndex]?.user_action,
 								}),
 							),
 					}),

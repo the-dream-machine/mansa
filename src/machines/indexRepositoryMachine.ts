@@ -1,11 +1,8 @@
 import {type Sender, assign, createMachine, type DoneInvokeEvent} from 'xstate';
-import {v4 as uuid} from 'uuid';
 
 import {getRepositoryDetails} from '../utils/repository/getRepositoryDetails.js';
 import {getRepositoryFilePaths} from '../utils/repository/getRepositoryFilePaths.js';
 import {AppState, type NavigationMachineEvent} from './navigationMachine.js';
-import {fishcakeUserPath} from '../utils/fishcakePath.js';
-import {writeToFile} from '../utils/writeToFile.js';
 import {updateRepositoryChecksums} from '../utils/repository/updateRepositoryChecksums.js';
 import {updateRepositoryMap} from '../utils/repository/updateRepositoryMap.js';
 import {type Repo} from '../types/Repo.js';
@@ -15,11 +12,26 @@ interface IndexRepositoryMachineContext {
 	repositoryName: string;
 	filePaths: string[];
 	currentFileIndexing: number;
-	indexRepositoryErrorMessage: string;
-	indexRepositoryErrorLogPath: string;
+	errorMessage: string;
 	enterLabel: 'start indexing' | 'continue' | 'retry';
 	navigate?: Sender<NavigationMachineEvent>;
+	showProgressBar: boolean;
+	isLoading: boolean;
+	isSuccess: boolean;
+	isError: boolean;
 }
+
+const initialIndexRepositoryMachineContext: IndexRepositoryMachineContext = {
+	repositoryName: 'your repo',
+	filePaths: [],
+	errorMessage: '',
+	currentFileIndexing: 0,
+	enterLabel: 'start indexing',
+	showProgressBar: false,
+	isLoading: false,
+	isSuccess: false,
+	isError: false,
+};
 
 // States
 export enum IndexRepositoryState {
@@ -29,7 +41,6 @@ export enum IndexRepositoryState {
 	INDEXING_REPO_FILES = 'INDEXING_REPO_FILES',
 	INDEXING_SUCCESS_IDLE = 'INDEXING_SUCCESS_IDLE',
 	INDEXING_ERROR_IDLE = 'INDEXING_ERROR_IDLE',
-	WRITING_ERROR_FILE = 'WRITING_ERROR_FILE',
 }
 
 //  State machine states
@@ -54,18 +65,14 @@ type IndexRepositoryMachineState =
 	| {
 			value: IndexRepositoryState.INDEXING_ERROR_IDLE;
 			context: IndexRepositoryMachineContext;
-	  }
-	| {
-			value: IndexRepositoryState.WRITING_ERROR_FILE;
-			context: IndexRepositoryMachineContext;
 	  };
 
 export enum IndexRepositoryEvent {
-	ENTER_PRESSED = 'ENTER_PRESSED',
+	ENTER_KEY_PRESS = 'ENTER_KEY_PRESS',
 }
 
 //  State machine events
-type IndexRepositoryMachineEvent = {type: IndexRepositoryEvent.ENTER_PRESSED};
+type IndexRepositoryMachineEvent = {type: IndexRepositoryEvent.ENTER_KEY_PRESS};
 
 // Guards
 const isLastFilePath = (context: IndexRepositoryMachineContext) =>
@@ -80,14 +87,7 @@ export const indexRepositoryMachine = createMachine<
 	id: 'indexRepositoryMachine',
 	predictableActionArguments: true,
 	initial: IndexRepositoryState.FETCHING_REPO_DETAILS,
-	context: {
-		repositoryName: 'your repo',
-		filePaths: [],
-		indexRepositoryErrorMessage: '',
-		indexRepositoryErrorLogPath: '',
-		currentFileIndexing: 0,
-		enterLabel: 'start indexing',
-	},
+	context: initialIndexRepositoryMachineContext,
 	states: {
 		[IndexRepositoryState.FETCHING_REPO_DETAILS]: {
 			invoke: {
@@ -100,18 +100,18 @@ export const indexRepositoryMachine = createMachine<
 					}),
 				},
 				onError: {
-					target: IndexRepositoryState.WRITING_ERROR_FILE,
+					target: IndexRepositoryState.INDEXING_ERROR_IDLE,
 					actions: assign({
-						indexRepositoryErrorMessage: (_, event: DoneInvokeEvent<Error>) =>
+						errorMessage: (_, event: DoneInvokeEvent<Error>) =>
 							event.data.message,
-						indexRepositoryErrorLogPath: `${fishcakeUserPath}/logs/index_repo_error_${uuid()}.log`,
 					}),
 				},
 			},
 		},
 		[IndexRepositoryState.IDLE]: {
 			on: {
-				ENTER_PRESSED: IndexRepositoryState.FETCHING_FILE_PATHS,
+				[IndexRepositoryEvent.ENTER_KEY_PRESS]:
+					IndexRepositoryState.FETCHING_FILE_PATHS,
 			},
 		},
 		[IndexRepositoryState.FETCHING_FILE_PATHS]: {
@@ -124,19 +124,17 @@ export const indexRepositoryMachine = createMachine<
 					}),
 				},
 				onError: {
-					target: IndexRepositoryState.WRITING_ERROR_FILE,
+					target: IndexRepositoryState.INDEXING_ERROR_IDLE,
 					actions: assign({
-						indexRepositoryErrorMessage: (_, event: DoneInvokeEvent<Error>) =>
+						isError: true,
+						errorMessage: (_, event: DoneInvokeEvent<Error>) =>
 							event.data.message,
-						indexRepositoryErrorLogPath: context =>
-							`${fishcakeUserPath}/logs/index_${
-								context.repositoryName
-							}_repo_error_${uuid()}.log`,
 					}),
 				},
 			},
 		},
 		[IndexRepositoryState.INDEXING_REPO_FILES]: {
+			entry: [assign({showProgressBar: true, isLoading: true})],
 			invoke: {
 				src: async context => {
 					const filePath = context.filePaths[context.currentFileIndexing] ?? '';
@@ -155,27 +153,23 @@ export const indexRepositoryMachine = createMachine<
 					{
 						target: IndexRepositoryState.INDEXING_SUCCESS_IDLE,
 						cond: context => isLastFilePath(context),
-						actions: assign({
-							enterLabel: 'continue',
-						}),
 					},
 				],
 				onError: {
-					target: IndexRepositoryState.WRITING_ERROR_FILE,
+					target: IndexRepositoryState.INDEXING_ERROR_IDLE,
 					actions: assign({
-						indexRepositoryErrorMessage: (_, event: DoneInvokeEvent<Error>) =>
+						isError: true,
+						errorMessage: (_, event: DoneInvokeEvent<Error>) =>
 							event.data.message,
-						indexRepositoryErrorLogPath: context =>
-							`${fishcakeUserPath}/logs/index_${
-								context.repositoryName
-							}_repo_error_${uuid()}.log`,
 					}),
 				},
 			},
+			exit: [assign({isLoading: false})],
 		},
 		[IndexRepositoryState.INDEXING_SUCCESS_IDLE]: {
+			entry: [assign({isSuccess: true, enterLabel: 'continue'})],
 			on: {
-				[IndexRepositoryEvent.ENTER_PRESSED]: {
+				[IndexRepositoryEvent.ENTER_KEY_PRESS]: {
 					actions: context => {
 						if (context.navigate) {
 							context.navigate(AppState.DOES_MAP_EXIST);
@@ -183,28 +177,26 @@ export const indexRepositoryMachine = createMachine<
 					},
 				},
 			},
-		},
-		[IndexRepositoryState.WRITING_ERROR_FILE]: {
-			invoke: {
-				src: async context =>
-					await writeToFile({
-						filePath: context.indexRepositoryErrorLogPath,
-						fileContent: context.indexRepositoryErrorMessage,
-					}),
-				onDone: {
-					target: IndexRepositoryState.INDEXING_ERROR_IDLE,
-					actions: assign({
-						enterLabel: 'retry',
-					}),
-				},
-			},
+			exit: [
+				assign({
+					isSuccess: initialIndexRepositoryMachineContext.isSuccess,
+					enterLabel: initialIndexRepositoryMachineContext.enterLabel,
+				}),
+			],
 		},
 		[IndexRepositoryState.INDEXING_ERROR_IDLE]: {
+			entry: [assign({isError: true, enterLabel: 'retry'})],
 			on: {
-				[IndexRepositoryEvent.ENTER_PRESSED]: {
-					target: IndexRepositoryState.FETCHING_REPO_DETAILS,
+				[IndexRepositoryEvent.ENTER_KEY_PRESS]: {
+					target: IndexRepositoryState.FETCHING_FILE_PATHS,
 				},
 			},
+			exit: [
+				assign({
+					isError: initialIndexRepositoryMachineContext.isError,
+					enterLabel: initialIndexRepositoryMachineContext.enterLabel,
+				}),
+			],
 		},
 	},
 });

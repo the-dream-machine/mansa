@@ -23,7 +23,7 @@ export const SectionContainer = ({children, showDivider = false}: Props) => {
 		<Box
 			flexDirection="column"
 			paddingX={3}
-			paddingY={2}
+			paddingY={3}
 			gap={1}
 			{...sectionProps}
 		>

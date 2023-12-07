@@ -12,11 +12,17 @@ import type {Actor} from '../../../types/Actor.js';
 import {SectionContainer} from '../../SectionContainer.js';
 import {
 	UserActionEvent,
+	UserActionState,
 	type UserActionMachineContext,
 	type UserActionMachineEvent,
 	type UserActionMachineState,
 } from '../../../machines/userActionMachine.js';
+import {highlight} from 'prismjs-terminal';
+import loadLanguages from 'prismjs/components/index.js';
+import {defaultPrismTheme} from '../../../utils/prismThemes.js';
+import {ScrollContainer} from '../../ScrollContainer.js';
 
+loadLanguages('bash');
 export const UserActionStep = () => {
 	const [stepsState] = StepsContext.useActor();
 	const activeStepIndex = stepsState.context.activeStepIndex;
@@ -40,7 +46,17 @@ export const UserActionStep = () => {
 	const successMessage = userActionMachineState.context.successMessage;
 	const errorMessage = userActionMachineState.context.errorMessage;
 
-	const showSuccessSection = isLoading || isSuccess || isError;
+	const isBashCommand = userActionMachineState.context.isBashCommand;
+
+	const highlightedBashCommand = highlight(
+		userActionMachineState.context.user_action?.bash_command ?? '',
+		{language: 'bash', theme: defaultPrismTheme({})},
+	)
+		.trim()
+		.replace(/(\r\n|\n|\r)/gm, ''); // trim line breaks
+
+	const isUrl = userActionMachineState.context.isUrl;
+	const url = userActionMachineState.context.user_action?.url;
 
 	const {exit} = useApp();
 	useInput((_, key) => {
@@ -53,84 +69,80 @@ export const UserActionStep = () => {
 	});
 
 	const getStateColor = (color: Colors | BaseColors) =>
-		showSuccessSection ? Colors.DarkGray : color;
+		isSuccess ? Colors.DarkGray : color;
 
 	return (
 		<PageContainer>
 			<Header />
-			<SectionContainer>
-				{/* Title */}
-				<Text color={Colors.White}>
-					{activeStep?.step_title}{' '}
-					<Text color={Colors.DarkGray}>
-						(Step {activeStepIndex + 1} of {totalSteps})
+			<ScrollContainer>
+				<SectionContainer>
+					{/* Title */}
+					<Text color={Colors.White}>
+						{activeStep?.step_title}{' '}
+						<Text color={Colors.DarkGray}>
+							(Step {activeStepIndex + 1} of {totalSteps})
+						</Text>
 					</Text>
-				</Text>
 
-				{/* Description */}
-				<Box gap={2}>
-					<Text color={getStateColor(Colors.LightGreen)}>•</Text>
-					<Text color={getStateColor(Colors.LightGray)}>
-						{activeStep?.step_description}
-					</Text>
-				</Box>
-
-				{/* Code Block */}
-				{/* <Box
-					flexDirection="column"
-					flexShrink={0}
-					gap={1}
-					marginX={3}
-					paddingY={1}
-					paddingX={2}
-					borderColor={Colors.DarkGray}
-					borderStyle="round"
-				>
-					<Text>{highlightedCode}</Text>
-				</Box> */}
-
-				{/* Press Enter to copy */}
-				<Box marginLeft={3}>
-					<Text color={getStateColor(Colors.LightGray)}>
-						Press <Text color={getStateColor(Colors.LightGreen)}>enter</Text> to
-						copy to clipboard.
-					</Text>
-				</Box>
-			</SectionContainer>
-
-			{showSuccessSection && (
-				<SectionContainer showDivider>
-					<Box flexDirection="column" gap={1}>
-						{/* Loader */}
-						{isLoading && (
-							<Box gap={2}>
-								<Spinner />
-								<Text color={Colors.LightGray}>{loadingMessage}</Text>
-							</Box>
-						)}
-
-						{/* Success message */}
-						{isSuccess && (
-							<Box flexDirection="column" gap={2} paddingTop={2}>
-								<Box gap={3}>
-									<Text color={Colors.LightGreen}>•</Text>
-									<Text>{successMessage} 🎉</Text>
-								</Box>
-
-								<Box marginLeft={3}>
-									<Text color={Colors.LightGray}>
-										Press <Text color={Colors.LightGreen}>enter</Text> to go to
-										the next step.
-									</Text>
-								</Box>
-							</Box>
-						)}
+					{/* Description */}
+					<Box gap={2}>
+						<Text color={getStateColor(Colors.LightGreen)}>•</Text>
+						<Text color={getStateColor(Colors.LightGray)}>
+							{activeStep?.step_description}
+						</Text>
 					</Box>
+
+					{isBashCommand && (
+						<>
+							<Box marginLeft={3}>
+								<Box
+									flexGrow={0}
+									borderStyle="round"
+									borderColor={Colors.DarkGray}
+								>
+									<Text>{highlightedBashCommand}</Text>
+								</Box>
+							</Box>
+
+							{/* Press Enter to copy */}
+							<Box marginLeft={3}>
+								<Text color={getStateColor(Colors.LightGray)}>
+									Press{' '}
+									<Text color={getStateColor(Colors.LightGreen)}>enter</Text> to
+									copy the command.
+								</Text>
+							</Box>
+						</>
+					)}
 				</SectionContainer>
-			)}
+
+				{isSuccess && (
+					<SectionContainer showDivider>
+						<Box flexDirection="column" gap={1}>
+							{/* Success message */}
+							{isSuccess && (
+								<Box flexDirection="column" gap={2} paddingTop={2}>
+									<Box gap={2}>
+										<Text color={Colors.LightGreen}>•</Text>
+										{isBashCommand && <Text>Copied to clipboard!</Text>}
+										{isUrl && <Text>Opened the url in your browser!</Text>}
+									</Box>
+
+									<Box marginLeft={3}>
+										<Text color={Colors.LightGray}>
+											Press <Text color={Colors.LightGreen}>enter</Text> to go
+											to the next step.
+										</Text>
+									</Box>
+								</Box>
+							)}
+						</Box>
+					</SectionContainer>
+				)}
+			</ScrollContainer>
 			<Spacer />
 			<Footer
-				controls={['enter', 'esc']}
+				controls={['up', 'down', 'enter', 'esc']}
 				enterLabel={enterLabel}
 				enterDisabled={isLoading}
 			/>

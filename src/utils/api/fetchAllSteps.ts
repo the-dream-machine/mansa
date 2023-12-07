@@ -1,6 +1,7 @@
 import axios, {type AxiosRequestConfig, type AxiosResponse} from 'axios';
 import {type Run} from '../../types/Run.js';
-import {type Step} from '../../types/Step.js';
+import {type StepsSchema} from '../schema/Steps.js';
+import {type Static} from '@sinclair/typebox';
 
 export const fetchAllSteps = async ({thread_id}: Run) => {
 	const data = JSON.stringify({thread_id});
@@ -13,7 +14,8 @@ export const fetchAllSteps = async ({thread_id}: Run) => {
 	};
 
 	try {
-		const response: AxiosResponse<Step[]> = await axios.request(config);
+		const response: AxiosResponse<Static<typeof StepsSchema>[]> =
+			await axios.request(config);
 		return response.data;
 	} catch (error) {
 		throw error;

@@ -20,13 +20,13 @@ export const theme = extendTheme(defaultTheme, {
 		Select: {
 			styles: {
 				focusIndicator: (): TextProps => ({
-					color: 'magentaBright',
+					color: Colors.LightPink,
 				}),
 				label: ({isFocused}: SelectState): TextProps => {
-					let color: ColorName = 'gray';
+					let color: Colors = Colors.LightGray;
 
 					if (isFocused) {
-						color = 'magentaBright';
+						color = Colors.LightPink;
 					}
 
 					return {color};

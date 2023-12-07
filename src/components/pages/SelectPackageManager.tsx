@@ -14,6 +14,8 @@ import {
 } from '../../machines/selectPackageManagerMachine.js';
 import {type PackageManager} from '../../types/PackageManager.js';
 import {BaseColors, Colors} from '../../utils/Colors.js';
+import {SectionContainer} from '../SectionContainer.js';
+import {ScrollContainer} from '../ScrollContainer.js';
 
 const options: Option[] = [
 	{label: 'npm', value: 'npm'},
@@ -37,25 +39,33 @@ const SelectPackageManager = () => {
 
 	return (
 		<PageContainer>
-			<Header title="Fishcake" titleBackgroundColor={BaseColors.Pink500} />
-			<Body>
-				<Text color={Colors.White}>
-					Set up fishcake <Text color={Colors.DarkGray}>(Step 1 of 2)</Text>
-				</Text>
-				<Text color={Colors.LightGray}>
-					Which package manager are you using for this project?
-				</Text>
+			<Header title="Fishcake" titleBackgroundColor={Colors.LightPink} />
 
-				<Select
-					options={options}
-					onChange={value => {
-						send({
-							type: SelectPackageManagerEvent.SUBMIT_SELECTION,
-							selection: value as PackageManager,
-						});
-					}}
-				/>
-			</Body>
+			<ScrollContainer>
+				<SectionContainer>
+					<Text color={Colors.White}>
+						Set up fishcake <Text color={Colors.DarkGray}>(Step 1 of 2)</Text>
+					</Text>
+					<Text color={Colors.LightGray}>
+						Which package manager are you using for this project?
+					</Text>
+
+					<Text color={Colors.LightGray}>
+						Press <Text color={Colors.LightGreen}>enter</Text> to submit.
+					</Text>
+
+					<Select
+						options={options}
+						onChange={value => {
+							send({
+								type: SelectPackageManagerEvent.SUBMIT_SELECTION,
+								selection: value as PackageManager,
+							});
+						}}
+					/>
+				</SectionContainer>
+			</ScrollContainer>
+
 			<Spacer />
 			<Footer controls={['esc', 'enter', 'up', 'down']} />
 		</PageContainer>
