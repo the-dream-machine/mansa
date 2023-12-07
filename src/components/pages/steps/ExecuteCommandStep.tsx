@@ -36,11 +36,6 @@ export const ExecuteCommandStep = () => {
 		ExecuteCommandMachineEvent,
 		ExecuteCommandMachineState
 	>;
-	const highlightedBashCommand =
-		executeCommandMachineState.context.highlightedBashCommand
-			.split('\n') // Remove newlines
-			.join('')
-			.trim();
 
 	const enterLabel = executeCommandMachineState.context.enterLabel;
 	const highlightedCommandOutput =
@@ -50,6 +45,11 @@ export const ExecuteCommandStep = () => {
 	const isError = executeCommandMachineState.context.isError;
 	const errorMessage = executeCommandMachineState.context.errorMessage;
 	const showLogsSection = executeCommandMachineState.context.showLogsSection;
+	const highlightedBashCommand =
+		executeCommandMachineState.context.highlightedBashCommand
+			.split('\n') // Remove newlines
+			.join('')
+			.trim();
 
 	const getStateColor = (color: Colors) =>
 		showLogsSection ? Colors.DarkGray : color;
@@ -70,12 +70,14 @@ export const ExecuteCommandStep = () => {
 			<ScrollContainer>
 				<SectionContainer>
 					{/* Title */}
-					<Text color={Colors.White}>
-						{activeStep?.step_title}{' '}
-						<Text color={Colors.DarkGray}>
-							(Step {activeStepIndex + 1} of {totalSteps})
+					<Box paddingBottom={1}>
+						<Text color={Colors.White}>
+							{activeStep?.step_title}{' '}
+							<Text color={Colors.DarkGray}>
+								(Step {activeStepIndex + 1} of {totalSteps})
+							</Text>
 						</Text>
-					</Text>
+					</Box>
 
 					{/* Description */}
 					<Text color={getStateColor(Colors.LightGray)}>

@@ -8,25 +8,19 @@ import {$} from 'zx';
 // Context
 export interface UserActionMachineContext {
 	user_action?: Static<typeof userActionSchema>;
-	enterLabel: string;
+	enterLabel: 'copy command' | 'open url' | 'next step';
 	isBashCommand: boolean;
 	isUrl: boolean;
 	isLoading: boolean;
 	isSuccess: boolean;
-	isError: boolean;
-	loadingMessage: string;
-	successMessage: string;
-	errorMessage: string;
 }
 
 // State
 export enum UserActionState {
 	CHECKING_ACTION_TYPE = 'CHECKING_ACTION_TYPE',
-
 	BASH_COMMAND_IDLE = 'BASH_COMMAND_IDLE',
 	COPYING_BASH_COMMAND = 'COPYING_BASH_COMMAND',
 	BASH_COMMAND_SUCCESS_IDLE = 'RUN_BASH_COMMAND_SUCCESS_IDLE',
-
 	URL_IDLE = 'URL_IDLE',
 	OPENING_URL = 'OPENING_URL',
 	URL_SUCCESS_IDLE = 'URL_SUCCESS_IDLE',
@@ -64,15 +58,11 @@ export type UserActionMachineEvent = {type: UserActionEvent.ENTER_KEY_PRESS};
 
 export const initialUserActionContext: UserActionMachineContext = {
 	user_action: undefined,
-	enterLabel: '',
+	enterLabel: 'copy command',
 	isBashCommand: false,
 	isUrl: false,
 	isLoading: false,
 	isSuccess: false,
-	isError: false,
-	loadingMessage: '',
-	successMessage: '',
-	errorMessage: '',
 };
 
 // Guards
@@ -99,7 +89,7 @@ export const userActionMachine = createMachine<
 				},
 				{
 					cond: isUrl,
-					actions: assign({isUrl: true, enterLabel: 'open link'}),
+					actions: assign({isUrl: true, enterLabel: 'open url'}),
 					target: UserActionState.URL_IDLE,
 				},
 			],
@@ -121,7 +111,7 @@ export const userActionMachine = createMachine<
 			},
 		},
 		[UserActionState.BASH_COMMAND_SUCCESS_IDLE]: {
-			entry: [assign({isSuccess: true})],
+			entry: [assign({isSuccess: true, enterLabel: 'next step'})],
 			on: {
 				[UserActionEvent.ENTER_KEY_PRESS]: {
 					actions: sendParent({type: StepsEvent.NAVIGATE_NEXT_STEP}),
@@ -149,7 +139,7 @@ export const userActionMachine = createMachine<
 			},
 		},
 		[UserActionState.URL_SUCCESS_IDLE]: {
-			entry: [assign({isSuccess: true})],
+			entry: [assign({isSuccess: true, enterLabel: 'next step'})],
 			on: {
 				[UserActionEvent.ENTER_KEY_PRESS]: {
 					actions: sendParent({type: StepsEvent.NAVIGATE_NEXT_STEP}),

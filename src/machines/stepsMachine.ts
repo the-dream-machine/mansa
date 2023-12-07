@@ -265,7 +265,7 @@ const initialStepsMachineContext: StepsMachineContext = {
 			},
 		},
 	],
-	activeStepIndex: 0,
+	activeStepIndex: 8,
 	activeStepActor: undefined,
 
 	isStepsSummaryLoading: false,

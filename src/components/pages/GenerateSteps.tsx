@@ -42,7 +42,13 @@ export const GenerateSteps = () => {
 		<PageContainer>
 			<Header />
 			<ScrollContainer>
-				<Box flexDirection="column" paddingX={3} paddingY={2} gap={1}>
+				<Box
+					flexDirection="column"
+					paddingX={3}
+					paddingY={2}
+					gap={1}
+					marginTop={1}
+				>
 					{/* Steps summary */}
 					{showStepsSummary && (
 						<Box gap={2} flexShrink={0}>
