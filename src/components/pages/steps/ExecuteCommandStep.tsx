@@ -4,7 +4,7 @@ import {useActor} from '@xstate/react';
 import {Box, Spacer, Text, useApp, useInput} from 'ink';
 
 import {StepsContext} from '../../StepsProvider.js';
-import {BaseColors, Colors} from '../../../utils/Colors.js';
+import {Colors} from '../../../utils/Colors.js';
 import {PageContainer} from '../../PageContainer.js';
 import {ScrollContainer} from '../../ScrollContainer.js';
 import {Footer} from '../../Footer.js';
@@ -19,7 +19,6 @@ import {
 import {type Actor} from '../../../types/Actor.js';
 import {Spinner} from '@inkjs/ui';
 import {SectionContainer} from '../../SectionContainer.js';
-import {dimInactiveStep} from '../../../utils/dimInactiveState.js';
 
 loadLanguages('bash');
 
@@ -49,15 +48,11 @@ export const ExecuteCommandStep = () => {
 	const isLoading = executeCommandMachineState.context.isLoading;
 	const isSuccess = executeCommandMachineState.context.isSuccess;
 	const isError = executeCommandMachineState.context.isError;
-	const loadingMessage = executeCommandMachineState.context.loadingMessage;
-	const successMessage = executeCommandMachineState.context.successMessage;
 	const errorMessage = executeCommandMachineState.context.errorMessage;
+	const showLogsSection = executeCommandMachineState.context.showLogsSection;
 
-	const showLogsSection = isLoading || isSuccess || isError;
-	// const showLogsSection = true;
-
-	const getFirstStepStateColor = (color: Colors) =>
-		dimInactiveStep({color, condition: showLogsSection});
+	const getStateColor = (color: Colors) =>
+		showLogsSection ? Colors.DarkGray : color;
 
 	const {exit} = useApp();
 	useInput((_, key) => {
@@ -75,7 +70,7 @@ export const ExecuteCommandStep = () => {
 			<ScrollContainer>
 				<SectionContainer>
 					{/* Title */}
-					<Text color={BaseColors.White}>
+					<Text color={Colors.White}>
 						{activeStep?.step_title}{' '}
 						<Text color={Colors.DarkGray}>
 							(Step {activeStepIndex + 1} of {totalSteps})
@@ -83,54 +78,59 @@ export const ExecuteCommandStep = () => {
 					</Text>
 
 					{/* Description */}
-					<Box gap={2}>
-						<Text color={getFirstStepStateColor(Colors.LightGreen)}>•</Text>
-						<Text color={getFirstStepStateColor(Colors.LightGray)}>
-							{activeStep?.step_description}
-						</Text>
-					</Box>
+					<Text color={getStateColor(Colors.LightGray)}>
+						{activeStep?.step_description}
+					</Text>
 
 					{/* Bash command */}
-					<Box marginLeft={3}>
+					<Box>
 						<Box flexGrow={0} borderStyle="round" borderColor={Colors.DarkGray}>
 							<Text>{highlightedBashCommand}</Text>
 						</Box>
 					</Box>
 
 					{/* Press Enter */}
-					<Box paddingLeft={3}>
-						<Text color={getFirstStepStateColor(Colors.LightGray)}>
-							Press{' '}
-							<Text color={getFirstStepStateColor(Colors.LightGreen)}>
-								enter
-							</Text>{' '}
-							to run the command.
-						</Text>
-					</Box>
+					<Text color={getStateColor(Colors.LightGray)}>
+						Press <Text color={getStateColor(Colors.LightGreen)}>enter</Text> to
+						run the command.
+					</Text>
 				</SectionContainer>
 
 				{/* Command preview block */}
 				{showLogsSection && (
 					<SectionContainer showDivider>
 						{/* Loader */}
-						<Box gap={2}>
-							{isLoading ? (
+						{isLoading && (
+							<Box gap={1}>
 								<Spinner />
-							) : (
+								<Text color={Colors.LightGray}>Running command</Text>
+							</Box>
+						)}
+						{isSuccess && (
+							<Box gap={1}>
 								<Text color={Colors.LightGreen}>•</Text>
-							)}
-							<Text color={Colors.LightGray}>Running command</Text>
-						</Box>
+								<Text color={Colors.LightGray}>Run successful</Text>
+							</Box>
+						)}
+						{isError && (
+							<Box gap={1}>
+								<Text color={Colors.LightRed}>•</Text>
+								<Text color={Colors.LightGray}>
+									Error running command: {errorMessage}
+								</Text>
+							</Box>
+						)}
 
 						{/* Command */}
 						{highlightedCommandOutput && (
-							<Box gap={1} flexDirection="column" marginLeft={3}>
+							<Box gap={1} flexDirection="column" marginLeft={1}>
 								<Box gap={1}>
 									<Text color={Colors.DarkGray}>{figureSet.triangleDown}</Text>
 									<Text color={Colors.LightGray}>Logs</Text>
 								</Box>
 								<Box
 									paddingLeft={2}
+									marginBottom={1}
 									flexGrow={0}
 									borderStyle="single"
 									borderColor={Colors.DarkGray}
@@ -143,18 +143,17 @@ export const ExecuteCommandStep = () => {
 									</Text>
 								</Box>
 
+								{/* Press Enter */}
 								{isSuccess && (
-									<Box flexDirection="column" gap={2} paddingTop={2}>
-										<Box gap={2}>
-											<Text color={Colors.LightGreen}>🎉</Text>
-											<Text>{successMessage}</Text>
-										</Box>
-
-										<Text color={Colors.LightGray}>
-											Press <Text color={Colors.LightGreen}>enter</Text> to go
-											to the next step.
-										</Text>
-									</Box>
+									<Text color={Colors.LightGray}>
+										Press <Text color={Colors.LightGreen}>enter</Text> to go to
+										the next step.
+									</Text>
+								)}
+								{isError && (
+									<Text color={Colors.LightGray}>
+										Press <Text color={Colors.LightGreen}>enter</Text> to retry.
+									</Text>
 								)}
 							</Box>
 						)}
@@ -163,7 +162,7 @@ export const ExecuteCommandStep = () => {
 			</ScrollContainer>
 			<Spacer />
 			<Footer
-				controls={['enter', 'esc']}
+				controls={['up', 'down', 'enter', 'esc']}
 				enterLabel={enterLabel}
 				enterDisabled={isLoading}
 			/>

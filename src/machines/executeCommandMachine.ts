@@ -10,17 +10,16 @@ import {StepsEvent} from '../types/StepsMachine.js';
 
 // Context
 export interface ExecuteCommandMachineContext {
-	enterLabel: string;
+	enterLabel: 'run command' | 'next step' | 'retry';
 	bashCommand: string;
 	highlightedBashCommand: string;
 	commandOutput: string;
 	highlightedCommandOutput: string;
 
+	showLogsSection: boolean;
 	isLoading: boolean;
 	isSuccess: boolean;
 	isError: boolean;
-	loadingMessage: string;
-	successMessage: string;
 	errorMessage: string;
 }
 export const initialExecuteCommandMachineContext: ExecuteCommandMachineContext =
@@ -30,11 +29,10 @@ export const initialExecuteCommandMachineContext: ExecuteCommandMachineContext =
 		highlightedBashCommand: '',
 		commandOutput: '',
 		highlightedCommandOutput: '',
+		showLogsSection: false,
 		isLoading: false,
 		isSuccess: false,
 		isError: false,
-		loadingMessage: '',
-		successMessage: '',
 		errorMessage: '',
 	};
 
@@ -43,7 +41,8 @@ export enum ExecuteCommandState {
 	HIGHLIGHTING_BASH_COMMAND = 'HIGHLIGHTING_BASH_COMMAND',
 	IDLE = 'IDLE',
 	RUNNING_BASH_COMMAND = 'RUNNING_BASH_COMMAND',
-	RUN_BASH_COMMAND_SUCCESS_IDLE = 'RUN_BASH_COMMAND_SUCCESS_IDLE',
+	RUNNING_BASH_COMMAND_SUCCESS_IDLE = 'RUNNING_BASH_COMMAND_SUCCESS_IDLE',
+	RUNNING_BASH_COMMAND_ERROR_IDLE = 'RUNNING_BASH_COMMAND_ERROR_IDLE',
 }
 
 //  State machine states
@@ -59,6 +58,14 @@ export type ExecuteCommandMachineState =
 	| {
 			value: ExecuteCommandState.RUNNING_BASH_COMMAND;
 			context: ExecuteCommandMachineContext;
+	  }
+	| {
+			value: ExecuteCommandState.RUNNING_BASH_COMMAND_SUCCESS_IDLE;
+			context: ExecuteCommandMachineContext;
+	  }
+	| {
+			value: ExecuteCommandState.RUNNING_BASH_COMMAND_ERROR_IDLE;
+			context: ExecuteCommandMachineContext;
 	  };
 
 export enum ExecuteCommandEvent {
@@ -69,15 +76,9 @@ export enum ExecuteCommandEvent {
 
 //  State machine events
 export type ExecuteCommandMachineEvent =
-	| {
-			type: ExecuteCommandEvent.ENTER_KEY_PRESSED;
-	  }
+	| {type: ExecuteCommandEvent.ENTER_KEY_PRESSED}
 	| {type: ExecuteCommandEvent.UPDATE_COMMAND_OUTPUT; output: string}
-	| {
-			type: ExecuteCommandEvent.GO_TO_SUCCESS_STATE;
-	  };
-
-loadLanguages('log');
+	| {type: ExecuteCommandEvent.GO_TO_SUCCESS_STATE};
 
 export const executeCommandMachine = createMachine<
 	ExecuteCommandMachineContext,
@@ -115,16 +116,12 @@ export const executeCommandMachine = createMachine<
 			},
 		},
 		[ExecuteCommandState.RUNNING_BASH_COMMAND]: {
-			entry: [
-				assign({
-					isLoading: true,
-					loadingMessage: 'Running command',
-				}),
-			],
+			entry: [assign({isLoading: true, showLogsSection: true})],
 			on: {
 				[ExecuteCommandEvent.UPDATE_COMMAND_OUTPUT]: {
 					actions: assign({
 						highlightedCommandOutput: (context, event) => {
+							loadLanguages('log');
 							const currentHighlightedCommandOutput = highlight(event.output, {
 								language: 'log',
 								theme: defaultPrismTheme({}),
@@ -137,7 +134,7 @@ export const executeCommandMachine = createMachine<
 					}),
 				},
 				[ExecuteCommandEvent.GO_TO_SUCCESS_STATE]: {
-					target: ExecuteCommandState.RUN_BASH_COMMAND_SUCCESS_IDLE,
+					target: ExecuteCommandState.RUNNING_BASH_COMMAND_SUCCESS_IDLE,
 				},
 			},
 			invoke: {
@@ -155,6 +152,9 @@ export const executeCommandMachine = createMachine<
 							output: data.toString(),
 						});
 					});
+					process.stdout.on('error', _ => {
+						throw new Error('Failed to run command');
+					});
 
 					process.stdout.on('end', () => {
 						send({
@@ -162,23 +162,45 @@ export const executeCommandMachine = createMachine<
 						});
 					});
 				},
+				onError: {
+					target: ExecuteCommandState.RUNNING_BASH_COMMAND_ERROR_IDLE,
+					actions: assign({
+						errorMessage: (_, event: DoneInvokeEvent<Error>) =>
+							event.data.message,
+					}),
+				},
 			},
-		},
-		[ExecuteCommandState.RUN_BASH_COMMAND_SUCCESS_IDLE]: {
-			entry: [
-				assign({
-					isLoading: false,
-					loadingMessage: initialExecuteCommandMachineContext.loadingMessage,
-					isSuccess: true,
-					successMessage: 'Run successful',
-					enterLabel: 'next step',
-				}),
+			exit: [
+				assign({isLoading: initialExecuteCommandMachineContext.isLoading}),
 			],
+		},
+		[ExecuteCommandState.RUNNING_BASH_COMMAND_SUCCESS_IDLE]: {
+			entry: [assign({isSuccess: true, enterLabel: 'next step'})],
 			on: {
 				[ExecuteCommandEvent.ENTER_KEY_PRESSED]: {
 					actions: [sendParent({type: StepsEvent.NAVIGATE_NEXT_STEP})],
 				},
 			},
+			exit: [
+				assign({
+					isSuccess: initialExecuteCommandMachineContext.isSuccess,
+					enterLabel: initialExecuteCommandMachineContext.enterLabel,
+				}),
+			],
+		},
+		[ExecuteCommandState.RUNNING_BASH_COMMAND_ERROR_IDLE]: {
+			entry: [assign({isError: true, enterLabel: 'retry'})],
+			on: {
+				[ExecuteCommandEvent.ENTER_KEY_PRESSED]: {
+					target: ExecuteCommandState.RUNNING_BASH_COMMAND,
+				},
+			},
+			exit: [
+				assign({
+					isError: initialExecuteCommandMachineContext.isError,
+					enterLabel: initialExecuteCommandMachineContext.enterLabel,
+				}),
+			],
 		},
 	},
 });
