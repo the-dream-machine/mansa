@@ -76,23 +76,22 @@ export const ModifyFileStep = () => {
 			<ScrollContainer>
 				<SectionContainer>
 					{/* Title */}
-					<Text color={BaseColors.White}>
-						{activeStep?.step_title}{' '}
-						<Text color={Colors.DarkGray}>
-							(Step {activeStepIndex + 1} of {totalSteps})
-						</Text>
-					</Text>
-
-					{/* Description step */}
-					<Box gap={2} marginTop={1}>
-						<Text color={getFetchEditsStateColor(Colors.LightGreen)}>•</Text>
-						<Text color={getFetchEditsStateColor(Colors.LightGray)}>
-							{activeStep?.step_description}
+					<Box paddingBottom={1}>
+						<Text color={BaseColors.White}>
+							{activeStep?.step_title}{' '}
+							<Text color={Colors.DarkGray}>
+								(Step {activeStepIndex + 1} of {totalSteps})
+							</Text>
 						</Text>
 					</Box>
 
+					{/* Description step */}
+					<Text color={getFetchEditsStateColor(Colors.LightGray)}>
+						{activeStep?.step_description}
+					</Text>
+
 					{/* Press Enter Edit File */}
-					<Box marginLeft={3}>
+					<Box>
 						<Text color={getFetchEditsStateColor(Colors.LightGray)}>
 							Press{' '}
 							<Text color={getFetchEditsStateColor(Colors.LightGreen)}>
@@ -111,7 +110,7 @@ export const ModifyFileStep = () => {
 						<Box flexDirection="column" gap={1}>
 							{/* Loader */}
 							{isFetchEditsLoading && (
-								<Box gap={2}>
+								<Box gap={1}>
 									<Spinner />
 									<Text color={getApplyStateColor(Colors.LightGray)}>
 										Fetching changes for{' '}
@@ -122,7 +121,7 @@ export const ModifyFileStep = () => {
 								</Box>
 							)}
 							{isFetchEditsSuccess && (
-								<Box gap={2}>
+								<Box gap={1}>
 									<Text color={getApplyStateColor(Colors.LightGreen)}>•</Text>
 									<Text color={getApplyStateColor(Colors.LightGray)}>
 										Successfully fetched changes for{' '}
@@ -136,10 +135,11 @@ export const ModifyFileStep = () => {
 
 						{/* Code block */}
 						{editedFileHighlightedCode && (
-							<Box paddingX={3}>
+							<Box>
 								<Box
 									flexDirection="column"
 									gap={1}
+									marginX={2}
 									paddingX={2}
 									paddingY={1}
 									borderColor={Colors.DarkGray}
@@ -156,7 +156,7 @@ export const ModifyFileStep = () => {
 
 						{/* Press Enter Apply Changes */}
 						{isFetchEditsSuccess && (
-							<Box marginLeft={3}>
+							<Box marginLeft={2} paddingTop={1}>
 								<Text color={getApplyStateColor(Colors.LightGray)}>
 									Press{' '}
 									<Text color={getApplyStateColor(Colors.LightGreen)}>
@@ -177,7 +177,7 @@ export const ModifyFileStep = () => {
 						<Box flexDirection="column" gap={1}>
 							{/* Loading */}
 							{isApplyEditsLoading && (
-								<Box gap={2} paddingX={2}>
+								<Box gap={1} paddingX={2}>
 									<Spinner />
 									<Text color={Colors.LightGray}>
 										Applying changes to{' '}
@@ -191,7 +191,7 @@ export const ModifyFileStep = () => {
 							{/* Success */}
 							{isApplyEditsSuccess && (
 								<Box flexDirection="column" gap={2}>
-									<Box gap={2} paddingX={2}>
+									<Box gap={1}>
 										<Text color={Colors.LightGreen}>•</Text>
 										<Text color={Colors.LightGray}>
 											Successfully applied changes to{' '}
@@ -200,7 +200,7 @@ export const ModifyFileStep = () => {
 											</Text>
 										</Text>
 									</Box>
-									<Box marginLeft={5}>
+									<Box marginLeft={2}>
 										<Text color={Colors.LightGray}>
 											Press <Text color={Colors.LightGreen}>enter</Text> to go
 											to the next step.

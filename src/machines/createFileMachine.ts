@@ -16,13 +16,10 @@ export interface CreateFileMachineContext {
 	formattedCode?: string;
 	highlightedCode?: string;
 	enterLabel: string;
-
 	isLoading: boolean;
 	isSuccess: boolean;
 	isError: boolean;
-	loadingMessage: string;
-	successMessage: string;
-	errorMessage: string;
+	showSuccessSection: boolean;
 }
 
 // States
@@ -72,13 +69,10 @@ export const initialCreateFileMachineContext: CreateFileMachineContext = {
 	formattedCode: '',
 	highlightedCode: '',
 	enterLabel: 'create file',
-
 	isLoading: false,
 	isSuccess: false,
 	isError: false,
-	loadingMessage: '',
-	successMessage: '',
-	errorMessage: '',
+	showSuccessSection: false,
 };
 
 export const createFileMachine = createMachine<
@@ -100,15 +94,21 @@ export const createFileMachine = createMachine<
 					}),
 				onDone: {
 					target: CreateFileState.HIGHLIGHTING_CODE,
-					actions: assign({
-						formattedCode: (_, event: DoneInvokeEvent<string>) => event.data,
-					}),
+					actions: [
+						() => console.log('Formatted!'),
+						assign({
+							formattedCode: (_, event: DoneInvokeEvent<string>) => event.data,
+						}),
+					],
 				},
 				onError: {
 					target: CreateFileState.HIGHLIGHTING_CODE,
-					actions: assign({
-						formattedCode: context => context.rawCode,
-					}),
+					actions: [
+						(_, event) => console.log('Not formatted!', event),
+						assign({
+							formattedCode: context => context.rawCode,
+						}),
+					],
 				},
 			},
 		},
@@ -161,13 +161,7 @@ export const createFileMachine = createMachine<
 			},
 		},
 		[CreateFileState.CREATING_FILE]: {
-			entry: [
-				assign(context => ({
-					isLoading: true,
-					loadingMessage: `Creating ${context.filePath}`,
-				})),
-			],
-			exit: [assign({isLoading: false})],
+			entry: [assign({isLoading: true, showSuccessSection: true})],
 			invoke: {
 				src: async context => {
 					await sleep(2000);
@@ -180,6 +174,7 @@ export const createFileMachine = createMachine<
 					target: CreateFileState.CREATE_FILE_SUCCESS_IDLE,
 				},
 			},
+			exit: [assign({isLoading: false})],
 		},
 		[CreateFileState.CREATE_FILE_SUCCESS_IDLE]: {
 			entry: [

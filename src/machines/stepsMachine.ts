@@ -149,123 +149,111 @@ const initialStepsMachineContext: StepsMachineContext = {
 	// steps: [],
 	steps: [
 		{
-			step_title: 'Install Trigger.dev SDK and Next.js Library',
+			step_title: 'Install trigger.dev packages',
 			step_description:
-				"To integrate Trigger.dev with your Next.js project, you'll need to install the SDK and Next.js integration libraries using bun, your project's package manager.",
+				'You need to add the trigger.dev SDK and server-side middleware to your project. These packages enable you to define and handle custom jobs triggered by various events within your application.',
 			step_type: 'RUN_BASH_COMMAND',
-			bash_command_to_run: 'bun add @trigger.dev/sdk @trigger.dev/nextjs',
+			bash_command_to_run: 'npm install @trigger.dev/sdk @trigger.dev/express',
 		},
 		{
-			step_title: 'Obtain Development API Key',
+			step_title: 'Copy API key from dashboard',
 			step_description:
-				'Obtain the development API key from the Trigger.dev dashboard to authenticate your application with the Trigger.dev services.',
+				'Retrieve the Server API key from the trigger.dev dashboard. This key is essential for your server to authenticate and communicate with the trigger.dev services.',
 			step_type: 'USER_ACTION',
 			user_action: {
-				url: 'https://cloud.trigger.dev/',
+				url: 'https://cloud.trigger.dev/dashboard',
 			},
 		},
 		{
-			step_title: 'Create Environment Variables File',
+			step_title: 'Configure environment variables',
 			step_description:
-				'Create a file to store environment variables, which will include your Trigger.dev API key for secure access within your application.',
-			step_type: 'CREATE_FILE',
-			new_file_path_to_create: {
-				file_path: './.env.local',
+				"Environment variables are crucial for storing sensitive information such as API keys outside your codebase. You'll need to set up the trigger.dev API key in your project's environment variables.",
+			step_type: 'MODIFY_FILE',
+			existing_file_path_to_modify: {
+				file_path: './.env',
 				file_extension: 'env',
+				current_file_content_summary:
+					'This file serves as an example for the ".env" file, providing instructions for building a new ".env" file when cloning the repository.',
 				file_content_summary:
-					'This file stores environment variables such as the Trigger.dev API key and URL required for the Trigger client configuration.',
-				file_code_changes: 'TRIGGER_API_KEY=your_development_api_key_here',
+					'Adds necessary trigger.dev configurations: your unique Server API key for secure interaction between your app and trigger.dev services, and specifies the API URL.',
 			},
 		},
 		{
-			step_title: 'Create Trigger Client Configuration',
+			step_title: 'Create Trigger client configuration',
 			step_description:
-				"This step involves creating a new TypeScript file in your 'src' directory to hold the configuration for the Trigger.dev client. This allows your application to interact with the Trigger.dev services.",
+				"To interact with trigger.dev, you need to configure the TriggerClient. This setup includes providing your app's unique identifier and specifying the API key for authentication.",
 			step_type: 'CREATE_FILE',
 			new_file_path_to_create: {
 				file_path: './src/trigger.ts',
 				file_extension: 'ts',
 				file_content_summary:
-					'Configuration file for the Trigger.dev client, specifying the project identifier, API key, and API URL.',
+					'This file initializes the Trigger client with your project-specific ID and the environment variables containing the API key and URL.',
 				file_code_changes:
-					"import { TriggerClient } from '@trigger.dev/sdk'; export const client = new TriggerClient({ id: 'my-app', // Replace with an appropriate identifier for your project apiKey: process.env.TRIGGER_API_KEY, apiUrl: process.env.TRIGGER_API_URL });",
+					'import { TriggerClient } from "@trigger.dev/sdk";\n\nexport const client = new TriggerClient({\n  id: "my-nextjs-app",\n  apiKey: process.env.TRIGGER_API_KEY!,\n  apiUrl: process.env.TRIGGER_API_URL!,\n});',
 			},
 		},
 		{
-			step_title: 'Create Trigger API Route',
+			step_title: 'Set up Express to use trigger.dev middleware',
 			step_description:
-				"In this step, you'll create a new API route that will handle Trigger.dev events. This route is essential for initializing and connecting your backend to the Trigger.dev client.",
+				"For trigger.dev to handle the background jobs, you need to integrate its Express middleware into your Next.js API routes, enabling job processing within your application's server side.",
 			step_type: 'CREATE_FILE',
 			new_file_path_to_create: {
 				file_path: './src/pages/api/trigger.ts',
 				file_extension: 'ts',
 				file_content_summary:
-					'API route that initializes and connects to the Trigger.dev client, enabling the invocation of backend jobs.',
+					'This file sets up an Express application using the trigger.dev middleware to handle jobs dispatched by trigger.dev within the Next.js API routes.',
 				file_code_changes:
-					"import { createPagesRoute } from '@trigger.dev/nextjs'; import { client } from '../../trigger'; import '../../jobs'; const { handler, config } = createPagesRoute(client); export { config }; export default handler;",
+					'import type { NextApiRequest, NextApiResponse } from \'next\';\nimport express from \'express\';\nimport { createMiddleware } from "@trigger.dev/express";\nimport { client } from "../../trigger";\n\nconst app = express();\napp.use(createMiddleware(client));\n\nexport default (req: NextApiRequest, res: NextApiResponse) => {\n    app(req, res, (result) => {\n        if (result instanceof Error) {\n            throw result;\n        }\n        res.status(result.statusCode).end();\n    });\n};',
 			},
 		},
 		{
-			step_title: 'Define Example Job',
+			step_title: 'Define a job for trigger.dev',
 			step_description:
-				'Setting up an example job will give you a quick start in understanding how to define jobs that can be triggered by events in your application. The example provided should be customized to suit the actual tasks you want to run.',
+				"Jobs are the core of trigger.dev's functionality. They represent tasks that your application can run in response to events. You'll need to define these jobs so that trigger.dev knows what actions to execute.",
 			step_type: 'CREATE_FILE',
 			new_file_path_to_create: {
-				file_path: './src/jobs/example.ts',
+				file_path: './src/jobs/exampleJob.ts',
 				file_extension: 'ts',
 				file_content_summary:
-					'This TypeScript file contains an example job definition using the Trigger.dev SDK, which can be triggered by a specific event.',
+					'This job file creates a job definition for trigger.dev, setting up the event trigger and defining what the job does when the event occurs.',
 				file_code_changes:
-					"import { eventTrigger } from '@trigger.dev/sdk'; import { client } from '../trigger'; client.defineJob({ id: 'example-job', name: 'Example Job', version: '0.0.1', trigger: eventTrigger({ name: 'example.event', }), run: async (payload, io, ctx) => { await io.logger.info('Hello world!', { payload }); return { message: 'Hello world!', }; }, });",
+					'import { eventTrigger } from "@trigger.dev/sdk";\nimport { client } from "../trigger";\n\nclient.defineJob({\n  id: "example-job",\n  name: "Example Job",\n  version: "0.0.1",\n  trigger: eventTrigger({\n    name: "example.event",\n  }),\n  run: async (payload, io, ctx) => {\n    await io.logger.info("Hello world!", { payload });\n\n    return {\n      message: "Hello world!",\n    };\n  },\n});',
 			},
 		},
 		{
-			step_title: 'Export Job Definitions',
+			step_title: 'Add trigger.dev configuration to package.json',
 			step_description:
-				'This file acts as an index that exports all job definitions, ensuring they are centrally managed and accessible throughout your application. You can add additional job exports here as you create more jobs.',
-			step_type: 'CREATE_FILE',
-			new_file_path_to_create: {
-				file_path: './src/jobs/index.ts',
-				file_extension: 'ts',
-				file_content_summary:
-					'Central index file for exporting job definitions for easy management and access within the application.',
-				file_code_changes: "export * from './example';",
-			},
-		},
-		{
-			step_title: 'Configure package.json for Trigger.dev',
-			step_description:
-				'Add a specific configuration to your package.json file that identifies your Trigger.dev endpoint. This allows Trigger.dev to recognize your application and route jobs correctly.',
+				'The package.json helps trigger.dev CLI identify your project. By adding the endpointId, the CLI can correctly target and handle job processing for your application.',
 			step_type: 'MODIFY_FILE',
 			existing_file_path_to_modify: {
 				file_path: './package.json',
 				file_extension: 'json',
 				current_file_content_summary:
-					'Node.js project using Next.js and TypeScript, with dependencies including Prisma for database, React and React DOM for UI, Zod for data validation, and Trigger.dev for triggering events.',
+					'This is a package.json file for a project using Next.js, Prisma, React, and TypeScript, with dependencies for data fetching, API interaction, and type validation.',
 				file_content_summary:
-					"The modified package.json now includes a Trigger.dev configuration object specifying your application's endpoint identifier. This is used by Trigger.dev to link events to your specific deployment.",
+					'Configures the package.json file for trigger.dev CLI, providing it with the unique endpoint identifier for the Trigger client.',
 			},
 		},
 		{
-			step_title: 'Run the Development Server and Trigger.dev CLI',
+			step_title: 'Run development server',
 			step_description:
-				'Launch your Next.js application using the bun package manager to serve the frontend, and start the Trigger.dev CLI in a separate terminal window to handle job execution.',
+				"To test the integration with trigger.dev, you'll need to run your Next.js application in development mode. This allows you to make sure everything is wired up correctly and functioning as intended.",
 			step_type: 'USER_ACTION',
 			user_action: {
-				bash_command: 'bun run dev',
+				bash_command: 'npm run dev',
 			},
 		},
 		{
-			step_title: 'Run the Trigger.dev CLI',
+			step_title: 'Start trigger.dev CLI tool',
 			step_description:
-				"In a new terminal window, you'll need to start the Trigger.dev CLI. This tool will manage the execution of jobs and trigger events within your application environment.",
+				'The trigger.dev CLI tool is the bridge between your local development environment and trigger.dev services. Running the CLI allows you to develop and test your trigger.dev jobs in real time.',
 			step_type: 'USER_ACTION',
 			user_action: {
-				bash_command: 'bunx @trigger.dev/cli@latest dev',
+				bash_command: 'npx @trigger.dev/cli@latest dev',
 			},
 		},
 	],
-	activeStepIndex: 8,
+	activeStepIndex: 6,
 	activeStepActor: undefined,
 
 	isStepsSummaryLoading: false,
@@ -289,7 +277,7 @@ export const stepsMachine = createMachine<
 	id: 'stepsMachine',
 	preserveActionOrder: true,
 	predictableActionArguments: true,
-	initial: StepsState.REVIEW_STEPS_IDLE,
+	initial: StepsState.STEPS_COMPLETE,
 	context: initialStepsMachineContext,
 	states: {
 		[StepsState.FETCHING_REPOSITORY_MAP]: {

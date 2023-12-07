@@ -51,7 +51,8 @@ export const initialModifyFileMachineContext: ModifyFileMachineContext = {
 	editedFileChangesSummary: '',
 	originalFileRawCode: '',
 	originalFileFormattedCode: '',
-	editedFileRawCode: '',
+	editedFileRawCode:
+		'```json\n{\n  "name": "ragdoll",\n  "version": "0.1.0",\n  "private": true,\n  "scripts": {\n    "build": "next build",\n    "db:push": "prisma db push",\n    "db:studio": "prisma studio",\n    "dev": "next dev",\n    "postinstall": "prisma generate",\n    "lint": "next lint",\n    "start": "next start",\n    "trigger": "trigger.dev --endpoint=<UNIQUE_ENDPOINT_IDENTIFIER>"\n  },\n  "dependencies": {\n    "@prisma/client": "^5.1.1",\n    "@t3-oss/env-nextjs": "^0.7.0",\n    "@tanstack/react-query": "^4.32.6",\n    "@trpc/client": "^10.37.1",\n    "@trpc/next": "^10.37.1",\n    "@trpc/react-query": "^10.37.1",\n    "@trpc/server": "^10.37.1",\n    "next": "^13.5.4",\n    "react": "18.2.0",\n    "react-dom": "18.2.0",\n    "superjson": "^1.13.1",\n    "zod": "^3.22.4",\n    "trigger.dev": "latest"\n  },\n  "devDependencies": {\n    "@types/eslint": "^8.44.2",\n    "@types/node": "^18.16.0",\n    "@types/react": "^18.2.20",\n    "@types/react-dom": "^18.2.7",\n    "@typescript-eslint/eslint-plugin": "^6.3.0",\n    "@typescript-eslint/parser": "^6.3.0",\n    "eslint": "^8.47.0",\n    "eslint-config-next": "^13.5.4",\n    "prisma": "^5.1.1",\n    "typescript": "^5.1.6"\n  },\n  "ct3aMetadata": {\n    "initVersion": "7.22.0"\n  }\n}\n```',
 	editedFileFormattedCode: '',
 	editedFileHighlightedCode: '',
 	diffs: [],
@@ -60,7 +61,7 @@ export const initialModifyFileMachineContext: ModifyFileMachineContext = {
 	// Component states
 	enterLabel: 'preview changes',
 	isFetchEditsLoading: false,
-	isFetchEditsSuccess: false,
+	isFetchEditsSuccess: true,
 	isFetchEditsError: false,
 	isApplyEditsLoading: false,
 	isApplyEditsSuccess: false,
@@ -153,7 +154,7 @@ export const modifyFileMachine = createMachine<
 	id: 'modifyFileMachine',
 	preserveActionOrder: true,
 	predictableActionArguments: true,
-	initial: ModifyFileState.READING_ORIGINAL_FILE,
+	initial: ModifyFileState.FORMATTING_EDITED_FILE_RAW_CODE,
 	context: initialModifyFileMachineContext,
 	states: {
 		[ModifyFileState.READING_ORIGINAL_FILE]: {

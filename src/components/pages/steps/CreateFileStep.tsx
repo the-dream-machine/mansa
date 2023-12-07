@@ -35,16 +35,13 @@ export const CreateFileStep = () => {
 	>;
 
 	const highlightedCode = createFileMachineState.context.highlightedCode;
+	const formattedCode = createFileMachineState.context.formattedCode;
 	const filepath = createFileMachineState.context.filePath;
 	const enterLabel = createFileMachineState.context.enterLabel;
 	const isLoading = createFileMachineState.context.isLoading;
 	const isSuccess = createFileMachineState.context.isSuccess;
 	const isError = createFileMachineState.context.isError;
-	const loadingMessage = createFileMachineState.context.loadingMessage;
-	const successMessage = createFileMachineState.context.successMessage;
-	const errorMessage = createFileMachineState.context.errorMessage;
-
-	const showNextSection = isLoading || isSuccess || isError;
+	const showNextSection = createFileMachineState.context.showSuccessSection;
 
 	const {exit} = useApp();
 	useInput((_, key) => {
@@ -65,27 +62,25 @@ export const CreateFileStep = () => {
 			<ScrollContainer>
 				<SectionContainer>
 					{/* Title */}
-					<Text color={Colors.White}>
-						{activeStep?.step_title}{' '}
-						<Text color={Colors.DarkGray}>
-							(Step {activeStepIndex + 1} of {totalSteps})
-						</Text>
-					</Text>
-
-					{/* Description */}
-					<Box gap={2} marginTop={1}>
-						<Text color={getStateColor(Colors.LightGreen)}>•</Text>
-						<Text color={getStateColor(Colors.LightGray)}>
-							{activeStep?.step_description}
+					<Box paddingBottom={1}>
+						<Text color={Colors.White}>
+							{activeStep?.step_title}{' '}
+							<Text color={Colors.DarkGray}>
+								(Step {activeStepIndex + 1} of {totalSteps})
+							</Text>
 						</Text>
 					</Box>
+
+					{/* Description */}
+					<Text color={getStateColor(Colors.LightGray)}>
+						{activeStep?.step_description}
+					</Text>
 
 					{/* Code Block */}
 					<Box
 						flexDirection="column"
 						flexShrink={0}
 						gap={1}
-						marginX={3}
 						paddingY={1}
 						paddingX={2}
 						borderColor={Colors.DarkGray}
@@ -98,16 +93,14 @@ export const CreateFileStep = () => {
 					</Box>
 
 					{/* Press Enter Create File */}
-					<Box marginLeft={3}>
-						<Text color={getStateColor(Colors.LightGray)}>
-							Press <Text color={getStateColor(Colors.LightGreen)}>enter</Text>{' '}
-							to create the{' '}
-							<Text color={getStateColor(Colors.White)} italic>
-								{filepath}
-							</Text>{' '}
-							file and apply the code changes.
-						</Text>
-					</Box>
+					<Text color={getStateColor(Colors.LightGray)}>
+						Press <Text color={getStateColor(Colors.LightGreen)}>enter</Text> to
+						create the{' '}
+						<Text color={getStateColor(Colors.White)} italic>
+							{filepath}
+						</Text>{' '}
+						file and apply the code changes.
+					</Text>
 				</SectionContainer>
 
 				{showNextSection && (
@@ -128,8 +121,8 @@ export const CreateFileStep = () => {
 
 							{/* Success message */}
 							{isSuccess && (
-								<Box flexDirection="column" gap={1} paddingTop={2}>
-									<Box gap={2}>
+								<Box flexDirection="column" gap={1}>
+									<Box gap={1}>
 										<Text color={Colors.LightGreen}>•</Text>
 										<Text color={Colors.LightGray}>
 											Successfully created{' '}
@@ -139,7 +132,7 @@ export const CreateFileStep = () => {
 										</Text>
 									</Box>
 
-									<Box marginLeft={3}>
+									<Box marginLeft={2}>
 										<Text color={Colors.LightGray}>
 											Press <Text color={Colors.LightGreen}>enter</Text> to go
 											to the next step.
