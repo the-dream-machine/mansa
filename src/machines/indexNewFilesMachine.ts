@@ -1,22 +1,36 @@
 import {type DoneInvokeEvent, assign, createMachine, type Sender} from 'xstate';
-import {v4 as uuid} from 'uuid';
 
 import {updateRepositoryChecksums} from '../utils/repository/updateRepositoryChecksums.js';
 import {updateRepositoryMap} from '../utils/repository/updateRepositoryMap.js';
-import {fishcakeUserPath} from '../utils/fishcakePath.js';
-import {writeToFile} from '../utils/writeToFile.js';
 import {AppState, type NavigationMachineEvent} from './navigationMachine.js';
 import {compareAllChecksums} from '../utils/compareAllChecksums.js';
 
 interface IndexNewFilesMachineContext {
 	filePaths: string[];
 	currentFileIndexing: number;
-	enterLabel: string;
+	enterLabel: 'start indexing' | 'continue' | 'retry';
 	repositoryName: string;
-	indexRepositoryErrorMessage: string;
-	indexRepositoryErrorLogPath: string;
+	errorMessage: string;
 	navigate?: Sender<NavigationMachineEvent>;
+
+	showProgressBar: boolean;
+	isLoading: boolean;
+	isSuccess: boolean;
+	isError: boolean;
 }
+
+const initialIndexRepositoryMachineContext: IndexNewFilesMachineContext = {
+	filePaths: [],
+	currentFileIndexing: 0,
+	enterLabel: 'start indexing',
+	repositoryName: '',
+	errorMessage: '',
+
+	showProgressBar: false,
+	isLoading: false,
+	isSuccess: false,
+	isError: false,
+};
 
 export enum IndexNewFilesState {
 	COMPARING_CHECKSUMS = 'COMPARING_CHECKSUMS',
@@ -24,7 +38,6 @@ export enum IndexNewFilesState {
 	INDEXING_NEW_FILES = 'INDEXING_NEW_FILES',
 	INDEXING_SUCCESS_IDLE = 'INDEXING_SUCCESS_IDLE',
 	INDEXING_ERROR_IDLE = 'INDEXING_ERROR_IDLE',
-	WRITING_ERROR_FILE = 'WRITING_ERROR_FILE',
 }
 type IndexNewFilesMachineState =
 	| {
@@ -46,10 +59,6 @@ type IndexNewFilesMachineState =
 	| {
 			value: IndexNewFilesState.INDEXING_ERROR_IDLE;
 			context: IndexNewFilesMachineContext;
-	  }
-	| {
-			value: IndexNewFilesState.WRITING_ERROR_FILE;
-			context: IndexNewFilesMachineContext;
 	  };
 
 export enum IndexNewFilesEvent {
@@ -70,14 +79,7 @@ export const indexNewFilesMachine = createMachine<
 	predictableActionArguments: true,
 	preserveActionOrder: true,
 	initial: IndexNewFilesState.COMPARING_CHECKSUMS,
-	context: {
-		filePaths: [],
-		currentFileIndexing: 0,
-		enterLabel: 'start indexing',
-		repositoryName: '',
-		indexRepositoryErrorMessage: '',
-		indexRepositoryErrorLogPath: '',
-	},
+	context: initialIndexRepositoryMachineContext,
 	states: {
 		[IndexNewFilesState.COMPARING_CHECKSUMS]: {
 			invoke: {
@@ -89,14 +91,10 @@ export const indexNewFilesMachine = createMachine<
 					}),
 				},
 				onError: {
-					target: IndexNewFilesState.WRITING_ERROR_FILE,
+					target: IndexNewFilesState.INDEXING_ERROR_IDLE,
 					actions: assign({
-						indexRepositoryErrorMessage: (_, event: DoneInvokeEvent<Error>) =>
+						errorMessage: (_, event: DoneInvokeEvent<Error>) =>
 							event.data.message,
-						indexRepositoryErrorLogPath: context =>
-							`${fishcakeUserPath}/logs/index_${
-								context.repositoryName
-							}_error_${uuid()}.log`,
 					}),
 				},
 			},
@@ -109,6 +107,7 @@ export const indexNewFilesMachine = createMachine<
 			},
 		},
 		[IndexNewFilesState.INDEXING_NEW_FILES]: {
+			entry: [assign({isLoading: true, showProgressBar: true})],
 			invoke: {
 				src: async context => {
 					const filePath = context.filePaths[context.currentFileIndexing] ?? '';
@@ -133,19 +132,19 @@ export const indexNewFilesMachine = createMachine<
 					},
 				],
 				onError: {
-					target: IndexNewFilesState.WRITING_ERROR_FILE,
+					target: IndexNewFilesState.INDEXING_ERROR_IDLE,
 					actions: assign({
-						indexRepositoryErrorMessage: (_, event: DoneInvokeEvent<Error>) =>
+						errorMessage: (_, event: DoneInvokeEvent<Error>) =>
 							event.data.message,
-						indexRepositoryErrorLogPath: context =>
-							`${fishcakeUserPath}/logs/index_${
-								context.repositoryName
-							}_error_${uuid()}.log`,
 					}),
 				},
 			},
+			exit: [
+				assign({isLoading: initialIndexRepositoryMachineContext.isLoading}),
+			],
 		},
 		[IndexNewFilesState.INDEXING_SUCCESS_IDLE]: {
+			entry: [assign({isSuccess: true})],
 			on: {
 				[IndexNewFilesEvent.ENTER_KEY_PRESSED]: {
 					actions: context => {
@@ -155,28 +154,23 @@ export const indexNewFilesMachine = createMachine<
 					},
 				},
 			},
-		},
-		[IndexNewFilesState.WRITING_ERROR_FILE]: {
-			invoke: {
-				src: async context =>
-					await writeToFile({
-						filePath: context.indexRepositoryErrorLogPath,
-						fileContent: context.indexRepositoryErrorMessage,
-					}),
-				onDone: {
-					target: IndexNewFilesState.INDEXING_ERROR_IDLE,
-					actions: assign({
-						enterLabel: 'retry',
-					}),
-				},
-			},
+			exit: [
+				assign({isSuccess: initialIndexRepositoryMachineContext.isSuccess}),
+			],
 		},
 		[IndexNewFilesState.INDEXING_ERROR_IDLE]: {
+			entry: [assign({isError: true, enterLabel: 'retry'})],
 			on: {
 				[IndexNewFilesEvent.ENTER_KEY_PRESSED]: {
 					target: IndexNewFilesState.INDEXING_NEW_FILES,
 				},
 			},
+			exit: [
+				assign({
+					isError: initialIndexRepositoryMachineContext.isError,
+					enterLabel: initialIndexRepositoryMachineContext.enterLabel,
+				}),
+			],
 		},
 	},
 });

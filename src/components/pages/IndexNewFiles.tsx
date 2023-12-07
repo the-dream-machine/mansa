@@ -6,15 +6,15 @@ import {useMachine} from '@xstate/react';
 
 import {Header} from '../Header.js';
 import {Footer} from '../Footer.js';
-import {Body} from '../Body.js';
 import {PageContainer} from '../PageContainer.js';
 import {NavigationContext} from '../NavigationProvider.js';
-import {BaseColors, Colors} from '../../utils/Colors.js';
+import {Colors} from '../../utils/Colors.js';
 import {
 	IndexNewFilesEvent,
 	IndexNewFilesState,
 	indexNewFilesMachine,
 } from '../../machines/indexNewFilesMachine.js';
+import {SectionContainer} from '../SectionContainer.js';
 
 export const IndexNewFiles = () => {
 	const [, navigate] = NavigationContext.useActor();
@@ -23,7 +23,12 @@ export const IndexNewFiles = () => {
 	});
 
 	const enterLabel = state.context.enterLabel;
-	const indexRepositoryErrorLogPath = state.context.indexRepositoryErrorLogPath;
+	const showProgressBar = state.context.showProgressBar;
+	const isLoading = state.context.isLoading;
+	const isSuccess = state.context.isSuccess;
+	const isError = state.context.isError;
+	const errorMessage = state.context.errorMessage;
+
 	const currentIndexingFile = state.context.currentFileIndexing;
 	const currentIndexingFilePath = state.context.filePaths[currentIndexingFile];
 	const currentIndexingFileCount = currentIndexingFile + 1;
@@ -32,21 +37,10 @@ export const IndexNewFiles = () => {
 		(currentIndexingFileCount / totalFiles) * 100,
 	);
 
-	const showLoader = state.matches(IndexNewFilesState.INDEXING_NEW_FILES);
-	const showProgressBar =
-		state.matches(IndexNewFilesState.INDEXING_NEW_FILES) ||
-		state.matches(IndexNewFilesState.INDEXING_SUCCESS_IDLE) ||
-		state.matches(IndexNewFilesState.INDEXING_ERROR_IDLE);
-	const showSuccessMessage = state.matches(
-		IndexNewFilesState.INDEXING_SUCCESS_IDLE,
-	);
-	const showErrorMessage = state.matches(
-		IndexNewFilesState.INDEXING_ERROR_IDLE,
-	);
-	const showCurrentIndexingFile = state.matches(
-		IndexNewFilesState.INDEXING_NEW_FILES,
-	);
 	const enterDisabled = state.matches(IndexNewFilesState.INDEXING_NEW_FILES);
+
+	const getStateColor = (color: Colors) =>
+		showProgressBar ? Colors.DarkGray : color;
 
 	const {exit} = useApp();
 	useInput((_, key) => {
@@ -60,76 +54,84 @@ export const IndexNewFiles = () => {
 
 	return (
 		<PageContainer>
-			<Header
-				title="Fishcake"
-				titleBackgroundColor={BaseColors.Pink600}
-				isLoading={showLoader}
-			/>
-			<Body>
-				<Text color={Colors.LightGray}>
-					Found {totalFiles} files that have changed since last sync.
+			<Header title="Fishcake" titleBackgroundColor={Colors.LightPink} />
+			<SectionContainer>
+				{/* Title */}
+				<Box paddingBottom={1}>
+					<Text color={Colors.White}>Sync files</Text>
+				</Box>
+
+				{/* Body */}
+				<Text color={getStateColor(Colors.LightGray)}>
+					Found <Text color={getStateColor(Colors.White)}>{totalFiles}</Text>{' '}
+					files that have changed since last sync.
 				</Text>
 
-				{(!showSuccessMessage || !showErrorMessage) && (
-					<Text color={Colors.LightGray}>
-						Press <Text color="white">enter</Text> to start indexing.
-					</Text>
-				)}
+				<Text color={getStateColor(Colors.LightGray)}>
+					Press <Text color={getStateColor(Colors.LightGreen)}>enter</Text> to
+					start indexing.
+				</Text>
+			</SectionContainer>
 
-				{showProgressBar && (
-					<Box flexDirection="column" gap={1}>
+			{showProgressBar && (
+				<SectionContainer showDivider>
+					<Box flexDirection="column" gap={1} marginBottom={1}>
+						{isLoading && (
+							<Box gap={1}>
+								<Spinner />
+								<Text color={Colors.LightGray}>
+									Indexing:{' '}
+									<Text color={Colors.White} italic>
+										{currentIndexingFilePath}
+									</Text>
+								</Text>
+							</Box>
+						)}
+						{isSuccess && (
+							<Box gap={1}>
+								<Text color={Colors.LightGreen}>•</Text>
+								<Text color={Colors.LightGray}>Indexing complete! 🎉</Text>
+							</Box>
+						)}
+						{isError && (
+							<Box gap={1}>
+								<Text color={Colors.LightRed}>•</Text>
+								<Text color={Colors.LightGray}>
+									Something went wrong: {errorMessage}
+								</Text>
+							</Box>
+						)}
+
+						{/* Progress bar */}
 						<Box gap={1}>
 							<Box width={70} flexGrow={0} flexShrink={0}>
 								<ProgressBar value={percentageProgress} />
 							</Box>
-							<Text>
+							<Text color={Colors.White}>
 								{percentageProgress}%{' '}
-								<Text color="gray">
+								<Text color={Colors.LightGray}>
 									({currentIndexingFileCount}/{totalFiles} files)
 								</Text>
 							</Text>
 						</Box>
-						{showCurrentIndexingFile && (
-							<Box gap={1}>
-								<Spinner />
-								<Text color="gray">Indexing: {currentIndexingFilePath}</Text>
-							</Box>
-						)}
 					</Box>
-				)}
 
-				{showSuccessMessage && (
-					<>
-						<Text>
-							<Text color="green">{figureSet.tick} </Text>
-							Indexing complete! 🎉
+					{isSuccess && (
+						<Text color={Colors.LightGray}>
+							Press <Text color={Colors.LightGreen}>enter</Text> to continue.
 						</Text>
+					)}
+					{isError && (
+						<Text color={Colors.LightGray}>
+							Press <Text color={Colors.LightGreen}>enter</Text> to retry.
+						</Text>
+					)}
+				</SectionContainer>
+			)}
 
-						<Text color="gray">
-							Press <Text color="white">enter</Text> to continue.
-						</Text>
-					</>
-				)}
-
-				{showErrorMessage && (
-					<>
-						<Text>
-							<Text color="red">{figureSet.cross} </Text>
-							An Error occurred! 😭
-						</Text>
-						<Text color="gray">
-							Press <Text color="white">enter</Text> to retry.
-						</Text>
-						<Text color="gray">
-							You can view the full error logs here:{' '}
-							<Text color="white">{indexRepositoryErrorLogPath}</Text>
-						</Text>
-					</>
-				)}
-			</Body>
 			<Spacer />
 			<Footer
-				controls={['esc', 'enter']}
+				controls={['up', 'down', 'esc', 'enter']}
 				enterLabel={enterLabel}
 				enterDisabled={enterDisabled}
 			/>
