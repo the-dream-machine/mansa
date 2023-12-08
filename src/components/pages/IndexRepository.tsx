@@ -54,24 +54,24 @@ export const IndexRepository = () => {
 
 	return (
 		<PageContainer>
-			<Header title="Fishcake" titleBackgroundColor={Colors.LightPink} />
+			<Header title="Joji" titleBackgroundColor={Colors.LightPink} />
 
 			<ScrollContainer>
 				<SectionContainer>
 					<Box paddingBottom={1}>
 						<Text color={Colors.White}>
-							Set up fishcake <Text color={Colors.DarkGray}>(Step 2 of 2)</Text>
+							Set up joji <Text color={Colors.DarkGray}>(Step 2 of 2)</Text>
 						</Text>
 					</Box>
 
 					<Text color={getStateColor(Colors.LightGray)}>
-						To provide instructions tailored to your codebase, fishcake needs to
+						To provide instructions tailored to your codebase, joji needs to
 						analyze and create an index of your project's files. The index helps
-						fishcake learn which files need to be created or edited.
+						joji learn which files need to be created or edited.
 					</Text>
 
 					<Text color={getStateColor(Colors.LightGray)}>
-						Fishcake looks at your{' '}
+						Joji looks at your{' '}
 						<Text color={getStateColor(Colors.White)} italic>
 							.gitignore
 						</Text>{' '}
@@ -91,9 +91,9 @@ export const IndexRepository = () => {
 					>
 						<Text color={getStateColor(Colors.White)}>👀 Privacy</Text>
 						<Text color={getStateColor(Colors.LightGray)}>
-							Fishcake may send snippets of your code to the server for
-							processing. All your files and their content remain on your
-							device, they are never stored by fishcake or third parties.
+							Joji may send snippets of your code to the server for processing.
+							All your files and their content remain on your device, they are
+							never stored by joji or third parties.
 						</Text>
 					</Box>
 

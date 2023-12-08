@@ -86,6 +86,7 @@ export enum StepsState {
 	SPAWNING_ACTIVE_STEP_MACHINE = 'SPAWNING_ACTIVE_STEP_MACHINE',
 	ACTIVE_STEP_IDLE = 'ACTIVE_STEP_IDLE',
 	FETCHING_NEXT_STEP = 'FETCHING_NEXT_STEP',
+	FETCHING_PREV_STEP = 'FETCHING_PREV_STEP',
 	STEPS_COMPLETE = 'STEPS_COMPLETE',
 }
 
@@ -120,11 +121,13 @@ export type StepsMachineState =
 	  }
 	| {value: StepsState.ACTIVE_STEP_IDLE; context: StepsMachineContext}
 	| {value: StepsState.FETCHING_NEXT_STEP; context: StepsMachineContext}
+	| {value: StepsState.FETCHING_PREV_STEP; context: StepsMachineContext}
 	| {value: StepsState.STEPS_COMPLETE; context: StepsMachineContext};
 
 //  State machine events
 export type StepsMachineEvent =
 	| {type: StepsEvent.NAVIGATE_NEXT_STEP}
+	| {type: StepsEvent.NAVIGATE_PREV_STEP}
 	| {type: StepsEvent.ENTER_KEY_PRESS}
 	| {type: StepsEvent.UPDATE_RUN; run: Run};
 
@@ -149,111 +152,122 @@ const initialStepsMachineContext: StepsMachineContext = {
 	// steps: [],
 	steps: [
 		{
-			step_title: 'Install trigger.dev packages',
+			step_title: 'Install Trigger.dev SDK',
 			step_description:
-				'You need to add the trigger.dev SDK and server-side middleware to your project. These packages enable you to define and handle custom jobs triggered by various events within your application.',
+				'This step involves adding the Trigger.dev SDK to your project dependencies, which is a crucial package that allows you to interact with the Trigger.dev API within your application.',
 			step_type: 'RUN_BASH_COMMAND',
-			bash_command_to_run: 'npm install @trigger.dev/sdk @trigger.dev/express',
+			bash_command_to_run: 'npm install @trigger.dev/sdk',
 		},
 		{
-			step_title: 'Copy API key from dashboard',
+			step_title: 'Install Trigger.dev Next.js Integration',
 			step_description:
-				'Retrieve the Server API key from the trigger.dev dashboard. This key is essential for your server to authenticate and communicate with the trigger.dev services.',
-			step_type: 'USER_ACTION',
-			user_action: {
-				url: 'https://cloud.trigger.dev/dashboard',
-			},
+				"By installing the Trigger.dev integration package for Next.js, you're setting up the necessary hooks and middleware to work seamlessly with Trigger.dev within the context of a Next.js application.",
+			step_type: 'RUN_BASH_COMMAND',
+			bash_command_to_run: 'npm install @trigger.dev/nextjs',
 		},
 		{
-			step_title: 'Configure environment variables',
+			step_title: 'Set up Environment Variables',
 			step_description:
-				"Environment variables are crucial for storing sensitive information such as API keys outside your codebase. You'll need to set up the trigger.dev API key in your project's environment variables.",
+				'Environment variables are used to securely store sensitive information such as API keys. They are also a way to configure behavior of your application without hardcoding values directly into your codebase.',
 			step_type: 'MODIFY_FILE',
 			existing_file_path_to_modify: {
-				file_path: './.env',
+				file_path: './.env.local',
 				file_extension: 'env',
 				current_file_content_summary:
-					'This file serves as an example for the ".env" file, providing instructions for building a new ".env" file when cloning the repository.',
+					'Environment configuration file that stores private variables such as API keys and other sensitive details, which should not be committed to version control.',
 				file_content_summary:
-					'Adds necessary trigger.dev configurations: your unique Server API key for secure interaction between your app and trigger.dev services, and specifies the API URL.',
+					'This file will contain the Trigger.dev API key and URL required to initialize and authenticate with the Trigger.dev API.',
 			},
 		},
 		{
-			step_title: 'Create Trigger client configuration',
+			step_title: 'Create Trigger Client Configuration',
 			step_description:
-				"To interact with trigger.dev, you need to configure the TriggerClient. This setup includes providing your app's unique identifier and specifying the API key for authentication.",
+				'This TypeScript file exports an instance of TriggerClient, configured with your project ID and API credentials sourced from environment variables, establishing the connection between your application and Trigger.dev services.',
 			step_type: 'CREATE_FILE',
 			new_file_path_to_create: {
-				file_path: './src/trigger.ts',
+				file_path: './src/triggerClient.ts',
 				file_extension: 'ts',
 				file_content_summary:
-					'This file initializes the Trigger client with your project-specific ID and the environment variables containing the API key and URL.',
+					'This TypeScript file exports an instance of TriggerClient, configured with your project ID and API credentials sourced from environment variables, establishing the connection between your application and Trigger.dev services.',
 				file_code_changes:
-					'import { TriggerClient } from "@trigger.dev/sdk";\n\nexport const client = new TriggerClient({\n  id: "my-nextjs-app",\n  apiKey: process.env.TRIGGER_API_KEY!,\n  apiUrl: process.env.TRIGGER_API_URL!,\n});',
+					'import { TriggerClient } from "@trigger.dev/sdk";\n\nexport const triggerClient = new TriggerClient({\n  id: "your-project-identifier",\n  apiKey: process.env.TRIGGER_API_KEY,\n  apiUrl: process.env.TRIGGER_API_URL,\n});',
 			},
 		},
 		{
-			step_title: 'Set up Express to use trigger.dev middleware',
+			step_title: 'Define Trigger Job',
 			step_description:
-				"For trigger.dev to handle the background jobs, you need to integrate its Express middleware into your Next.js API routes, enabling job processing within your application's server side.",
-			step_type: 'CREATE_FILE',
-			new_file_path_to_create: {
-				file_path: './src/pages/api/trigger.ts',
-				file_extension: 'ts',
-				file_content_summary:
-					'This file sets up an Express application using the trigger.dev middleware to handle jobs dispatched by trigger.dev within the Next.js API routes.',
-				file_code_changes:
-					'import type { NextApiRequest, NextApiResponse } from \'next\';\nimport express from \'express\';\nimport { createMiddleware } from "@trigger.dev/express";\nimport { client } from "../../trigger";\n\nconst app = express();\napp.use(createMiddleware(client));\n\nexport default (req: NextApiRequest, res: NextApiResponse) => {\n    app(req, res, (result) => {\n        if (result instanceof Error) {\n            throw result;\n        }\n        res.status(result.statusCode).end();\n    });\n};',
-			},
-		},
-		{
-			step_title: 'Define a job for trigger.dev',
-			step_description:
-				"Jobs are the core of trigger.dev's functionality. They represent tasks that your application can run in response to events. You'll need to define these jobs so that trigger.dev knows what actions to execute.",
+				'This step defines a new job for Trigger.dev in your application. Jobs are the units of work that Trigger.dev will execute based on events or schedules you define.',
 			step_type: 'CREATE_FILE',
 			new_file_path_to_create: {
 				file_path: './src/jobs/exampleJob.ts',
 				file_extension: 'ts',
 				file_content_summary:
-					'This job file creates a job definition for trigger.dev, setting up the event trigger and defining what the job does when the event occurs.',
+					'This TypeScript file contains the definition of a job that responds to a specific event trigger, it describes how the job should behave and the actions it should perform when triggered.',
 				file_code_changes:
-					'import { eventTrigger } from "@trigger.dev/sdk";\nimport { client } from "../trigger";\n\nclient.defineJob({\n  id: "example-job",\n  name: "Example Job",\n  version: "0.0.1",\n  trigger: eventTrigger({\n    name: "example.event",\n  }),\n  run: async (payload, io, ctx) => {\n    await io.logger.info("Hello world!", { payload });\n\n    return {\n      message: "Hello world!",\n    };\n  },\n});',
+					'import { eventTrigger } from "@trigger.dev/sdk"\nimport { triggerClient } from "../triggerClient"\n\ntriggerClient.defineJob({\n  id: "example-job",\n  name: "Example Job",\n  version: "0.0.1",\n  trigger: eventTrigger({\n    name: "example.event",\n  }),\n  run: async (payload, io, ctx) => {\n    await io.logger.info("Hello world!", { payload });\n\n    return {\n      message: "Hello world!",\n    };\n  },\n});',
 			},
 		},
 		{
-			step_title: 'Add trigger.dev configuration to package.json',
+			step_title: 'Export Trigger Jobs',
 			step_description:
-				'The package.json helps trigger.dev CLI identify your project. By adding the endpointId, the CLI can correctly target and handle job processing for your application.',
+				'This file serves as an entry point to export all defined Trigger.dev jobs within the directory so that they can be easily imported and registered in your application.',
+			step_type: 'CREATE_FILE',
+			new_file_path_to_create: {
+				file_path: './src/jobs/index.ts',
+				file_extension: 'ts',
+				file_content_summary:
+					'Collects and exports trigger job definitions from individual job files, organizing the jobs to register them as a batch within your Trigger.dev client.',
+				file_code_changes: 'export * from "./exampleJob";',
+			},
+		},
+		{
+			step_title: 'Create Trigger API Route',
+			step_description:
+				"API routes in Next.js act as the backend of your application. In this step, you're creating an API route that the Trigger.dev SDK can use to communicate with your job definitions.",
+			step_type: 'CREATE_FILE',
+			new_file_path_to_create: {
+				file_path: './src/pages/api/trigger.ts',
+				file_extension: 'ts',
+				file_content_summary:
+					'This API route is tied to Trigger.dev, it listens for incoming job execution requests and passes them to the appropriate job handlers defined in your Next.js application.',
+				file_code_changes:
+					'import { createPagesRoute } from "@trigger.dev/nextjs";\nimport { triggerClient } from "../../triggerClient";\nimport "../../jobs";\n\nconst { handler, config } = createPagesRoute(triggerClient);\nexport { config };\nexport default handler;',
+			},
+		},
+		{
+			step_title: 'Update Package Configuration',
+			step_description:
+				"The package.json file in a Node.js project includes not only your project's dependency list, but also various configurations for tools and libraries. By adding Trigger.dev's configuration, you are providing necessary information for the Trigger.dev CLI to interface correctly with your application.",
 			step_type: 'MODIFY_FILE',
 			existing_file_path_to_modify: {
 				file_path: './package.json',
 				file_extension: 'json',
 				current_file_content_summary:
-					'This is a package.json file for a project using Next.js, Prisma, React, and TypeScript, with dependencies for data fetching, API interaction, and type validation.',
+					'This project is a Next.js application using TypeScript and Tailwind CSS. It includes dependencies like React, Next.js, TypeScript, Tailwind CSS, ESLint, and more for development.',
 				file_content_summary:
-					'Configures the package.json file for trigger.dev CLI, providing it with the unique endpoint identifier for the Trigger client.',
+					"Enhanced to include configuration for Trigger.dev, specifying your app's unique endpointId to connect with the Trigger.dev backend services.",
 			},
 		},
 		{
-			step_title: 'Run development server',
+			step_title: 'Run Next.js Development Server',
 			step_description:
-				"To test the integration with trigger.dev, you'll need to run your Next.js application in development mode. This allows you to make sure everything is wired up correctly and functioning as intended.",
+				'Starting the Next.js development server is essential for testing your local project in real-time, including the features you have integrated with Trigger.dev.',
 			step_type: 'USER_ACTION',
 			user_action: {
 				bash_command: 'npm run dev',
 			},
 		},
 		{
-			step_title: 'Start trigger.dev CLI tool',
+			step_title: 'Run Trigger.dev CLI',
 			step_description:
-				'The trigger.dev CLI tool is the bridge between your local development environment and trigger.dev services. Running the CLI allows you to develop and test your trigger.dev jobs in real time.',
+				"The Trigger.dev CLI provides a command-line interface to work with Trigger.dev. Running it in tandem with your application's development server allows you to manage and test triggers locally.",
 			step_type: 'USER_ACTION',
 			user_action: {
 				bash_command: 'npx @trigger.dev/cli@latest dev',
 			},
 		},
 	],
-	activeStepIndex: 6,
+	activeStepIndex: 0,
 	activeStepActor: undefined,
 
 	isStepsSummaryLoading: false,
@@ -277,7 +291,7 @@ export const stepsMachine = createMachine<
 	id: 'stepsMachine',
 	preserveActionOrder: true,
 	predictableActionArguments: true,
-	initial: StepsState.STEPS_COMPLETE,
+	initial: StepsState.REVIEW_STEPS_IDLE,
 	context: initialStepsMachineContext,
 	states: {
 		[StepsState.FETCHING_REPOSITORY_MAP]: {
@@ -348,7 +362,7 @@ Question: Given this information, how do I manually setup 'trigger.dev' in my pr
 						query: `Here is an overview of my project showing the location and the purpose of each file: ${JSON.stringify(
 							context.repositoryMap,
 						)}
-Question: How do I apply these steps to my project? From the project map, you should infer the appropriate files to create and modify when necessary. ALWAYS infer appropriate variable names, types and import paths where necessary. Each step should be atomic.`,
+Question: How do I apply these steps to my project? From the project map, you should infer the appropriate files to create and modify when necessary. In the code files, try to infer appropriate variable names, types and import paths where necessary. If the project uses typescript, assume strict mode is active. Do not omit any step. Each step should be atomic.`,
 						thread_id: context.run?.thread_id,
 						skipTransform: true,
 					}),
@@ -495,6 +509,23 @@ Skip steps where I should create a folder. No preamble, respond with JSON only.`
 					target: StepsState.FETCHING_NEXT_STEP,
 				},
 			},
+		},
+		[StepsState.FETCHING_NEXT_STEP]: {
+			always: [
+				{
+					target: StepsState.SPAWNING_ACTIVE_STEP_MACHINE,
+					actions: assign({
+						activeStepIndex: context => context.activeStepIndex + 1,
+					}),
+					cond: context =>
+						context.steps?.length !== context.activeStepIndex - 1,
+				},
+				{
+					target: StepsState.STEPS_COMPLETE,
+					cond: context =>
+						context.steps?.length === context.activeStepIndex - 1,
+				},
+			],
 		},
 		[StepsState.FETCHING_NEXT_STEP]: {
 			always: [

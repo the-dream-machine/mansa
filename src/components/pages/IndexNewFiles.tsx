@@ -54,7 +54,7 @@ export const IndexNewFiles = () => {
 
 	return (
 		<PageContainer>
-			<Header title="Fishcake" titleBackgroundColor={Colors.LightPink} />
+			<Header title="Joji" titleBackgroundColor={Colors.LightPink} />
 			<SectionContainer>
 				{/* Title */}
 				<Box paddingBottom={1}>

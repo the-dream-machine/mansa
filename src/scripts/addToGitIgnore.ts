@@ -1,11 +1,11 @@
 import {$} from 'zx';
 
 export const addToGitIgnore = async () => {
-	// Create .fishcake local dir
+	// Create .joji local dir
 	const result = await $`
 	# Define the words you want to add to .gitignore
-	header="# fishcake"
-	firstItem=".fishcake"
+	header="# joji"
+	firstItem=".joji"
 
 	# Check if .gitignore exists
 	if [ -f .gitignore ]; then

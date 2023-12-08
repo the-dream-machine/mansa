@@ -28,7 +28,7 @@ export const StepsSchema = Type.Object({
 	}),
 	step_type: Type.Enum(StepType, {
 		description: `Type of the step. Only use '${StepType.USER_ACTION}' in the following cases:
-1. If the step requires the user to execute a long running command e.g running the development command or starting an interactive program.
+1. If the step requires the user to execute a long running command e.g running the development command or an 'init' command.
 2. If the user needs to take action in a new terminal window.
 3. If the user needs to do something in the browser to proceed.
 Note: Do NOT use for creating or modifying files.`,

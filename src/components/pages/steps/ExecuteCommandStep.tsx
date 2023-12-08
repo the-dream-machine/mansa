@@ -19,11 +19,12 @@ import {
 import {type Actor} from '../../../types/Actor.js';
 import {Spinner} from '@inkjs/ui';
 import {SectionContainer} from '../../SectionContainer.js';
+import {StepsEvent} from '../../../types/StepsMachine.js';
 
 loadLanguages('bash');
 
 export const ExecuteCommandStep = () => {
-	const [stepsState] = StepsContext.useActor();
+	const [stepsState, stepsSend] = StepsContext.useActor();
 	const activeStepIndex = stepsState.context.activeStepIndex;
 	const activeStep = stepsState.context.steps?.[activeStepIndex];
 	const activeStepActor = stepsState.context.activeStepActor;
@@ -61,6 +62,12 @@ export const ExecuteCommandStep = () => {
 		}
 		if (key.return) {
 			executeCommandMachineSend(ExecuteCommandEvent.ENTER_KEY_PRESSED);
+		}
+		// if (key.tab) {
+		// 	stepsSend(StepsEvent.NAVIGATE_NEXT_STEP);
+		// }
+		if (key.shift && key.tab) {
+			stepsSend(StepsEvent.NAVIGATE_NEXT_STEP);
 		}
 	});
 
@@ -164,7 +171,7 @@ export const ExecuteCommandStep = () => {
 			</ScrollContainer>
 			<Spacer />
 			<Footer
-				controls={['up', 'down', 'enter', 'esc']}
+				controls={['up', 'down', 'enter', 'esc', 'tab']}
 				enterLabel={enterLabel}
 				enterDisabled={isLoading}
 			/>

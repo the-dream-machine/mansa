@@ -38,11 +38,12 @@ export const Footer = ({
 				</Box>
 			)}
 			{controls.includes('tab') && (
-				<Text color="gray">
-					{' '}
-					• <Text color="white">tab</Text> toggle selection
-				</Text>
+				<Box>
+					<Text color={BaseColors.Gray600}>tab </Text>
+					<Text color={Colors.DarkGray}>next • </Text>
+				</Box>
 			)}
+
 			{controls.includes('search') && (
 				<Text color="gray">
 					{' '}

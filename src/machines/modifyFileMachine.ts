@@ -33,9 +33,11 @@ export interface ModifyFileMachineContext {
 
 	// Component states
 	enterLabel?: string;
+	showFetchEditsSection: boolean;
 	isFetchEditsLoading: boolean;
 	isFetchEditsSuccess: boolean;
 	isFetchEditsError: boolean;
+	showApplyEditsSection: boolean;
 	isApplyEditsLoading: boolean;
 	isApplyEditsSuccess: boolean;
 	isApplyEditsError: boolean;
@@ -60,9 +62,11 @@ export const initialModifyFileMachineContext: ModifyFileMachineContext = {
 
 	// Component states
 	enterLabel: 'preview changes',
+	showFetchEditsSection: false,
 	isFetchEditsLoading: false,
-	isFetchEditsSuccess: true,
+	isFetchEditsSuccess: false,
 	isFetchEditsError: false,
+	showApplyEditsSection: false,
 	isApplyEditsLoading: false,
 	isApplyEditsSuccess: false,
 	isApplyEditsError: false,
@@ -154,7 +158,7 @@ export const modifyFileMachine = createMachine<
 	id: 'modifyFileMachine',
 	preserveActionOrder: true,
 	predictableActionArguments: true,
-	initial: ModifyFileState.FORMATTING_EDITED_FILE_RAW_CODE,
+	initial: ModifyFileState.READING_ORIGINAL_FILE,
 	context: initialModifyFileMachineContext,
 	states: {
 		[ModifyFileState.READING_ORIGINAL_FILE]: {
@@ -222,7 +226,7 @@ export const modifyFileMachine = createMachine<
 			},
 		},
 		[ModifyFileState.GENERATING_FILE_EDITS]: {
-			entry: assign({isFetchEditsLoading: true}),
+			entry: assign({isFetchEditsLoading: true, showFetchEditsSection: true}),
 			invoke: {
 				src: context =>
 					sendQueryMachine.withContext({
@@ -382,7 +386,7 @@ No preamble. Only respond with the updated file. Do not truncate anything.`,
 			},
 		},
 		[ModifyFileState.APPLYING_CHANGES]: {
-			entry: assign({isApplyEditsLoading: true}),
+			entry: assign({isApplyEditsLoading: true, showApplyEditsSection: true}),
 			invoke: {
 				src: async context => {
 					await sleep(2000);

@@ -5,7 +5,6 @@ import {useMachine} from '@xstate/react';
 
 import {PageContainer} from '../PageContainer.js';
 import {Header} from '../Header.js';
-import {Body} from '../Body.js';
 import {Footer} from '../Footer.js';
 import {NavigationContext} from '../NavigationProvider.js';
 import {
@@ -13,7 +12,7 @@ import {
 	selectPackageManagerMachine,
 } from '../../machines/selectPackageManagerMachine.js';
 import {type PackageManager} from '../../types/PackageManager.js';
-import {BaseColors, Colors} from '../../utils/Colors.js';
+import {Colors} from '../../utils/Colors.js';
 import {SectionContainer} from '../SectionContainer.js';
 import {ScrollContainer} from '../ScrollContainer.js';
 
@@ -39,19 +38,15 @@ const SelectPackageManager = () => {
 
 	return (
 		<PageContainer>
-			<Header title="Fishcake" titleBackgroundColor={Colors.LightPink} />
+			<Header title="Joji" titleBackgroundColor={Colors.LightPink} />
 
 			<ScrollContainer>
 				<SectionContainer>
 					<Text color={Colors.White}>
-						Set up fishcake <Text color={Colors.DarkGray}>(Step 1 of 2)</Text>
+						Set up joji <Text color={Colors.DarkGray}>(Step 1 of 2)</Text>
 					</Text>
 					<Text color={Colors.LightGray}>
 						Which package manager are you using for this project?
-					</Text>
-
-					<Text color={Colors.LightGray}>
-						Press <Text color={Colors.LightGreen}>enter</Text> to submit.
 					</Text>
 
 					<Select
@@ -63,6 +58,10 @@ const SelectPackageManager = () => {
 							});
 						}}
 					/>
+
+					<Text color={Colors.LightGray}>
+						Press <Text color={Colors.LightGreen}>enter</Text> to submit.
+					</Text>
 				</SectionContainer>
 			</ScrollContainer>
 

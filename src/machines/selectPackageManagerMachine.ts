@@ -1,7 +1,7 @@
 import {type Sender, createMachine, assign, type DoneInvokeEvent} from 'xstate';
 
 import {AppState, type NavigationMachineEvent} from './navigationMachine.js';
-import {createFishcakeConfig} from '../utils/createFishcakeConfig.js';
+import {createJojiConfig} from '../utils/createJojiConfig.js';
 import type {PackageManager} from '../types/PackageManager.js';
 import {getRepositoryDetails} from '../utils/repository/getRepositoryDetails.js';
 import {type Repo} from '../types/Repo.js';
@@ -83,7 +83,7 @@ export const selectPackageManagerMachine = createMachine<
 		[SelectPackageManagerState.REGISTERING_PACKAGE_MANAGER]: {
 			invoke: {
 				src: async context => {
-					await createFishcakeConfig({
+					await createJojiConfig({
 						packageManager: context.packageManager,
 					});
 				},

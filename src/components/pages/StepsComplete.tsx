@@ -6,7 +6,6 @@ import {ScrollContainer} from '../ScrollContainer.js';
 import {Box, Spacer, Text, useApp, useInput} from 'ink';
 import {Colors} from '../../utils/Colors.js';
 import {Footer} from '../Footer.js';
-import {ModifyFileEvent} from '../../machines/modifyFileMachine.js';
 
 export const StepsComplete = () => {
 	const {exit} = useApp();

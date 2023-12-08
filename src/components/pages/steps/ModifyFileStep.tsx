@@ -47,12 +47,13 @@ export const ModifyFileStep = () => {
 	const isApplyEditsLoading = modifyFileMachineContext.isApplyEditsLoading;
 	const isApplyEditsSuccess = modifyFileMachineContext.isApplyEditsSuccess;
 	const isApplyEditsError = modifyFileMachineContext.isApplyEditsError;
-	const errorMessage = modifyFileMachineContext.errorMessage;
+	// const errorMessage = modifyFileMachineContext.errorMessage;
 
 	const showFetchEditsSection =
-		isFetchEditsLoading || isFetchEditsSuccess || isFetchEditsError;
+		modifyFileMachineState.context.showFetchEditsSection;
+
 	const showApplyEditsSection =
-		isApplyEditsLoading || isApplyEditsSuccess || isApplyEditsError;
+		modifyFileMachineState.context.showApplyEditsSection;
 
 	const {exit} = useApp();
 	useInput((_, key) => {

@@ -1,5 +1,5 @@
 import {fs} from 'zx';
-import {fishcakeRepositoryPath} from '../fishcakePath.js';
+import {jojiRepositoryPath} from '../jojiPath.js';
 import {writeToFile} from '../writeToFile.js';
 import {summarizeFile} from '../api/summarizeFile.js';
 import type {FileMapItem} from '../../types/FileMapItem.js';
@@ -11,7 +11,7 @@ interface Args {
 
 export const updateRepositoryMap = async ({filePath}: Args) => {
 	const fileMapItem = await summarizeFile({filePath});
-	const repositoryMapFilePath = `${fishcakeRepositoryPath}/map.json`;
+	const repositoryMapFilePath = `${jojiRepositoryPath}/map.json`;
 	let updatedMap: FileMapItem[] = [];
 
 	// If map file exists
