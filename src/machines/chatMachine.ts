@@ -9,8 +9,8 @@ import {initialSendQueryMachineContext} from '../utils/initialSendQueryMachineCo
 import {type SendQueryMachineResult} from '../types/SendQuery.js';
 import {sendQuery} from '../utils/api/sendQuery.js';
 import {sleep} from 'zx';
-import {sendQueryStatus} from '../utils/api/sendQueryStatus.js';
-import {sendQueryResult} from '../utils/api/sendQueryResult.js';
+import {getQueryStatus} from '../utils/api/getQueryStatus.js';
+import {getQueryResult} from '../utils/api/getQueryResult.js';
 
 interface ChatMachineContext {
 	run?: Run;
@@ -110,12 +110,6 @@ type ChatMachineEvent =
 	| {type: ChatEvent.ENTER_KEY_PRESS}
 	| {type: ChatEvent.SEND_QUERY; query: string};
 
-// Guards
-const isStatusCompleted = (event: DoneInvokeEvent<RunStatusResponse>) =>
-	event.data.status === 'completed';
-const isStatus = (event: DoneInvokeEvent<RunStatusResponse>) =>
-	event.data.status === 'completed';
-
 export const chatMachine = createMachine<
 	ChatMachineContext,
 	ChatMachineEvent,
@@ -186,7 +180,7 @@ export const chatMachine = createMachine<
 					if (!context.run) {
 						throw new Error('Run ID not found');
 					}
-					return await sendQueryStatus(context.run);
+					return await getQueryStatus(context.run);
 				},
 				onDone: [
 					{
@@ -220,6 +214,7 @@ export const chatMachine = createMachine<
 					}),
 				},
 			},
+			exit: [assign({isLoading: false})],
 		},
 		[ChatState.FETCHING_QUERY_RESULT]: {
 			invoke: {
@@ -227,7 +222,7 @@ export const chatMachine = createMachine<
 					if (!context.run?.thread_id) {
 						throw new Error('Thread ID not found');
 					}
-					return await sendQueryResult({
+					return await getQueryResult({
 						thread_id: context.run.thread_id,
 					});
 				},

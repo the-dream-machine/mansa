@@ -1,7 +1,7 @@
 import axios, {type AxiosRequestConfig, type AxiosResponse} from 'axios';
 import {type RunStatusResponse, type Run} from '../../types/Run.js';
 
-export const sendQueryStatus = async ({run_id, thread_id}: Run) => {
+export const getQueryStatus = async ({run_id, thread_id}: Run) => {
 	const data = JSON.stringify({
 		run_id,
 		thread_id,

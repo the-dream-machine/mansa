@@ -5,7 +5,7 @@ interface Args {
 	responseParentKey?: string;
 }
 
-export const sendQueryResult = async ({thread_id, responseParentKey}: Args) => {
+export const getQueryResult = async ({thread_id, responseParentKey}: Args) => {
 	const data = JSON.stringify({thread_id, responseParentKey});
 	const config: AxiosRequestConfig = {
 		method: 'POST',

@@ -7,8 +7,8 @@ import {
 import {sleep} from 'zx';
 
 import {sendQuery} from '../utils/api/sendQuery.js';
-import {sendQueryStatus} from '../utils/api/sendQueryStatus.js';
-import {sendQueryResult} from '../utils/api/sendQueryResult.js';
+import {getQueryStatus} from '../utils/api/getQueryStatus.js';
+import {getQueryResult} from '../utils/api/getQueryResult.js';
 
 import type {RunStatusResponse, Run} from '../types/Run.js';
 import {initialSendQueryMachineContext} from '../utils/initialSendQueryMachineContext.js';
@@ -94,7 +94,7 @@ export const sendQueryMachine = createMachine<
 			invoke: {
 				src: async context => {
 					await sleep(1000);
-					return await sendQueryStatus(context.run);
+					return await getQueryStatus(context.run);
 				},
 				onDone: [
 					// If status is not completed, keep polling
@@ -121,7 +121,7 @@ export const sendQueryMachine = createMachine<
 		[QueryState.FETCHING_QUERY_RESULT]: {
 			invoke: {
 				src: async context =>
-					await sendQueryResult({
+					await getQueryResult({
 						thread_id: context.run.thread_id,
 						responseParentKey: context.responseParentKey,
 					}),
