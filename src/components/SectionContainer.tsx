@@ -1,6 +1,6 @@
 import React from 'react';
 import {Box, type BoxProps} from 'ink';
-import {Colors} from '../utils/Colors.js';
+import {Colors} from '../styles/Colors.js';
 
 interface Props {
 	children: React.ReactNode;

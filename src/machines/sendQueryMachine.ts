@@ -21,7 +21,6 @@ export interface QueryMachineContext {
 	run: Run;
 	errorMessage?: string;
 	result: string;
-	skipTransform: boolean;
 	thread_id?: string;
 }
 
@@ -125,7 +124,6 @@ export const sendQueryMachine = createMachine<
 					await sendQueryResult({
 						thread_id: context.run.thread_id,
 						responseParentKey: context.responseParentKey,
-						skipTransform: context.skipTransform,
 					}),
 				onDone: {
 					target: QueryState.QUERY_SUCCESS,

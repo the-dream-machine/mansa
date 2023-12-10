@@ -4,7 +4,7 @@ import {argument} from 'pastel';
 import {ThemeProvider} from '@inkjs/ui';
 import NavigationHandler from '../components/NavigationHandler.js';
 import {NavigationProvider} from '../components/NavigationProvider.js';
-import {theme} from '../utils/theme.js';
+import {inkTheme} from '../styles/inkTheme.js';
 import {FullScreen} from '../components/FullScreen.js';
 
 export const args = zod.tuple([
@@ -22,7 +22,7 @@ type Props = {
 
 export default function Install({args}: Props) {
 	return (
-		<ThemeProvider theme={theme}>
+		<ThemeProvider theme={inkTheme}>
 			<NavigationProvider>
 				<FullScreen>
 					<NavigationHandler />

@@ -1,7 +1,7 @@
 import React from 'react';
 import {Box, Spacer, Text} from 'ink';
 import figureSet from 'figures';
-import {BaseColors, Colors} from '../utils/Colors.js';
+import {BaseColors, Colors} from '../styles/Colors.js';
 
 export type FooterControl =
 	| 'up'
@@ -76,7 +76,7 @@ export const Footer = ({
 				</Box>
 			)}
 			<Spacer />
-			<Text>🌵</Text>
+			<Text>🏔️</Text>
 		</Box>
 	);
 };

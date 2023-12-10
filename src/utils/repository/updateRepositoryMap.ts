@@ -1,5 +1,5 @@
 import {fs} from 'zx';
-import {jojiRepositoryPath} from '../jojiPath.js';
+import {manjaroRepositoryPath} from '../manjaroPath.js';
 import {writeToFile} from '../writeToFile.js';
 import {summarizeFile} from '../api/summarizeFile.js';
 import type {FileMapItem} from '../../types/FileMapItem.js';
@@ -11,7 +11,7 @@ interface Args {
 
 export const updateRepositoryMap = async ({filePath}: Args) => {
 	const fileMapItem = await summarizeFile({filePath});
-	const repositoryMapFilePath = `${jojiRepositoryPath}/map.json`;
+	const repositoryMapFilePath = `${manjaroRepositoryPath}/map.json`;
 	let updatedMap: FileMapItem[] = [];
 
 	// If map file exists

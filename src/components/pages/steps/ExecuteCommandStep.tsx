@@ -4,7 +4,7 @@ import {useActor} from '@xstate/react';
 import {Box, Spacer, Text, useApp, useInput} from 'ink';
 
 import {StepsContext} from '../../StepsProvider.js';
-import {Colors} from '../../../utils/Colors.js';
+import {Colors} from '../../../styles/Colors.js';
 import {PageContainer} from '../../PageContainer.js';
 import {ScrollContainer} from '../../ScrollContainer.js';
 import {Footer} from '../../Footer.js';
@@ -62,12 +62,6 @@ export const ExecuteCommandStep = () => {
 		}
 		if (key.return) {
 			executeCommandMachineSend(ExecuteCommandEvent.ENTER_KEY_PRESSED);
-		}
-		// if (key.tab) {
-		// 	stepsSend(StepsEvent.NAVIGATE_NEXT_STEP);
-		// }
-		if (key.shift && key.tab) {
-			stepsSend(StepsEvent.NAVIGATE_NEXT_STEP);
 		}
 	});
 
@@ -171,7 +165,7 @@ export const ExecuteCommandStep = () => {
 			</ScrollContainer>
 			<Spacer />
 			<Footer
-				controls={['up', 'down', 'enter', 'esc', 'tab']}
+				controls={['up', 'down', 'enter', 'esc']}
 				enterLabel={enterLabel}
 				enterDisabled={isLoading}
 			/>

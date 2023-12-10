@@ -1,14 +1,31 @@
 import React from 'react';
+import zod from 'zod';
+import {argument} from 'pastel';
 import {ThemeProvider} from '@inkjs/ui';
-import {theme} from '../utils/theme.js';
-
-import {FullScreen} from '../components/FullScreen.js';
-import {NavigationProvider} from '../components/NavigationProvider.js';
 import NavigationHandler from '../components/NavigationHandler.js';
+import {NavigationProvider} from '../components/NavigationProvider.js';
+import {inkTheme} from '../styles/inkTheme.js';
+import {FullScreen} from '../components/FullScreen.js';
 
-export default function App() {
+export const args = zod.tuple([
+	zod
+		.string()
+		.optional()
+		.describe(
+			argument({
+				name: 'prompt',
+				description: 'Prompt to pass to the agent',
+			}),
+		),
+]);
+
+type Props = {
+	args: zod.infer<typeof args>;
+};
+
+export default function Index({args}: Props) {
 	return (
-		<ThemeProvider theme={theme}>
+		<ThemeProvider theme={inkTheme}>
 			<NavigationProvider>
 				<FullScreen>
 					<NavigationHandler />

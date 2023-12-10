@@ -6,7 +6,7 @@ import {type Change} from 'diff';
 import {getDiffsAsync} from '../utils/getDiffsAsync.js';
 import {highlightAsync} from '../utils/highlightAsync.js';
 import loadLanguages from 'prismjs/components/index.js';
-import {Colors} from '../utils/Colors.js';
+import {Colors} from '../styles/Colors.js';
 import {writeToFile} from '../utils/writeToFile.js';
 import {sendParent} from 'xstate/lib/actions.js';
 import {StepsEvent} from '../types/StepsMachine.js';
@@ -231,7 +231,6 @@ export const modifyFileMachine = createMachine<
 				src: context =>
 					sendQueryMachine.withContext({
 						...initialSendQueryMachineContext,
-						skipTransform: true,
 						query: `Here is a summary of the file ${context.originalFilePath}: ${context.originalFileSummary}
 Here is the file content:
 \`\`\`${context.originalFileExtension}

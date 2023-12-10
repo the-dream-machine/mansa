@@ -8,7 +8,7 @@ import {Header} from '../Header.js';
 import {Footer} from '../Footer.js';
 import {PageContainer} from '../PageContainer.js';
 import {NavigationContext} from '../NavigationProvider.js';
-import {Colors} from '../../utils/Colors.js';
+import {Colors} from '../../styles/Colors.js';
 import {
 	IndexNewFilesEvent,
 	IndexNewFilesState,
@@ -54,7 +54,7 @@ export const IndexNewFiles = () => {
 
 	return (
 		<PageContainer>
-			<Header title="Joji" titleBackgroundColor={Colors.LightPink} />
+			<Header title="manjaro" titleBackgroundColor={Colors.LightPink} />
 			<SectionContainer>
 				{/* Title */}
 				<Box paddingBottom={1}>

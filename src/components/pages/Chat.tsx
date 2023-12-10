@@ -6,29 +6,22 @@ import {Header} from '../Header.js';
 import {Footer} from '../Footer.js';
 import {Body} from '../Body.js';
 import {PageContainer} from '../PageContainer.js';
-import {
-	IndexRepositoryEvent,
-	indexRepositoryMachine,
-} from '../../machines/indexRepositoryMachine.js';
+
 import {NavigationContext} from '../NavigationProvider.js';
 import {BaseColors, Colors} from '../../styles/Colors.js';
 import {ScrollContainer} from '../ScrollContainer.js';
 
-export const About = () => {
+export const Chat = () => {
 	const [, navigate] = NavigationContext.useActor();
-	const [_, send] = useMachine(indexRepositoryMachine, {
-		context: {navigate},
-	});
 
-	// const {exit} = useApp();
-	// useInput((_, key) => {
-	// 	if (key.escape) {
-	// 		exit();
-	// 	}
-	// 	if (key.return) {
-	// 		send(IndexRepositoryEvent.ENTER_KEY_PRESS);
-	// 	}
-	// });
+	const {exit} = useApp();
+	useInput((_, key) => {
+		if (key.escape) {
+			exit();
+		}
+		if (key.return) {
+		}
+	});
 
 	return (
 		<PageContainer>

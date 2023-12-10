@@ -12,7 +12,7 @@ import {
 	selectPackageManagerMachine,
 } from '../../machines/selectPackageManagerMachine.js';
 import {type PackageManager} from '../../types/PackageManager.js';
-import {Colors} from '../../utils/Colors.js';
+import {Colors} from '../../styles/Colors.js';
 import {SectionContainer} from '../SectionContainer.js';
 import {ScrollContainer} from '../ScrollContainer.js';
 
@@ -25,7 +25,7 @@ const options: Option[] = [
 
 const SelectPackageManager = () => {
 	const [, navigate] = NavigationContext.useActor();
-	const [, send] = useMachine(selectPackageManagerMachine, {
+	const [state, send] = useMachine(selectPackageManagerMachine, {
 		context: {navigate},
 	});
 
@@ -38,12 +38,15 @@ const SelectPackageManager = () => {
 
 	return (
 		<PageContainer>
-			<Header title="Joji" titleBackgroundColor={Colors.LightPink} />
-
+			<Header title="manjaro" titleBackgroundColor={Colors.DarkGreen} />
 			<ScrollContainer>
 				<SectionContainer>
+					{/* eslint-disable-next-line @typescript-eslint/ban-ts-comment */}
+					{/* @ts-ignore */}
+					<Text>state: {state.value}</Text>
 					<Text color={Colors.White}>
-						Set up joji <Text color={Colors.DarkGray}>(Step 1 of 2)</Text>
+						Set up manjaro in {state.context.repositoryName}{' '}
+						<Text color={Colors.DarkGray}>(Step 1 of 2)</Text>
 					</Text>
 					<Text color={Colors.LightGray}>
 						Which package manager are you using for this project?

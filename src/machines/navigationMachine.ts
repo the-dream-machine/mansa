@@ -5,7 +5,7 @@ import {getRepositoryChecksums} from '../utils/repository/getRepositoryChecksums
 import {repositoryChecksumsMatch} from '../utils/repository/repositoryChecksumsMatch.js';
 import {getRepositoryFilePaths} from '../utils/repository/getRepositoryFilePaths.js';
 import {writeToFile} from '../utils/writeToFile.js';
-import {jojiRepositoryPath} from '../utils/jojiPath.js';
+import {manjaroRepositoryPath} from '../utils/manjaroPath.js';
 
 export enum NavigationPage {
 	ABOUT = 'ABOUT',
@@ -126,7 +126,7 @@ export const navigationMachine = createMachine<
 						);
 
 						await writeToFile({
-							filePath: `${jojiRepositoryPath}/map.json`,
+							filePath: `${manjaroRepositoryPath}/map.json`,
 							fileContent: JSON.stringify(updatedFilePaths),
 						});
 					}
@@ -167,7 +167,7 @@ export const navigationMachine = createMachine<
 
 						// Un-index files that don't exist in the repo
 						await writeToFile({
-							filePath: `${jojiRepositoryPath}/checksums.json`,
+							filePath: `${manjaroRepositoryPath}/checksums.json`,
 							fileContent: JSON.stringify(updatedFilePaths),
 						});
 					}

@@ -3,7 +3,7 @@ import {type Run} from '../../types/Run.js';
 
 interface Args {
 	query: string;
-	systemInstructions: string;
+	systemInstructions?: string;
 	thread_id?: string;
 }
 

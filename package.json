@@ -1,6 +1,6 @@
 {
-	"name": "joji",
-	"version": "0.0.0",
+	"name": "manjaro",
+	"version": "0.1.0",
 	"license": "MIT",
 	"bin": "dist/cli.js",
 	"type": "module",

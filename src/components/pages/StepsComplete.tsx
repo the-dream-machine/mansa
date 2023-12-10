@@ -4,7 +4,7 @@ import {Header} from '../Header.js';
 import {SectionContainer} from '../SectionContainer.js';
 import {ScrollContainer} from '../ScrollContainer.js';
 import {Box, Spacer, Text, useApp, useInput} from 'ink';
-import {Colors} from '../../utils/Colors.js';
+import {Colors} from '../../styles/Colors.js';
 import {Footer} from '../Footer.js';
 
 export const StepsComplete = () => {

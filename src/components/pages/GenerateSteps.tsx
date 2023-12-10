@@ -2,7 +2,7 @@ import React from 'react';
 import {PageContainer} from '../PageContainer.js';
 import {Spinner} from '@inkjs/ui';
 import {Box, Text, Spacer, useApp, useInput} from 'ink';
-import {Colors} from '../../utils/Colors.js';
+import {Colors} from '../../styles/Colors.js';
 import {Footer, type FooterControl} from '../Footer.js';
 import {Header} from '../Header.js';
 import {SectionContainer} from '../SectionContainer.js';

@@ -8,7 +8,7 @@ interface SelectState {
 	isSelected: boolean;
 }
 
-export const theme = extendTheme(defaultTheme, {
+export const inkTheme = extendTheme(defaultTheme, {
 	components: {
 		Spinner: {
 			styles: {
@@ -20,13 +20,13 @@ export const theme = extendTheme(defaultTheme, {
 		Select: {
 			styles: {
 				focusIndicator: (): TextProps => ({
-					color: Colors.LightPink,
+					color: Colors.LightGreen,
 				}),
 				label: ({isFocused}: SelectState): TextProps => {
 					let color: Colors = Colors.LightGray;
 
 					if (isFocused) {
-						color = Colors.LightPink;
+						color = Colors.LightGreen;
 					}
 
 					return {color};

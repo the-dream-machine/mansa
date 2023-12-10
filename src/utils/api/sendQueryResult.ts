@@ -2,16 +2,11 @@ import axios, {type AxiosRequestConfig, type AxiosResponse} from 'axios';
 
 interface Args {
 	thread_id: string;
-	responseParentKey: string;
-	skipTransform: boolean;
+	responseParentKey?: string;
 }
 
-export const sendQueryResult = async ({
-	thread_id,
-	responseParentKey,
-	skipTransform,
-}: Args) => {
-	const data = JSON.stringify({thread_id, responseParentKey, skipTransform});
+export const sendQueryResult = async ({thread_id, responseParentKey}: Args) => {
+	const data = JSON.stringify({thread_id, responseParentKey});
 	const config: AxiosRequestConfig = {
 		method: 'POST',
 		maxBodyLength: Infinity,

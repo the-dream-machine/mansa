@@ -3,7 +3,7 @@ import {Box, Spacer, Text, useApp, useInput} from 'ink';
 import {useActor} from '@xstate/react';
 
 import {StepsContext} from '../../StepsProvider.js';
-import {type BaseColors, Colors} from '../../../utils/Colors.js';
+import {type BaseColors, Colors} from '../../../styles/Colors.js';
 import {PageContainer} from '../../PageContainer.js';
 import {Footer} from '../../Footer.js';
 import {Header} from '../../Header.js';

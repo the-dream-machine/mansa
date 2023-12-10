@@ -2,13 +2,13 @@ import {fs} from 'zx';
 import axios, {type AxiosResponse} from 'axios';
 
 import type {FileMapItem} from '../../types/FileMapItem.js';
-import {jojiRepositoryPath} from '../jojiPath.js';
+import {manjaroRepositoryPath} from '../manjaroPath.js';
 import {getRepositoryDetails} from '../repository/getRepositoryDetails.js';
 import {type Run} from '../../types/Run.js';
 
 export const generateSteps = async () => {
 	const codebaseMap: FileMapItem[] = await fs.readJSON(
-		`${jojiRepositoryPath}/map.json`,
+		`${manjaroRepositoryPath}/map.json`,
 	);
 	const repositoryDetails = await getRepositoryDetails();
 	const data = JSON.stringify({

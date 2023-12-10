@@ -1,7 +1,7 @@
 import {type Sender, createMachine, assign, type DoneInvokeEvent} from 'xstate';
 
 import {AppState, type NavigationMachineEvent} from './navigationMachine.js';
-import {createJojiConfig} from '../utils/createJojiConfig.js';
+import {createManjaroConfig} from '../utils/createManjaroConfig.js';
 import type {PackageManager} from '../types/PackageManager.js';
 import {getRepositoryDetails} from '../utils/repository/getRepositoryDetails.js';
 import {type Repo} from '../types/Repo.js';
@@ -12,6 +12,12 @@ interface SelectPackageManagerMachineContext {
 	packageManager: PackageManager;
 	navigate?: Sender<NavigationMachineEvent>;
 }
+
+const initialSelectPackageManagerMachineContext: SelectPackageManagerMachineContext =
+	{
+		repositoryName: 'your repository',
+		packageManager: 'npm',
+	};
 
 // States
 export enum SelectPackageManagerState {
@@ -36,7 +42,6 @@ type SelectPackageManagerMachineState =
 
 //  Events
 export enum SelectPackageManagerEvent {
-	ENTER_PRESSED = 'ENTER_PRESSED',
 	SUBMIT_SELECTION = 'SUBMIT_SELECTION',
 }
 
@@ -45,6 +50,7 @@ type SelectPackageManagerMachineEvent = {
 	selection: PackageManager;
 };
 
+// Machine
 export const selectPackageManagerMachine = createMachine<
 	SelectPackageManagerMachineContext,
 	SelectPackageManagerMachineEvent,
@@ -53,10 +59,7 @@ export const selectPackageManagerMachine = createMachine<
 	id: 'selectPackageManagerMachine',
 	predictableActionArguments: true,
 	initial: SelectPackageManagerState.FETCHING_REPOSITORY_DETAILS,
-	context: {
-		repositoryName: 'your repository',
-		packageManager: 'npm',
-	},
+	context: initialSelectPackageManagerMachineContext,
 	states: {
 		[SelectPackageManagerState.FETCHING_REPOSITORY_DETAILS]: {
 			invoke: {
@@ -83,7 +86,7 @@ export const selectPackageManagerMachine = createMachine<
 		[SelectPackageManagerState.REGISTERING_PACKAGE_MANAGER]: {
 			invoke: {
 				src: async context => {
-					await createJojiConfig({
+					await createManjaroConfig({
 						packageManager: context.packageManager,
 					});
 				},
