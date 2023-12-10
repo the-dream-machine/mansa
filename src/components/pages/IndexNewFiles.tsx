@@ -1,7 +1,6 @@
 import React from 'react';
 import {Box, Spacer, Text, useApp, useInput} from 'ink';
 import {ProgressBar, Spinner} from '@inkjs/ui';
-import figureSet from 'figures';
 import {useMachine} from '@xstate/react';
 
 import {Header} from '../Header.js';
@@ -15,6 +14,7 @@ import {
 	indexNewFilesMachine,
 } from '../../machines/indexNewFilesMachine.js';
 import {SectionContainer} from '../SectionContainer.js';
+import {ScrollContainer} from '../ScrollContainer.js';
 
 export const IndexNewFiles = () => {
 	const [, navigate] = NavigationContext.useActor();
@@ -54,81 +54,82 @@ export const IndexNewFiles = () => {
 
 	return (
 		<PageContainer>
-			<Header title="manjaro" titleBackgroundColor={Colors.LightPink} />
-			<SectionContainer>
-				{/* Title */}
-				<Box paddingBottom={1}>
-					<Text color={Colors.White}>Sync files</Text>
-				</Box>
+			<Header title="manjaro" titleBackgroundColor={Colors.DarkGreen} />
+			<ScrollContainer>
+				<SectionContainer>
+					{/* Title */}
+					<Box paddingBottom={1}>
+						<Text color={Colors.White}>Sync files</Text>
+					</Box>
 
-				{/* Body */}
-				<Text color={getStateColor(Colors.LightGray)}>
-					Found <Text color={getStateColor(Colors.White)}>{totalFiles}</Text>{' '}
-					files that have changed since last sync.
-				</Text>
+					{/* Body */}
+					<Text color={getStateColor(Colors.LightGray)}>
+						Found <Text color={getStateColor(Colors.White)}>{totalFiles}</Text>{' '}
+						files that have changed since last sync.
+					</Text>
 
-				<Text color={getStateColor(Colors.LightGray)}>
-					Press <Text color={getStateColor(Colors.LightGreen)}>enter</Text> to
-					start indexing.
-				</Text>
-			</SectionContainer>
+					<Text color={getStateColor(Colors.LightGray)}>
+						Press <Text color={getStateColor(Colors.LightGreen)}>enter</Text> to
+						start indexing.
+					</Text>
+				</SectionContainer>
 
-			{showProgressBar && (
-				<SectionContainer showDivider>
-					<Box flexDirection="column" gap={1} marginBottom={1}>
-						{isLoading && (
+				{showProgressBar && (
+					<SectionContainer showDivider>
+						<Box flexDirection="column" gap={1} marginBottom={1}>
+							{isLoading && (
+								<Box gap={1}>
+									<Spinner />
+									<Text color={Colors.LightGray}>
+										Indexing:{' '}
+										<Text color={Colors.White} italic>
+											{currentIndexingFilePath}
+										</Text>
+									</Text>
+								</Box>
+							)}
+							{isSuccess && (
+								<Box gap={1}>
+									<Text color={Colors.LightGreen}>•</Text>
+									<Text color={Colors.LightGray}>Indexing complete! 🎉</Text>
+								</Box>
+							)}
+							{isError && (
+								<Box gap={1}>
+									<Text color={Colors.LightRed}>•</Text>
+									<Text color={Colors.LightGray}>
+										Something went wrong: {errorMessage}
+									</Text>
+								</Box>
+							)}
+
+							{/* Progress bar */}
 							<Box gap={1}>
-								<Spinner />
-								<Text color={Colors.LightGray}>
-									Indexing:{' '}
-									<Text color={Colors.White} italic>
-										{currentIndexingFilePath}
+								<Box width={70} flexGrow={0} flexShrink={0}>
+									<ProgressBar value={percentageProgress} />
+								</Box>
+								<Text color={Colors.White}>
+									{percentageProgress}%{' '}
+									<Text color={Colors.LightGray}>
+										({currentIndexingFileCount}/{totalFiles} files)
 									</Text>
 								</Text>
 							</Box>
-						)}
+						</Box>
+
 						{isSuccess && (
-							<Box gap={1}>
-								<Text color={Colors.LightGreen}>•</Text>
-								<Text color={Colors.LightGray}>Indexing complete! 🎉</Text>
-							</Box>
+							<Text color={Colors.LightGray}>
+								Press <Text color={Colors.LightGreen}>enter</Text> to continue.
+							</Text>
 						)}
 						{isError && (
-							<Box gap={1}>
-								<Text color={Colors.LightRed}>•</Text>
-								<Text color={Colors.LightGray}>
-									Something went wrong: {errorMessage}
-								</Text>
-							</Box>
-						)}
-
-						{/* Progress bar */}
-						<Box gap={1}>
-							<Box width={70} flexGrow={0} flexShrink={0}>
-								<ProgressBar value={percentageProgress} />
-							</Box>
-							<Text color={Colors.White}>
-								{percentageProgress}%{' '}
-								<Text color={Colors.LightGray}>
-									({currentIndexingFileCount}/{totalFiles} files)
-								</Text>
+							<Text color={Colors.LightGray}>
+								Press <Text color={Colors.LightGreen}>enter</Text> to retry.
 							</Text>
-						</Box>
-					</Box>
-
-					{isSuccess && (
-						<Text color={Colors.LightGray}>
-							Press <Text color={Colors.LightGreen}>enter</Text> to continue.
-						</Text>
-					)}
-					{isError && (
-						<Text color={Colors.LightGray}>
-							Press <Text color={Colors.LightGreen}>enter</Text> to retry.
-						</Text>
-					)}
-				</SectionContainer>
-			)}
-
+						)}
+					</SectionContainer>
+				)}
+			</ScrollContainer>
 			<Spacer />
 			<Footer
 				controls={['up', 'down', 'esc', 'enter']}

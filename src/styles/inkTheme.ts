@@ -76,7 +76,7 @@ export const inkTheme = extendTheme(defaultTheme, {
 		ProgressBar: {
 			styles: {
 				completed: () => ({
-					color: Colors.LightPink,
+					color: Colors.DarkGreen,
 				}),
 			},
 		},

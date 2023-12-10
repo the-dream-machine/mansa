@@ -41,9 +41,6 @@ const SelectPackageManager = () => {
 			<Header title="manjaro" titleBackgroundColor={Colors.DarkGreen} />
 			<ScrollContainer>
 				<SectionContainer>
-					{/* eslint-disable-next-line @typescript-eslint/ban-ts-comment */}
-					{/* @ts-ignore */}
-					<Text>state: {state.value}</Text>
 					<Text color={Colors.White}>
 						Set up manjaro in {state.context.repositoryName}{' '}
 						<Text color={Colors.DarkGray}>(Step 1 of 2)</Text>

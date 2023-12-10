@@ -43,7 +43,6 @@ export enum IndexRepositoryState {
 	INDEXING_ERROR_IDLE = 'INDEXING_ERROR_IDLE',
 }
 
-//  State machine states
 type IndexRepositoryMachineState =
 	| {value: IndexRepositoryState.IDLE; context: IndexRepositoryMachineContext}
 	| {
@@ -67,17 +66,18 @@ type IndexRepositoryMachineState =
 			context: IndexRepositoryMachineContext;
 	  };
 
+// Events
 export enum IndexRepositoryEvent {
 	ENTER_KEY_PRESS = 'ENTER_KEY_PRESS',
 }
 
-//  State machine events
 type IndexRepositoryMachineEvent = {type: IndexRepositoryEvent.ENTER_KEY_PRESS};
 
 // Guards
 const isLastFilePath = (context: IndexRepositoryMachineContext) =>
 	context.filePaths.length - 1 === context.currentFileIndexing;
 
+// Machine
 export const indexRepositoryMachine = createMachine<
 	IndexRepositoryMachineContext,
 	IndexRepositoryMachineEvent,
