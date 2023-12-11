@@ -76,7 +76,7 @@ export const Footer = ({
 				</Box>
 			)}
 			<Spacer />
-			<Text>⛰︎</Text>
+			<Text>🐪</Text>
 		</Box>
 	);
 };

@@ -4,15 +4,23 @@ import {useMachine} from '@xstate/react';
 
 import {Header} from '../Header.js';
 import {Footer} from '../Footer.js';
-import {Body} from '../Body.js';
 import {PageContainer} from '../PageContainer.js';
 
 import {NavigationContext} from '../NavigationProvider.js';
-import {BaseColors, Colors} from '../../styles/Colors.js';
+import {Colors} from '../../styles/Colors.js';
 import {ScrollContainer} from '../ScrollContainer.js';
+import {SectionContainer} from '../SectionContainer.js';
+import {chatMachine} from '../../machines/chatMachine.js';
+import {TextInput} from '@inkjs/ui';
 
 export const Chat = () => {
 	const [, navigate] = NavigationContext.useActor();
+	const [state, send] = useMachine(chatMachine);
+
+	const isLoading = state.context.isLoading;
+	const isSuccess = state.context.isSuccess;
+	const isError = state.context.isError;
+	const errorMessage = state.context.errorMessage;
 
 	const {exit} = useApp();
 	useInput((_, key) => {
@@ -25,53 +33,32 @@ export const Chat = () => {
 
 	return (
 		<PageContainer>
-			<Header title="manjaro" titleBackgroundColor={BaseColors.Pink500} />
+			<Header
+				title="mansa"
+				titleBackgroundColor={Colors.DarkGreen}
+				isLoading={isLoading}
+				isSuccess={isSuccess}
+				isError={isError}
+				errorMessage={errorMessage}
+			/>
 			<ScrollContainer>
-				<Body>
-					<Text>What is manjaro?</Text>
-					<Text color={'gray'}>
-						manjaro uses your <Text color="white">.gitignore</Text> file to
-						figure out which files and folders should be ignored when parsing
-						and indexing your code. Also, manjaro ignores file formats whose
-						content can't be parsed like image, video and audio files.
-					</Text>
+				<SectionContainer>
+					{/* eslint-disable-next-line @typescript-eslint/ban-ts-comment */}
+					{/* @ts-ignore */}
+					<Text>{state.value}</Text>
+					<Text color={Colors.White}>What is manjaro?</Text>
 
-					<Box flexDirection="column" gap={2}>
-						<Box flexDirection="column" gap={1} marginTop={2}>
-							<Text color="white">🧠 Full codebase knowledge</Text>
-							<Text color="gray">
-								To generate accurate API guides, manjaro maintains an index of
-								the files in your project. This index is updated when the
-								content of your files change.
-							</Text>
-						</Box>
-						<Box flexDirection="column" gap={1}>
-							<Text color="white">🧩 API expert</Text>
-							<Text color="gray">
-								manjaro finds the most relevant documentation and
-							</Text>
-						</Box>
-						<Box flexDirection="column" gap={1}>
-							<Text color="white">👀 Privacy</Text>
-							<Text color="gray">
-								All your files remain on your device, they are never stored on
-								manjaro's servers. While editing files, code snippets will be
-								sent to our server for processing.
-							</Text>
-						</Box>
-						<Box flexDirection="column" gap={1}>
-							<Text color="white">
-								Safety{' '}
-								<Text color={Colors.LightGray}>- You're always in control</Text>
-							</Text>
-							<Text color="gray">
-								manjaro can create files, edit files and run commands. It cannot
-								delete files. You will always be prompted for confirmation
-								before any actions are taken.
-							</Text>
-						</Box>
+					<Box
+						paddingLeft={2}
+						paddingY={1}
+						borderStyle="single"
+						borderBottom={false}
+						borderRight={false}
+						borderTop={false}
+					>
+						<TextInput placeholder="Type something..." />
 					</Box>
-				</Body>
+				</SectionContainer>
 			</ScrollContainer>
 			<Spacer />
 			<Footer

@@ -1,3 +1,5 @@
+import {type SubmitToolOutputs} from './Tool.js';
+
 export interface Run {
 	thread_id: string;
 	run_id: string;
@@ -13,6 +15,12 @@ export type RunStatus =
 	| 'completed'
 	| 'expired';
 
+export interface RunRequiredAction {
+	type: 'submit_tool_outputs';
+	submit_tool_outputs: SubmitToolOutputs;
+}
+
 export interface RunStatusResponse {
 	status: RunStatus;
+	required_action: RunRequiredAction;
 }

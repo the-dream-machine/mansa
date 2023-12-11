@@ -68,9 +68,12 @@ export const inkTheme = extendTheme(defaultTheme, {
 		},
 		TextInput: {
 			styles: {
-				value: (): TextProps => ({
-					color: 'yellow',
-				}),
+				// value: (): TextProps => ({
+				// 	color: Colors.White,
+				// }),
+				// placeholder: (): TextProps => ({
+				// 	color: Colors.DarkGray,
+				// }),
 			},
 		},
 		ProgressBar: {

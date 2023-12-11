@@ -2,12 +2,12 @@ import React from 'react';
 import {NavigationContext} from './NavigationProvider.js';
 import {IndexRepository} from './pages/IndexRepository.js';
 import {AppState, NavigationPage} from '../machines/navigationMachine.js';
-import {GlobalLoader} from './GlobalLoader.js';
 import SelectPackageManager from './pages/SelectPackageManager.js';
 import {StepsProvider} from './StepsProvider.js';
 import {StepsHandler} from './StepsHandler.js';
 import {About} from './pages/About.js';
 import {IndexNewFiles} from './pages/IndexNewFiles.js';
+import {Spinner} from '@inkjs/ui';
 
 const NavigationHandler = () => {
 	const [state] = NavigationContext.useActor();
@@ -17,7 +17,7 @@ const NavigationHandler = () => {
 		state.matches(AppState.DOES_MAP_EXIST);
 
 	if (showLoader) {
-		return <GlobalLoader />;
+		return <Spinner />;
 	}
 
 	return (

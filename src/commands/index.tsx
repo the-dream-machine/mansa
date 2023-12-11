@@ -6,6 +6,7 @@ import NavigationHandler from '../components/NavigationHandler.js';
 import {NavigationProvider} from '../components/NavigationProvider.js';
 import {inkTheme} from '../styles/inkTheme.js';
 import {FullScreen} from '../components/FullScreen.js';
+import {Chat} from '../components/pages/Chat.js';
 
 export const args = zod.tuple([
 	zod
@@ -28,7 +29,7 @@ export default function Index({args}: Props) {
 		<ThemeProvider theme={inkTheme}>
 			<NavigationProvider>
 				<FullScreen>
-					<NavigationHandler />
+					<Chat />
 				</FullScreen>
 			</NavigationProvider>
 		</ThemeProvider>

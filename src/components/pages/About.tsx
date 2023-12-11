@@ -4,7 +4,7 @@ import {useMachine} from '@xstate/react';
 
 import {Header} from '../Header.js';
 import {Footer} from '../Footer.js';
-import {Body} from '../Body.js';
+
 import {PageContainer} from '../PageContainer.js';
 import {
 	IndexRepositoryEvent,
@@ -13,6 +13,7 @@ import {
 import {NavigationContext} from '../NavigationProvider.js';
 import {BaseColors, Colors} from '../../styles/Colors.js';
 import {ScrollContainer} from '../ScrollContainer.js';
+import {SectionContainer} from '../SectionContainer.js';
 
 export const About = () => {
 	const [, navigate] = NavigationContext.useActor();
@@ -34,7 +35,7 @@ export const About = () => {
 		<PageContainer>
 			<Header title="manjaro" titleBackgroundColor={BaseColors.Pink500} />
 			<ScrollContainer>
-				<Body>
+				<SectionContainer>
 					<Text>What is manjaro?</Text>
 					<Text color={'gray'}>
 						manjaro uses your <Text color="white">.gitignore</Text> file to
@@ -78,7 +79,7 @@ export const About = () => {
 							</Text>
 						</Box>
 					</Box>
-				</Body>
+				</SectionContainer>
 			</ScrollContainer>
 			<Spacer />
 			<Footer
