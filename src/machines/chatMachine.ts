@@ -1,11 +1,11 @@
 import {type DoneInvokeEvent, assign, createMachine} from 'xstate';
+import {v4 as uuid} from 'uuid';
 import {type FileMapItem} from '../types/FileMapItem.js';
 import {type RepoConfig} from '../types/Repo.js';
 import {
 	type RunStatusResponse,
 	type Run,
 	type RunStatus,
-	type RunRequiredAction,
 } from '../types/Run.js';
 import {getRepositoryMap} from '../utils/repository/getRepositoryMap.js';
 import {getRepositoryConfig} from '../utils/repository/getRepositoryConfig.js';
@@ -25,12 +25,21 @@ import {
 	type ToolOutput,
 } from '../types/Tool.js';
 import {submitToolCalls} from '../utils/api/submitToolCalls.js';
+import {getLibrary} from '../utils/api/getLibrary.js';
+import {type Library} from '../types/Library.js';
+
+interface Message {
+	id: string;
+	message: string;
+}
 
 interface ChatMachineContext {
+	libraryName: string;
+	library?: Library;
 	run?: Run;
 	repositoryMap?: FileMapItem[];
 	repositoryConfig?: RepoConfig;
-	messages: string[];
+	messages: Message[];
 	toolCalls: RequiredActionFunctionToolCall[];
 	currentToolCallProcessingIndex: number;
 	toolOutputs: ToolOutput[];
@@ -47,6 +56,8 @@ interface ChatMachineContext {
 }
 
 const initialChatMachineContext: ChatMachineContext = {
+	libraryName: '',
+	library: undefined,
 	run: undefined,
 	repositoryMap: [],
 	repositoryConfig: undefined,
@@ -66,6 +77,7 @@ const initialChatMachineContext: ChatMachineContext = {
 };
 
 export enum ChatState {
+	FETCHING_LIBRARY = 'FETCHING_LIBRARY',
 	FETCHING_REPOSITORY_MAP = 'FETCHING_REPOSITORY_MAP',
 	FETCHING_REPOSITORY_CONFIG = 'FETCHING_REPOSITORY_CONFIG',
 	SENDING_INITIAL_QUERY = 'SENDING_INITIAL_QUERY',
@@ -85,6 +97,10 @@ export enum ChatState {
 }
 
 type ChatMachineState =
+	| {
+			value: ChatState.FETCHING_LIBRARY;
+			context: ChatMachineContext;
+	  }
 	| {
 			value: ChatState.FETCHING_REPOSITORY_MAP;
 			context: ChatMachineContext;
@@ -186,8 +202,26 @@ export const chatMachine = createMachine<
 	preserveActionOrder: true,
 	predictableActionArguments: true,
 	context: initialChatMachineContext,
-	initial: ChatState.FETCHING_REPOSITORY_MAP,
+	initial: ChatState.FETCHING_LIBRARY,
 	states: {
+		[ChatState.FETCHING_LIBRARY]: {
+			invoke: {
+				src: async context => await getLibrary({name: context.libraryName}),
+				onDone: {
+					actions: assign({
+						library: (_, event: DoneInvokeEvent<Library>) => event.data,
+					}),
+					target: ChatState.FETCHING_REPOSITORY_MAP,
+				},
+				onError: {
+					target: ChatState.ERROR_IDLE,
+					actions: assign({
+						errorMessage: (_, event: DoneInvokeEvent<Error>) =>
+							event.data.message,
+					}),
+				},
+			},
+		},
 		[ChatState.FETCHING_REPOSITORY_MAP]: {
 			invoke: {
 				src: async () => await getRepositoryMap(),
@@ -204,7 +238,7 @@ export const chatMachine = createMachine<
 			invoke: {
 				src: async () => await getRepositoryConfig(),
 				onDone: {
-					target: ChatState.SENDING_QUERY,
+					target: ChatState.SENDING_INITIAL_QUERY,
 					actions: assign({
 						repositoryConfig: (_, event: DoneInvokeEvent<RepoConfig>) =>
 							event.data,
@@ -251,31 +285,31 @@ export const chatMachine = createMachine<
 				},
 				onDone: [
 					{
-						actions: assign({
-							status: (_, event: DoneInvokeEvent<RunStatusResponse>) =>
-								event.data.status,
-						}),
-					},
-					// If status is not completed, keep polling
-					{
-						cond: (_, event: DoneInvokeEvent<RunStatusResponse>) =>
-							!(event.data.status === 'completed') &&
-							!(event.data.status === 'requires_action'),
-						target: ChatState.POLLING_QUERY_STATUS,
-					},
-					{
 						cond: (_, event: DoneInvokeEvent<RunStatusResponse>) =>
 							event.data.status === 'requires_action',
-						actions: assign({
-							toolCalls: (_, event: DoneInvokeEvent<RunStatusResponse>) =>
+						actions: assign((_, event: DoneInvokeEvent<RunStatusResponse>) => ({
+							status: event.data.status,
+							toolCalls:
 								event.data.required_action.submit_tool_outputs.tool_calls,
-						}),
+						})),
 						target: ChatState.PROCESSING_TOOL_CALLS,
 					},
 					{
 						cond: (_, event: DoneInvokeEvent<RunStatusResponse>) =>
 							event.data.status === 'completed',
+						actions: assign((_, event: DoneInvokeEvent<RunStatusResponse>) => ({
+							status: event.data.status,
+						})),
 						target: ChatState.FETCHING_QUERY_RESULT,
+					},
+					// If status is not completed, keep polling
+					{
+						cond: (_, event: DoneInvokeEvent<RunStatusResponse>) =>
+							!(event.data.status === 'completed'),
+						actions: assign((_, event: DoneInvokeEvent<RunStatusResponse>) => ({
+							status: event.data.status,
+						})),
+						target: ChatState.POLLING_QUERY_STATUS,
 					},
 				],
 				onError: {
@@ -297,6 +331,18 @@ export const chatMachine = createMachine<
 					return await getQueryResult({
 						thread_id: context.run.thread_id,
 					});
+				},
+				onDone: {
+					target: ChatState.SUCCESS_IDLE,
+					actions: assign((context, event: DoneInvokeEvent<string>) => ({
+						messages: [...context.messages, {id: uuid(), message: event.data}],
+					})),
+				},
+				onError: {
+					target: ChatState.ERROR_IDLE,
+					actions: assign((_, event: DoneInvokeEvent<Error>) => ({
+						errorMessage: event.data.message,
+					})),
 				},
 			},
 		},

@@ -72,7 +72,6 @@ export const sendQueryMachine = createMachine<
 				src: context =>
 					sendQuery({
 						query: context.query,
-						systemInstructions: context.systemInstructions,
 						thread_id: context.thread_id,
 					}),
 				onDone: {
@@ -123,7 +122,6 @@ export const sendQueryMachine = createMachine<
 				src: async context =>
 					await getQueryResult({
 						thread_id: context.run.thread_id,
-						responseParentKey: context.responseParentKey,
 					}),
 				onDone: {
 					target: QueryState.QUERY_SUCCESS,

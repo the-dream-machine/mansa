@@ -3,23 +3,24 @@ import axios, {
 	type AxiosRequestConfig,
 	type AxiosResponse,
 } from 'axios';
+import {type Library} from '../../types/Library.js';
 
 interface Args {
-	thread_id: string;
+	name: string;
 }
 
-export const getQueryResult = async ({thread_id}: Args) => {
-	const params = {thread_id};
+export const getLibrary = async ({name}: Args) => {
+	const params = {name};
 	const config: AxiosRequestConfig = {
 		method: 'GET',
 		maxBodyLength: Infinity,
-		url: 'http://localhost:3000/query-result',
+		url: 'http://localhost:3000/library',
 		headers: {'Content-Type': 'application/json'},
 		params,
 	};
 
 	try {
-		const response: AxiosResponse<string> = await axios.request(config);
+		const response: AxiosResponse<Library> = await axios.request(config);
 		return response.data;
 	} catch (error) {
 		if (axios.isAxiosError(error)) {

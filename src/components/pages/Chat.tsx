@@ -13,10 +13,17 @@ import {SectionContainer} from '../SectionContainer.js';
 import {chatMachine} from '../../machines/chatMachine.js';
 import {TextInput} from '@inkjs/ui';
 
-export const Chat = () => {
-	const [, navigate] = NavigationContext.useActor();
-	const [state, send] = useMachine(chatMachine);
+interface Props {
+	name: string;
+}
 
+export const Chat = ({name}: Props) => {
+	const [, navigate] = NavigationContext.useActor();
+	const [state, send] = useMachine(chatMachine, {
+		context: {libraryName: name},
+	});
+
+	const messages = state.context.messages;
 	const isLoading = state.context.isLoading;
 	const isSuccess = state.context.isSuccess;
 	const isError = state.context.isError;
@@ -41,25 +48,29 @@ export const Chat = () => {
 				isError={isError}
 				errorMessage={errorMessage}
 			/>
-			<ScrollContainer>
-				<SectionContainer>
-					{/* eslint-disable-next-line @typescript-eslint/ban-ts-comment */}
-					{/* @ts-ignore */}
-					<Text>{state.value}</Text>
-					<Text color={Colors.White}>What is manjaro?</Text>
+			{/* <ScrollContainer> */}
+			<SectionContainer>
+				{/* eslint-disable-next-line @typescript-eslint/ban-ts-comment */}
+				{/* @ts-ignore */}
+				<Text>{state.value}</Text>
 
-					<Box
-						paddingLeft={2}
-						paddingY={1}
-						borderStyle="single"
-						borderBottom={false}
-						borderRight={false}
-						borderTop={false}
-					>
-						<TextInput placeholder="Type something..." />
+				{messages.map(({id, message}) => (
+					<Box key={id}>
+						<Text color={Colors.LightGray}>{message}</Text>
 					</Box>
-				</SectionContainer>
-			</ScrollContainer>
+				))}
+				<Box
+					paddingLeft={2}
+					paddingY={1}
+					borderStyle="single"
+					borderBottom={false}
+					borderRight={false}
+					borderTop={false}
+				>
+					<TextInput placeholder="Type something..." />
+				</Box>
+			</SectionContainer>
+			{/* </ScrollContainer> */}
 			<Spacer />
 			<Footer
 				controls={['up', 'down', 'esc', 'enter']}

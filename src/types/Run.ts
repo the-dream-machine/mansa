@@ -23,4 +23,8 @@ export interface RunRequiredAction {
 export interface RunStatusResponse {
 	status: RunStatus;
 	required_action: RunRequiredAction;
+	last_error?: {
+		code: string;
+		message: string;
+	};
 }
