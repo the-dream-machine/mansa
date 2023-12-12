@@ -24,7 +24,7 @@ import {
 	type RequiredActionFunctionToolCall,
 	type ToolOutput,
 } from '../types/Tool.js';
-import {submitToolCalls} from '../utils/api/submitToolCalls.js';
+import {submitToolOutputs} from '../utils/api/submitToolOutputs.js';
 import {getLibrary} from '../utils/api/getLibrary.js';
 import {type Library} from '../types/Library.js';
 
@@ -37,6 +37,8 @@ interface ChatMachineContext {
 	libraryName: string;
 	library?: Library;
 	run?: Run;
+	retrievalRun?: Run;
+	isRetrievalRun: boolean;
 	repositoryMap?: FileMapItem[];
 	repositoryConfig?: RepoConfig;
 	messages: Message[];
@@ -59,6 +61,8 @@ const initialChatMachineContext: ChatMachineContext = {
 	libraryName: '',
 	library: undefined,
 	run: undefined,
+	retrievalRun: undefined,
+	isRetrievalRun: true,
 	repositoryMap: [],
 	repositoryConfig: undefined,
 	messages: [],
@@ -88,12 +92,6 @@ export enum ChatState {
 	FETCHING_QUERY_RESULT = 'FETCHING_QUERY_RESULT',
 	SUCCESS_IDLE = 'SUCCESS_IDLE',
 	ERROR_IDLE = 'ERROR_IDLE',
-
-	// Handle tools
-	CREATE_FILE = 'CREATE_FILE',
-	READ_FILE = 'READ_FILE',
-	EDIT_FILE = 'EDIT_FILE',
-	RUN_COMMAND = 'RUN_COMMAND',
 }
 
 type ChatMachineState =
@@ -157,8 +155,8 @@ const isLastToolCall = (context: ChatMachineContext) =>
 
 // Tool handlers
 const createFileToolCall = async (args: CreateFileToolParams) => {
-	const {filePath, fileContent} = args;
-	await writeToFile({filePath, fileContent});
+	const {file_path, file_content} = args;
+	await writeToFile({filePath: file_path, fileContent: file_content});
 	return JSON.stringify({success: true});
 };
 
@@ -183,13 +181,17 @@ const getRepositoryMetadataToolCall = async () => {
 };
 
 const runCommandToolCall = async (args: RunCommandToolParams) => {
+	console.log('🌱 # args:', args);
 	const {command} = args;
+	console.log('🌱 # command:', command);
 	/**
 	 * You have to pass in commands as an array
 	 * @see: https://google.github.io/zx/quotes#assembling-commands
 	 */
 	const commandArgs = command.split(' ');
+	console.log('🌱 # commandArgs:', commandArgs);
 	const process = await $`${commandArgs}`.quiet();
+	console.log('🌱 # process:', process);
 	return JSON.stringify({success: true});
 };
 
@@ -249,21 +251,44 @@ export const chatMachine = createMachine<
 		[ChatState.SENDING_INITIAL_QUERY]: {
 			always: [
 				{
-					actions: assign({query: 'Hello there, how are you?'}),
+					actions: assign({
+						query: context =>
+							`How do I manually set up ${context.library?.name} in my repository?`,
+					}),
 					target: ChatState.SENDING_QUERY,
 				},
 			],
 		},
 		[ChatState.SENDING_QUERY]: {
 			invoke: {
-				src: async ({query, run}) =>
-					await sendQuery({query, thread_id: run?.thread_id}),
-				onDone: {
-					target: ChatState.POLLING_QUERY_STATUS,
-					actions: assign({
-						run: (_, event: DoneInvokeEvent<Run>) => event.data,
-					}),
+				src: async ({query, isRetrievalRun, run, retrievalRun, library}) => {
+					if (!library?.id) {
+						throw new Error("Couldn't find library. Please retry");
+					}
+					const queryRun = isRetrievalRun ? retrievalRun : run;
+					return await sendQuery({
+						query,
+						thread_id: queryRun?.thread_id,
+						libraryId: library.id,
+						isRetrievalRun,
+					});
 				},
+				onDone: [
+					{
+						cond: context => context.isRetrievalRun,
+						target: ChatState.POLLING_QUERY_STATUS,
+						actions: assign({
+							retrievalRun: (_, event: DoneInvokeEvent<Run>) => event.data,
+						}),
+					},
+					{
+						cond: context => !context.isRetrievalRun,
+						target: ChatState.POLLING_QUERY_STATUS,
+						actions: assign({
+							run: (_, event: DoneInvokeEvent<Run>) => event.data,
+						}),
+					},
+				],
 				onError: {
 					target: ChatState.ERROR_IDLE,
 					actions: assign({
@@ -276,22 +301,28 @@ export const chatMachine = createMachine<
 		[ChatState.POLLING_QUERY_STATUS]: {
 			entry: [assign({isLoading: true})],
 			invoke: {
-				src: async context => {
+				src: async ({isRetrievalRun, retrievalRun, run}) => {
 					await sleep(10000);
-					if (!context.run) {
+					const queryRun = isRetrievalRun ? retrievalRun : run;
+					if (!queryRun) {
 						throw new Error('Run ID not found');
 					}
-					return await getQueryStatus(context.run);
+					const status = await getQueryStatus(queryRun);
+					console.log('🌱 # status:', status);
+					return status;
 				},
 				onDone: [
 					{
 						cond: (_, event: DoneInvokeEvent<RunStatusResponse>) =>
 							event.data.status === 'requires_action',
-						actions: assign((_, event: DoneInvokeEvent<RunStatusResponse>) => ({
-							status: event.data.status,
-							toolCalls:
-								event.data.required_action.submit_tool_outputs.tool_calls,
-						})),
+						actions: [
+							assign((_, event: DoneInvokeEvent<RunStatusResponse>) => ({
+								status: event.data.status,
+								toolCalls:
+									event.data.required_action.submit_tool_outputs.tool_calls,
+							})),
+							() => console.log('Requires action condition'),
+						],
 						target: ChatState.PROCESSING_TOOL_CALLS,
 					},
 					{
@@ -324,20 +355,40 @@ export const chatMachine = createMachine<
 		},
 		[ChatState.FETCHING_QUERY_RESULT]: {
 			invoke: {
-				src: async context => {
-					if (!context.run?.thread_id) {
+				src: async ({isRetrievalRun, retrievalRun, run}) => {
+					const queryRun = isRetrievalRun ? retrievalRun : run;
+					if (!queryRun?.thread_id) {
 						throw new Error('Thread ID not found');
 					}
 					return await getQueryResult({
-						thread_id: context.run.thread_id,
+						thread_id: queryRun.thread_id,
 					});
 				},
-				onDone: {
-					target: ChatState.SUCCESS_IDLE,
-					actions: assign((context, event: DoneInvokeEvent<string>) => ({
-						messages: [...context.messages, {id: uuid(), message: event.data}],
-					})),
-				},
+				onDone: [
+					{
+						cond: context => context.isRetrievalRun,
+						target: ChatState.SENDING_QUERY,
+						actions: assign((context, event: DoneInvokeEvent<string>) => ({
+							messages: [
+								...context.messages,
+								{id: uuid(), message: event.data},
+							],
+							query: `Apply these steps to my project. Walk me through each step as we apply them together.
+Steps: ${event.data}`,
+							isRetrievalRun: false,
+						})),
+					},
+					{
+						cond: context => !context.isRetrievalRun,
+						target: ChatState.SUCCESS_IDLE,
+						actions: assign((context, event: DoneInvokeEvent<string>) => ({
+							messages: [
+								...context.messages,
+								{id: uuid(), message: event.data},
+							],
+						})),
+					},
+				],
 				onError: {
 					target: ChatState.ERROR_IDLE,
 					actions: assign((_, event: DoneInvokeEvent<Error>) => ({
@@ -351,7 +402,9 @@ export const chatMachine = createMachine<
 				src: async context => {
 					const toolCall =
 						context.toolCalls[context.currentToolCallProcessingIndex];
-					const args = toolCall?.function.arguments;
+					console.log('🌱 # toolCall:', toolCall);
+					const args = JSON.parse(toolCall?.function.arguments ?? '');
+					console.log('🌱 # args:', args);
 
 					if (toolCall?.function.name === 'create_file') {
 						const output = await createFileToolCall(
@@ -378,7 +431,9 @@ export const chatMachine = createMachine<
 						return {tool_call_id: toolCall.id, output};
 					}
 					if (toolCall?.function.name === 'get_repository_metadata') {
-						return await getRepositoryMetadataToolCall();
+						const output = await getRepositoryMetadataToolCall();
+						console.log('🌱 # output:', output);
+						return {tool_call_id: toolCall.id, output};
 					}
 					return;
 				},
@@ -401,20 +456,27 @@ export const chatMachine = createMachine<
 						target: ChatState.SUBMITTING_TOOL_CALLS,
 					},
 				],
+				onError: {
+					actions: (_, event: DoneInvokeEvent<Error>) =>
+						console.log('Something went wrong:', event.data),
+				},
 			},
 		},
 		[ChatState.SUBMITTING_TOOL_CALLS]: {
 			invoke: {
-				src: async context => {
-					if (context.run) {
-						await submitToolCalls({
-							run: context.run,
-							toolOutputs: context.toolOutputs,
-						});
+				src: async ({isRetrievalRun, retrievalRun, run, toolOutputs}) => {
+					const queryRun = isRetrievalRun ? retrievalRun : run;
+					if (!queryRun) {
+						throw new Error('Run not found');
 					}
+					return await submitToolOutputs({
+						run: queryRun,
+						toolOutputs,
+					});
 				},
 				onDone: {
 					target: ChatState.POLLING_QUERY_STATUS,
+					actions: assign({toolOutputs: initialChatMachineContext.toolOutputs}),
 				},
 			},
 		},

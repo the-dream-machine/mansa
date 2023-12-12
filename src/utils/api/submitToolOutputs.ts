@@ -7,12 +7,12 @@ interface Args {
 	toolOutputs: ToolOutput[];
 }
 
-export const submitToolCalls = async ({run, toolOutputs}: Args) => {
+export const submitToolOutputs = async ({run, toolOutputs}: Args) => {
 	const data = JSON.stringify({run, toolOutputs});
 	const config = {
 		method: 'POST',
 		maxBodyLength: Infinity,
-		url: 'http://localhost:3000/submit-tool-calls',
+		url: 'http://localhost:3000/submit-tool-outputs',
 		headers: {'Content-Type': 'application/json'},
 		data,
 	};

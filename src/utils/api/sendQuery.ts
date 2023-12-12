@@ -3,11 +3,18 @@ import {type Run} from '../../types/Run.js';
 
 interface Args {
 	query: string;
+	isRetrievalRun: boolean;
 	thread_id?: string;
+	libraryId: string;
 }
 
-export const sendQuery = async ({query, thread_id}: Args) => {
-	const data = JSON.stringify({query, thread_id});
+export const sendQuery = async ({
+	query,
+	thread_id,
+	isRetrievalRun,
+	libraryId,
+}: Args) => {
+	const data = JSON.stringify({query, thread_id, isRetrievalRun, libraryId});
 	const config = {
 		method: 'POST',
 		maxBodyLength: Infinity,

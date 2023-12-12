@@ -33,7 +33,7 @@ export const About = () => {
 
 	return (
 		<PageContainer>
-			<Header title="manjaro" titleBackgroundColor={BaseColors.Pink500} />
+			<Header title="manjaro" backgroundColor={BaseColors.Pink500} />
 			<ScrollContainer>
 				<SectionContainer>
 					<Text>What is manjaro?</Text>

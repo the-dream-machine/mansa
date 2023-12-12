@@ -69,11 +69,11 @@ export const sendQueryMachine = createMachine<
 	states: {
 		[QueryState.SEND_QUERY]: {
 			invoke: {
-				src: context =>
-					sendQuery({
-						query: context.query,
-						thread_id: context.thread_id,
-					}),
+				src: context => sleep(1000),
+				// sendQuery({
+				// 	query: context.query,
+				// 	thread_id: context.thread_id,
+				// }),
 				onDone: {
 					target: QueryState.POLLING_QUERY_STATUS,
 					actions: assign({

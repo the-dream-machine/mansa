@@ -54,7 +54,7 @@ export const IndexRepository = () => {
 
 	return (
 		<PageContainer>
-			<Header title="manjaro" titleBackgroundColor={Colors.DarkGreen} />
+			<Header title="manjaro" backgroundColor={Colors.DarkGreen} />
 
 			<ScrollContainer>
 				<SectionContainer>

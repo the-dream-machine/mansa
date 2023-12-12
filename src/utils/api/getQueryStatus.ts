@@ -22,7 +22,9 @@ export const getQueryStatus = async ({run_id, thread_id}: Run) => {
 		if (response.data.status === 'failed') {
 			throw new Error(response.data.last_error?.message);
 		}
-		console.log('🌱 # getQueryStatus response.data:', response.data);
+		if (response.data.status === 'expired') {
+			throw new Error('This action timed out. Please retry.');
+		}
 		return response.data;
 	} catch (error) {
 		if (axios.isAxiosError(error)) {

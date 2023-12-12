@@ -1,6 +1,6 @@
 export interface CreateFileToolParams {
-	filePath: string;
-	fileContent: string;
+	file_path: string;
+	file_content: string;
 }
 
 export interface ReadFileToolParams {

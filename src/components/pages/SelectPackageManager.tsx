@@ -38,7 +38,7 @@ const SelectPackageManager = () => {
 
 	return (
 		<PageContainer>
-			<Header title="manjaro" titleBackgroundColor={Colors.DarkGreen} />
+			<Header title="manjaro" backgroundColor={Colors.DarkGreen} />
 			<ScrollContainer>
 				<SectionContainer>
 					<Text color={Colors.White}>

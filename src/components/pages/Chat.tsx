@@ -23,6 +23,7 @@ export const Chat = ({name}: Props) => {
 		context: {libraryName: name},
 	});
 
+	const library = state.context.library;
 	const messages = state.context.messages;
 	const isLoading = state.context.isLoading;
 	const isSuccess = state.context.isSuccess;
@@ -41,8 +42,9 @@ export const Chat = ({name}: Props) => {
 	return (
 		<PageContainer>
 			<Header
-				title="mansa"
-				titleBackgroundColor={Colors.DarkGreen}
+				title={library?.name}
+				backgroundColor={library?.backgroundColor}
+				textColor={library?.textColor}
 				isLoading={isLoading}
 				isSuccess={isSuccess}
 				isError={isError}

@@ -4,8 +4,8 @@ import {Colors} from '../styles/Colors.js';
 
 interface Props {
 	title?: string;
-	titleTextColor?: string;
-	titleBackgroundColor?: string;
+	textColor?: string;
+	backgroundColor?: string;
 
 	isLoading?: boolean;
 	isSuccess?: boolean;
@@ -15,9 +15,9 @@ interface Props {
 	errorMessage?: string;
 }
 export const Header = ({
-	title = 'Trigger.dev',
-	titleTextColor = '#ffffff',
-	titleBackgroundColor = '#4eb03a',
+	title = 'mansa',
+	textColor = Colors.White,
+	backgroundColor = Colors.DarkYellow,
 
 	isLoading = false,
 	isSuccess = false,
@@ -27,7 +27,7 @@ export const Header = ({
 	errorMessage = 'Error',
 }: Props) => (
 	<Box paddingTop={2} paddingX={3} gap={1} width={'100%'} flexShrink={0}>
-		<Text color={titleTextColor} backgroundColor={titleBackgroundColor} bold>
+		<Text color={textColor} backgroundColor={backgroundColor} bold>
 			{' '}
 			{title}{' '}
 		</Text>
