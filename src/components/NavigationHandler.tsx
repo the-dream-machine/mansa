@@ -8,8 +8,12 @@ import {StepsHandler} from './StepsHandler.js';
 import {About} from './pages/About.js';
 import {IndexNewFiles} from './pages/IndexNewFiles.js';
 import {Spinner} from '@inkjs/ui';
+import {Chat} from './pages/Chat.js';
 
-const NavigationHandler = () => {
+interface Props {
+	libraryName: string;
+}
+const NavigationHandler = ({libraryName}: Props) => {
 	const [state] = NavigationContext.useActor();
 	const showLoader =
 		state.matches(AppState.DOES_CONFIG_EXIST) ||
@@ -22,6 +26,7 @@ const NavigationHandler = () => {
 
 	return (
 		<>
+			{state.matches(NavigationPage.CHAT) && <Chat name={libraryName} />}
 			{state.matches(NavigationPage.ABOUT) && <About />}
 			{state.matches(NavigationPage.CREATE_CONFIG) && <SelectPackageManager />}
 			{state.matches(NavigationPage.INDEX_REPOSITORY) && <IndexRepository />}

@@ -10,11 +10,12 @@ export interface Tool {
 }
 
 export type ToolNames =
-	| 'create_file'
+	| 'get_repository_summary'
+	| 'find_file_by_path'
+	| 'find_file_by_description'
 	| 'read_file'
-	| 'edit_file'
-	| 'run_command'
-	| 'get_repository_metadata';
+	| 'create_file'
+	| 'edit_file';
 
 export interface RequiredActionFunctionToolCallFunction {
 	arguments: string;

@@ -10,14 +10,14 @@ import {
 import {getRepositoryMap} from '../utils/repository/getRepositoryMap.js';
 import {getRepositoryConfig} from '../utils/repository/getRepositoryConfig.js';
 import {sendQuery} from '../utils/api/sendQuery.js';
-import {$, fs, sleep} from 'zx';
+import {fs, path, sleep} from 'zx';
 import {getQueryStatus} from '../utils/api/getQueryStatus.js';
 import {getQueryResult} from '../utils/api/getQueryResult.js';
 import {
 	type ReadFileToolParams,
 	type CreateFileToolParams,
 	type EditFileToolParams,
-	type RunCommandToolParams,
+	type FindFileByPathToolParams,
 } from '../types/ToolParams.js';
 import {writeToFile} from '../utils/writeToFile.js';
 import {
@@ -31,6 +31,10 @@ import {type Library} from '../types/Library.js';
 interface Message {
 	id: string;
 	message: string;
+	isUser?: boolean;
+	isRetrievalRun?: boolean;
+	isTool?: boolean;
+	isAssistant?: boolean;
 }
 
 interface ChatMachineContext {
@@ -50,7 +54,9 @@ interface ChatMachineContext {
 
 	// Component states
 	enterLabel: string;
+	enterDisabled: boolean;
 	isLoading: boolean;
+	loadingMessage: string;
 	isWorking: boolean;
 	isSuccess: boolean;
 	isError: boolean;
@@ -62,7 +68,7 @@ const initialChatMachineContext: ChatMachineContext = {
 	library: undefined,
 	run: undefined,
 	retrievalRun: undefined,
-	isRetrievalRun: true,
+	isRetrievalRun: false,
 	repositoryMap: [],
 	repositoryConfig: undefined,
 	messages: [],
@@ -72,8 +78,10 @@ const initialChatMachineContext: ChatMachineContext = {
 	query: '',
 	status: undefined,
 
-	enterLabel: 'submit',
+	enterLabel: 'send',
+	enterDisabled: true,
 	isLoading: false,
+	loadingMessage: '',
 	isWorking: false,
 	isSuccess: false,
 	isError: false,
@@ -87,7 +95,12 @@ export enum ChatState {
 	SENDING_INITIAL_QUERY = 'SENDING_INITIAL_QUERY',
 	SENDING_QUERY = 'SENDING_QUERY',
 	POLLING_QUERY_STATUS = 'POLLING_QUERY_STATUS',
-	PROCESSING_TOOL_CALLS = 'PROCESSING_TOOL_CALLS',
+	ROUTING_TOOL_CALLS = 'ROUTING_TOOL_CALLS',
+	PROCESSING_GET_REPOSITORY_SUMMARY_TOOL_CALL = 'PROCESSING_GET_REPOSITORY_SUMMARY_TOOL_CALL',
+	PROCESSING_FIND_FILE_BY_PATH_TOOL_CALL = 'PROCESSING_FIND_FILE_BY_PATH_TOOL_CALL',
+	PROCESSING_READ_FILE_TOOL_CALL = 'PROCESSING_READ_FILE_TOOL_CALL',
+	PROCESSING_CREATE_FILE_TOOL_CALL = 'PROCESSING_CREATE_FILE_TOOL_CALL',
+	PROCESSING_EDIT_FILE_TOOL_CALL = 'PROCESSING_EDIT_FILE_TOOL_CALL',
 	SUBMITTING_TOOL_CALLS = 'SUBMITTING_TOOL_CALLS',
 	FETCHING_QUERY_RESULT = 'FETCHING_QUERY_RESULT',
 	SUCCESS_IDLE = 'SUCCESS_IDLE',
@@ -120,7 +133,27 @@ type ChatMachineState =
 			context: ChatMachineContext;
 	  }
 	| {
-			value: ChatState.PROCESSING_TOOL_CALLS;
+			value: ChatState.ROUTING_TOOL_CALLS;
+			context: ChatMachineContext;
+	  }
+	| {
+			value: ChatState.PROCESSING_GET_REPOSITORY_SUMMARY_TOOL_CALL;
+			context: ChatMachineContext;
+	  }
+	| {
+			value: ChatState.PROCESSING_FIND_FILE_BY_PATH_TOOL_CALL;
+			context: ChatMachineContext;
+	  }
+	| {
+			value: ChatState.PROCESSING_READ_FILE_TOOL_CALL;
+			context: ChatMachineContext;
+	  }
+	| {
+			value: ChatState.PROCESSING_CREATE_FILE_TOOL_CALL;
+			context: ChatMachineContext;
+	  }
+	| {
+			value: ChatState.PROCESSING_EDIT_FILE_TOOL_CALL;
 			context: ChatMachineContext;
 	  }
 	| {
@@ -150,49 +183,122 @@ type ChatMachineEvent =
 	| {type: ChatEvent.SEND_QUERY; query: string};
 
 // Guards
-const isLastToolCall = (context: ChatMachineContext) =>
-	context.toolCalls.length - 1 === context.currentToolCallProcessingIndex;
+const isLastToolCall = (context: ChatMachineContext) => {
+	return context.toolCalls.length === context.currentToolCallProcessingIndex;
+};
 
 // Tool handlers
-const createFileToolCall = async (args: CreateFileToolParams) => {
-	const {file_path, file_content} = args;
-	await writeToFile({filePath: file_path, fileContent: file_content});
-	return JSON.stringify({success: true});
-};
+const getRepositorySummaryToolCall = async (
+	context: ChatMachineContext,
+): Promise<ToolOutput> => {
+	const toolCall = context.toolCalls[context.currentToolCallProcessingIndex];
+	if (!toolCall) {
+		throw new Error('getRepositorySummaryToolCall: Tool call is undefined');
+	}
 
-const readFileToolCall = async (args: ReadFileToolParams) => {
-	const {filePath} = args;
-	const fileContent = await fs.readFile(filePath);
-	return JSON.stringify({filePath, fileContent});
-};
-
-const editFileToolCall = async (args: EditFileToolParams) => {
-	const {filePath, fileContent} = args;
-	await writeToFile({filePath, fileContent});
-	return JSON.stringify({success: true});
-};
-
-const getRepositoryMetadataToolCall = async () => {
 	const repositoryMap = await getRepositoryMap();
 	const packageJsonMapItem = repositoryMap.find(
 		mapItem => mapItem.filePath === 'package.json',
 	);
-	return JSON.stringify({metadata: packageJsonMapItem?.fileSummary});
+	const output = JSON.stringify({summary: packageJsonMapItem?.fileSummary});
+	return {tool_call_id: toolCall.id, output};
 };
 
-const runCommandToolCall = async (args: RunCommandToolParams) => {
-	console.log('🌱 # args:', args);
-	const {command} = args;
-	console.log('🌱 # command:', command);
-	/**
-	 * You have to pass in commands as an array
-	 * @see: https://google.github.io/zx/quotes#assembling-commands
-	 */
-	const commandArgs = command.split(' ');
-	console.log('🌱 # commandArgs:', commandArgs);
-	const process = await $`${commandArgs}`.quiet();
-	console.log('🌱 # process:', process);
-	return JSON.stringify({success: true});
+const findFileByPathToolCall = async (
+	context: ChatMachineContext,
+): Promise<ToolOutput> => {
+	const toolCall = context.toolCalls[context.currentToolCallProcessingIndex];
+	console.log('🌱 # toolCall:', toolCall);
+	if (!toolCall) {
+		throw new Error('findFileByPathToolCall: Tool call is undefined');
+	}
+
+	const args = (await JSON.parse(
+		toolCall.function.arguments,
+	)) as unknown as FindFileByPathToolParams;
+
+	const dirname = path.dirname(args.file_path);
+	const output = JSON.stringify({does_file_exist: await fs.exists(dirname)});
+	console.log('🌱 # findFileByPathToolCall output:', output);
+	return {tool_call_id: toolCall.id, output};
+};
+
+const readFileToolCall = async (
+	context: ChatMachineContext,
+): Promise<ToolOutput> => {
+	const toolCall = context.toolCalls[context.currentToolCallProcessingIndex];
+	console.log('🌱 # read file toolCall:', toolCall);
+	if (!toolCall) {
+		throw new Error('readFileToolCall: Tool call is undefined');
+	}
+
+	const args = (await JSON.parse(
+		toolCall.function.arguments,
+	)) as unknown as ReadFileToolParams;
+	console.log('🌱 # read file args:', args);
+
+	try {
+		const fileContent = (await fs.readFile(args.file_path)).toString();
+		const output = JSON.stringify({file_content: fileContent});
+		console.log('🌱 # read file output:', {
+			tool_call_id: toolCall.id,
+			output,
+		});
+		return {tool_call_id: toolCall.id, output};
+	} catch (error) {
+		const output = JSON.stringify({error: 'file does not exist'});
+		return {tool_call_id: toolCall.id, output};
+	}
+};
+
+const createFileToolCall = async (
+	context: ChatMachineContext,
+): Promise<ToolOutput> => {
+	const toolCall = context.toolCalls[context.currentToolCallProcessingIndex];
+	if (!toolCall) {
+		throw new Error('createFileToolCall: Tool call is undefined');
+	}
+
+	const args = (await JSON.parse(
+		toolCall.function.arguments,
+	)) as unknown as CreateFileToolParams;
+
+	try {
+		await writeToFile({
+			filePath: args.file_path,
+			fileContent: args.file_content,
+		});
+		const output = JSON.stringify({response: 'file created successfully'});
+		return {tool_call_id: toolCall.id, output};
+	} catch (error) {
+		const output = JSON.stringify({error});
+		return {tool_call_id: toolCall.id, output};
+	}
+};
+
+const editFileToolCall = async (
+	context: ChatMachineContext,
+): Promise<ToolOutput> => {
+	const toolCall = context.toolCalls[context.currentToolCallProcessingIndex];
+	if (!toolCall) {
+		throw new Error('editFileToolCall: Tool call is undefined');
+	}
+
+	const args = (await JSON.parse(
+		toolCall.function.arguments,
+	)) as unknown as EditFileToolParams;
+
+	try {
+		await writeToFile({
+			filePath: args.file_path,
+			fileContent: args.file_content,
+		});
+		const output = JSON.stringify({response: 'file edit successfully'});
+		return {tool_call_id: toolCall.id, output};
+	} catch (error) {
+		const output = JSON.stringify({error});
+		return {tool_call_id: toolCall.id, output};
+	}
 };
 
 export const chatMachine = createMachine<
@@ -240,7 +346,7 @@ export const chatMachine = createMachine<
 			invoke: {
 				src: async () => await getRepositoryConfig(),
 				onDone: {
-					target: ChatState.SENDING_INITIAL_QUERY,
+					target: ChatState.SUCCESS_IDLE,
 					actions: assign({
 						repositoryConfig: (_, event: DoneInvokeEvent<RepoConfig>) =>
 							event.data,
@@ -248,17 +354,26 @@ export const chatMachine = createMachine<
 				},
 			},
 		},
-		[ChatState.SENDING_INITIAL_QUERY]: {
-			always: [
-				{
-					actions: assign({
-						query: context =>
-							`How do I manually set up ${context.library?.name} in my repository?`,
-					}),
-					target: ChatState.SENDING_QUERY,
-				},
-			],
-		},
+		// 		[ChatState.SENDING_INITIAL_QUERY]: {
+		// 			always: [
+		// 				{
+		// 					actions: assign({
+		// isRetrievalRun: true,
+		// 						query: context => {
+		// 							const packageJsonMapItem = context.repositoryMap?.find(
+		// 								mapItem => mapItem.filePath === 'package.json',
+		// 							);
+		// 							const summary = packageJsonMapItem?.fileSummary;
+		// 							const packageManager = context.repositoryConfig?.packageManager;
+		// 							const libraryName = context.library?.name;
+		// 							return `Here is a summary of my repository: "${summary}. The repository uses the '${packageManager}' package manager."
+		// Question: "Given this information, how do I manually install the '${libraryName}' library in my repository?" (Respond with a complete guide).`;
+		// 						},
+		// 					}),
+		// 					target: ChatState.SENDING_QUERY,
+		// 				},
+		// 			],
+		// 		},
 		[ChatState.SENDING_QUERY]: {
 			invoke: {
 				src: async ({query, isRetrievalRun, run, retrievalRun, library}) => {
@@ -321,9 +436,8 @@ export const chatMachine = createMachine<
 								toolCalls:
 									event.data.required_action.submit_tool_outputs.tool_calls,
 							})),
-							() => console.log('Requires action condition'),
 						],
-						target: ChatState.PROCESSING_TOOL_CALLS,
+						target: ChatState.ROUTING_TOOL_CALLS,
 					},
 					{
 						cond: (_, event: DoneInvokeEvent<RunStatusResponse>) =>
@@ -371,10 +485,14 @@ export const chatMachine = createMachine<
 						actions: assign((context, event: DoneInvokeEvent<string>) => ({
 							messages: [
 								...context.messages,
-								{id: uuid(), message: event.data},
+								{
+									id: uuid(),
+									message: event.data,
+									isRetrievalRun: context.isRetrievalRun,
+								},
 							],
-							query: `Apply these steps to my project. Walk me through each step as we apply them together.
-Steps: ${event.data}`,
+							query: `${event.data}
+Walk me through each step one at a time. Let's start with the first step.`,
 							isRetrievalRun: false,
 						})),
 					},
@@ -384,7 +502,11 @@ Steps: ${event.data}`,
 						actions: assign((context, event: DoneInvokeEvent<string>) => ({
 							messages: [
 								...context.messages,
-								{id: uuid(), message: event.data},
+								{
+									id: uuid(),
+									message: event.data,
+									isAssistant: true,
+								},
 							],
 						})),
 					},
@@ -397,101 +519,243 @@ Steps: ${event.data}`,
 				},
 			},
 		},
-		[ChatState.PROCESSING_TOOL_CALLS]: {
-			invoke: {
-				src: async context => {
-					const toolCall =
-						context.toolCalls[context.currentToolCallProcessingIndex];
-					console.log('🌱 # toolCall:', toolCall);
-					const args = JSON.parse(toolCall?.function.arguments ?? '');
-					console.log('🌱 # args:', args);
-
-					if (toolCall?.function.name === 'create_file') {
-						const output = await createFileToolCall(
-							args as unknown as CreateFileToolParams,
-						);
-						return {tool_call_id: toolCall.id, output};
-					}
-					if (toolCall?.function.name === 'read_file') {
-						const output = await readFileToolCall(
-							args as unknown as ReadFileToolParams,
-						);
-						return {tool_call_id: toolCall.id, output};
-					}
-					if (toolCall?.function.name === 'edit_file') {
-						const output = await editFileToolCall(
-							args as unknown as EditFileToolParams,
-						);
-						return {tool_call_id: toolCall.id, output};
-					}
-					if (toolCall?.function.name === 'run_command') {
-						const output = await runCommandToolCall(
-							args as unknown as RunCommandToolParams,
-						);
-						return {tool_call_id: toolCall.id, output};
-					}
-					if (toolCall?.function.name === 'get_repository_metadata') {
-						const output = await getRepositoryMetadataToolCall();
-						console.log('🌱 # output:', output);
-						return {tool_call_id: toolCall.id, output};
-					}
-					return;
+		[ChatState.ROUTING_TOOL_CALLS]: {
+			always: [
+				{
+					cond: context => isLastToolCall(context),
+					target: ChatState.SUBMITTING_TOOL_CALLS,
 				},
-				onDone: [
-					// Loop until last tool call is processed
-					{
-						cond: context => !isLastToolCall(context),
-						actions: assign((context, event: DoneInvokeEvent<ToolOutput>) => ({
-							toolOutputs: [...context.toolOutputs, event.data],
-							currentToolCallProcessingIndex:
-								context.currentToolCallProcessingIndex + 1,
-						})),
-						target: ChatState.PROCESSING_TOOL_CALLS,
-					},
-					{
-						cond: context => isLastToolCall(context),
-						actions: assign((context, event: DoneInvokeEvent<ToolOutput>) => ({
-							toolOutputs: [...context.toolOutputs, event.data],
-						})),
-						target: ChatState.SUBMITTING_TOOL_CALLS,
-					},
-				],
+				{
+					cond: context =>
+						context.toolCalls[context.currentToolCallProcessingIndex]?.function
+							.name === 'get_repository_summary',
+					target: ChatState.PROCESSING_GET_REPOSITORY_SUMMARY_TOOL_CALL,
+					actions: [
+						() => console.log('Getting repository summary'),
+						assign({
+							messages: context => [
+								...context.messages,
+								{
+									id: uuid(),
+									isTool: true,
+									message: '👀 Reading a summary of your repository',
+								},
+							],
+						}),
+					],
+				},
+				{
+					cond: context =>
+						context.toolCalls[context.currentToolCallProcessingIndex]?.function
+							.name === 'find_file_by_path',
+					target: ChatState.PROCESSING_FIND_FILE_BY_PATH_TOOL_CALL,
+					actions: assign({
+						messages: context => {
+							const args = JSON.parse(
+								context.toolCalls[context.currentToolCallProcessingIndex]
+									?.function.arguments ?? '',
+							) as unknown as FindFileByPathToolParams;
+
+							return [
+								...context.messages,
+								{
+									id: uuid(),
+									isTool: true,
+									message: `🔎 Searching for ${args.file_path}`,
+								},
+							];
+						},
+					}),
+				},
+				{
+					cond: context =>
+						context.toolCalls[context.currentToolCallProcessingIndex]?.function
+							.name === 'read_file',
+					target: ChatState.PROCESSING_READ_FILE_TOOL_CALL,
+					actions: assign({
+						messages: context => {
+							const args = JSON.parse(
+								context.toolCalls[context.currentToolCallProcessingIndex]
+									?.function.arguments ?? '',
+							) as unknown as ReadFileToolParams;
+
+							return [
+								...context.messages,
+								{
+									id: uuid(),
+									isTool: true,
+									message: `📖 Reading ${args.file_path}`,
+								},
+							];
+						},
+					}),
+				},
+				{
+					cond: context =>
+						context.toolCalls[context.currentToolCallProcessingIndex]?.function
+							.name === 'create_file',
+					target: ChatState.PROCESSING_CREATE_FILE_TOOL_CALL,
+					actions: assign({
+						messages: context => {
+							const args = JSON.parse(
+								context.toolCalls[context.currentToolCallProcessingIndex]
+									?.function.arguments ?? '',
+							) as unknown as CreateFileToolParams;
+
+							return [
+								...context.messages,
+								{
+									id: uuid(),
+									isTool: true,
+									message: `🛠️ Creating ${args.file_path}`,
+								},
+							];
+						},
+					}),
+				},
+				{
+					cond: context =>
+						context.toolCalls[context.currentToolCallProcessingIndex]?.function
+							.name === 'edit_file',
+					target: ChatState.PROCESSING_EDIT_FILE_TOOL_CALL,
+					actions: assign({
+						messages: context => {
+							const args = JSON.parse(
+								context.toolCalls[context.currentToolCallProcessingIndex]
+									?.function.arguments ?? '',
+							) as unknown as EditFileToolParams;
+
+							return [
+								...context.messages,
+								{
+									id: uuid(),
+									isTool: true,
+									message: `✨ Editing ${args.file_path}`,
+								},
+							];
+						},
+					}),
+				},
+			],
+		},
+		[ChatState.PROCESSING_GET_REPOSITORY_SUMMARY_TOOL_CALL]: {
+			invoke: {
+				src: async context => getRepositorySummaryToolCall(context),
+				onDone: {
+					actions: assign((context, event: DoneInvokeEvent<ToolOutput>) => ({
+						toolOutputs: [...context.toolOutputs, event.data],
+						currentToolCallProcessingIndex:
+							context.currentToolCallProcessingIndex + 1,
+					})),
+					target: ChatState.ROUTING_TOOL_CALLS,
+				},
+			},
+		},
+		[ChatState.PROCESSING_FIND_FILE_BY_PATH_TOOL_CALL]: {
+			invoke: {
+				src: async context => findFileByPathToolCall(context),
+				onDone: {
+					actions: assign((context, event: DoneInvokeEvent<ToolOutput>) => ({
+						toolOutputs: [...context.toolOutputs, event.data],
+						currentToolCallProcessingIndex:
+							context.currentToolCallProcessingIndex + 1,
+					})),
+					target: ChatState.ROUTING_TOOL_CALLS,
+				},
 				onError: {
-					actions: (_, event: DoneInvokeEvent<Error>) =>
-						console.log('Something went wrong:', event.data),
+					actions: (_, event) =>
+						console.log('PROCESSING_FIND_FILE_BY_PATH_TOOL_CALL:', event.data),
+				},
+			},
+		},
+		[ChatState.PROCESSING_READ_FILE_TOOL_CALL]: {
+			invoke: {
+				src: async context => readFileToolCall(context),
+				onDone: {
+					actions: assign((context, event: DoneInvokeEvent<ToolOutput>) => ({
+						toolOutputs: [...context.toolOutputs, event.data],
+						currentToolCallProcessingIndex:
+							context.currentToolCallProcessingIndex + 1,
+					})),
+					target: ChatState.ROUTING_TOOL_CALLS,
+				},
+			},
+		},
+		[ChatState.PROCESSING_CREATE_FILE_TOOL_CALL]: {
+			invoke: {
+				src: async context => createFileToolCall(context),
+				onDone: {
+					actions: assign((context, event: DoneInvokeEvent<ToolOutput>) => ({
+						toolOutputs: [...context.toolOutputs, event.data],
+						currentToolCallProcessingIndex:
+							context.currentToolCallProcessingIndex + 1,
+					})),
+					target: ChatState.ROUTING_TOOL_CALLS,
+				},
+			},
+		},
+		[ChatState.PROCESSING_EDIT_FILE_TOOL_CALL]: {
+			invoke: {
+				src: async context => editFileToolCall(context),
+				onDone: {
+					actions: assign((context, event: DoneInvokeEvent<ToolOutput>) => ({
+						toolOutputs: [...context.toolOutputs, event.data],
+						currentToolCallProcessingIndex:
+							context.currentToolCallProcessingIndex + 1,
+					})),
+					target: ChatState.ROUTING_TOOL_CALLS,
 				},
 			},
 		},
 		[ChatState.SUBMITTING_TOOL_CALLS]: {
 			invoke: {
 				src: async ({isRetrievalRun, retrievalRun, run, toolOutputs}) => {
+					console.log('🌱 # toolOutputs:', toolOutputs);
 					const queryRun = isRetrievalRun ? retrievalRun : run;
 					if (!queryRun) {
 						throw new Error('Run not found');
 					}
-					return await submitToolOutputs({
-						run: queryRun,
-						toolOutputs,
-					});
+					return await submitToolOutputs({run: queryRun, toolOutputs});
 				},
 				onDone: {
 					target: ChatState.POLLING_QUERY_STATUS,
-					actions: assign({toolOutputs: initialChatMachineContext.toolOutputs}),
+					actions: assign({
+						toolOutputs: initialChatMachineContext.toolOutputs,
+						currentToolCallProcessingIndex:
+							initialChatMachineContext.currentToolCallProcessingIndex,
+					}),
+				},
+				onError: {
+					actions: (_, events) => console.log(events.data),
 				},
 			},
 		},
 		[ChatState.SUCCESS_IDLE]: {
+			entry: [assign({enterDisabled: false})],
 			on: {
 				[ChatEvent.SEND_QUERY]: {
-					actions: assign({
-						query: (_, event) => event.query,
-					}),
+					actions: [
+						assign((context, event) => ({
+							query: event.query,
+							messages: [
+								...context.messages,
+								{
+									id: uuid(),
+									isUser: true,
+									message: event.query,
+								},
+							],
+						})),
+					],
 					target: ChatState.SENDING_QUERY,
 				},
 			},
+			exit: [assign({enterDisabled: true})],
 		},
 		[ChatState.ERROR_IDLE]: {
-			entry: [assign({isError: true, enterLabel: 'retry'})],
+			entry: [
+				assign({isError: true, enterLabel: 'retry', enterDisabled: false}),
+			],
 			on: {
 				[ChatEvent.SEND_QUERY]: {
 					actions: assign({
@@ -504,6 +768,7 @@ Steps: ${event.data}`,
 				assign({
 					isError: initialChatMachineContext.isError,
 					enterLabel: initialChatMachineContext.enterLabel,
+					enterDisabled: true,
 				}),
 			],
 		},

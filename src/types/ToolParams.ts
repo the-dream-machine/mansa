@@ -4,14 +4,14 @@ export interface CreateFileToolParams {
 }
 
 export interface ReadFileToolParams {
-	filePath: string;
+	file_path: string;
 }
 
 export interface EditFileToolParams {
-	filePath: string;
-	fileContent: string;
+	file_path: string;
+	file_content: string;
 }
 
-export interface RunCommandToolParams {
-	command: string;
+export interface FindFileByPathToolParams {
+	file_path: string;
 }

@@ -13,6 +13,7 @@ export enum NavigationPage {
 	INDEX_REPOSITORY = 'INDEX_REPOSITORY',
 	INDEX_NEW_FILES = 'INDEX_NEW_FILES',
 	STEPS = 'STEPS',
+	CHAT = 'CHAT',
 }
 
 export enum AppState {
@@ -68,6 +69,10 @@ export type NavigationMachineState =
 	  }
 	| {
 			value: NavigationPage.STEPS;
+			context: never;
+	  }
+	| {
+			value: NavigationPage.CHAT;
 			context: never;
 	  };
 
@@ -182,7 +187,7 @@ export const navigationMachine = createMachine<
 			invoke: {
 				src: async () => await repositoryChecksumsMatch(),
 				onDone: {
-					target: NavigationPage.STEPS,
+					target: NavigationPage.CHAT,
 				},
 				onError: {
 					target: NavigationPage.INDEX_NEW_FILES,
@@ -190,6 +195,7 @@ export const navigationMachine = createMachine<
 			},
 		},
 
+		[NavigationPage.CHAT]: {},
 		[NavigationPage.ABOUT]: {},
 		[NavigationPage.CREATE_CONFIG]: {},
 		[NavigationPage.INDEX_REPOSITORY]: {},
@@ -215,6 +221,9 @@ export const navigationMachine = createMachine<
 
 		[AppState.DO_CHECKSUMS_MATCH]: {
 			target: AppState.DO_CHECKSUMS_MATCH,
+		},
+		[NavigationPage.CHAT]: {
+			target: NavigationPage.ABOUT,
 		},
 		[NavigationPage.ABOUT]: {
 			target: NavigationPage.ABOUT,

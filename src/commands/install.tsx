@@ -24,9 +24,9 @@ export default function Install({args}: Props) {
 	return (
 		<ThemeProvider theme={inkTheme}>
 			<NavigationProvider>
-				<FullScreen>
-					<NavigationHandler />
-				</FullScreen>
+				{/* <FullScreen> */}
+				<NavigationHandler libraryName={args[0]} />
+				{/* </FullScreen> */}
 			</NavigationProvider>
 		</ThemeProvider>
 	);
