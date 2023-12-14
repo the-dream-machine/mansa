@@ -11,17 +11,18 @@ import {Colors} from '../../styles/Colors.js';
 import {ScrollContainer} from '../ScrollContainer.js';
 import {SectionContainer} from '../SectionContainer.js';
 import {ChatEvent, chatMachine} from '../../machines/chatMachine.js';
-import {TextInput} from '@inkjs/ui';
+import {Spinner, TextInput} from '@inkjs/ui';
 
 interface Props {
-	name: string;
+	libraryName: string;
+	commandName: string;
 }
 
-export const Chat = ({name}: Props) => {
+export const Chat = ({libraryName, commandName}: Props) => {
 	const [value, setValue] = useState('');
 	const [, navigate] = NavigationContext.useActor();
 	const [state, send] = useMachine(chatMachine, {
-		context: {libraryName: name},
+		context: {libraryName, commandName},
 	});
 
 	const library = state.context.library;
@@ -60,66 +61,58 @@ export const Chat = ({name}: Props) => {
 
 			<SectionContainer>
 				<Box flexDirection="column" gap={2}>
-					{messages.map(
-						(
-							{id, message, isRetrievalRun, isUser, isTool, isAssistant},
-							index,
-						) => (
-							<Box key={id}>
-								{isRetrievalRun && (
-									<Text color={Colors.White}>Documentation:</Text>
-								)}
-								{isUser && (
+					{messages.map(({id, message, isUser, isTool, isAssistant}) => (
+						<Box key={id}>
+							{isUser && (
+								<Box
+									paddingLeft={2}
+									paddingY={1}
+									borderColor={Colors.LightGray}
+									borderStyle="single"
+									borderBottom={false}
+									borderRight={false}
+									borderTop={false}
+								>
+									<Text color={Colors.LightGray}>{message}</Text>
+								</Box>
+							)}
+							{isTool && (
+								<Box gap={2}>
+									{isLoading && <Spinner />}
 									<Box
-										paddingLeft={2}
-										paddingY={1}
+										flexGrow={0}
+										borderStyle="round"
 										borderColor={Colors.DarkGray}
-										borderStyle="single"
-										borderBottom={false}
-										borderRight={false}
-										borderTop={false}
 									>
-										<Text color={Colors.LightGray}>{message}</Text>
+										<Text>{message}</Text>
 									</Box>
-								)}
-								{isTool && (
-									<Box>
-										<Box
-											flexGrow={0}
-											borderStyle="round"
-											borderColor={Colors.DarkGray}
-										>
-											<Text>{message}</Text>
-										</Box>
-									</Box>
-								)}
-								{isAssistant && <Text color={Colors.LightGray}>{message}</Text>}
-							</Box>
-						),
+								</Box>
+							)}
+							{isAssistant && <Text color={Colors.LightGray}>{message}</Text>}
+						</Box>
+					))}
+
+					{!enterDisabled && (
+						<Box
+							paddingLeft={2}
+							paddingY={1}
+							borderColor={enterDisabled ? Colors.DarkGray : Colors.White}
+							borderStyle="single"
+							borderBottom={false}
+							borderRight={false}
+							borderTop={false}
+						>
+							<TextInput
+								isDisabled={enterDisabled}
+								placeholder="Type something..."
+								onChange={setValue}
+								onSubmit={query => send({type: ChatEvent.SEND_QUERY, query})}
+							/>
+						</Box>
 					)}
 				</Box>
 			</SectionContainer>
 
-			{!enterDisabled && (
-				<SectionContainer showDivider={messages.length > 0}>
-					<Box
-						paddingLeft={2}
-						paddingY={1}
-						borderColor={enterDisabled ? Colors.DarkGray : Colors.White}
-						borderStyle="single"
-						borderBottom={false}
-						borderRight={false}
-						borderTop={false}
-					>
-						<TextInput
-							isDisabled={enterDisabled}
-							placeholder="Type something..."
-							onChange={setValue}
-							onSubmit={query => send({type: ChatEvent.SEND_QUERY, query})}
-						/>
-					</Box>
-				</SectionContainer>
-			)}
 			{/* </ScrollContainer> */}
 			<Spacer />
 			<Footer

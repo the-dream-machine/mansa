@@ -27,6 +27,8 @@ import {
 import {submitToolOutputs} from '../utils/api/submitToolOutputs.js';
 import {getLibrary} from '../utils/api/getLibrary.js';
 import {type Library} from '../types/Library.js';
+import {sendRetrievalCommand} from '../utils/api/sendRetrievalCommand.js';
+import {sendAssistantCommand} from '../utils/api/sendAssistantCommand.js';
 
 interface Message {
 	id: string;
@@ -38,13 +40,14 @@ interface Message {
 }
 
 interface ChatMachineContext {
+	repositoryConfig?: RepoConfig;
+	commandName: string;
 	libraryName: string;
 	library?: Library;
 	run?: Run;
-	retrievalRun?: Run;
 	isRetrievalRun: boolean;
-	repositoryMap?: FileMapItem[];
-	repositoryConfig?: RepoConfig;
+	retrievalRun?: Run;
+	retrievalContext: string;
 	messages: Message[];
 	toolCalls: RequiredActionFunctionToolCall[];
 	currentToolCallProcessingIndex: number;
@@ -64,12 +67,13 @@ interface ChatMachineContext {
 }
 
 const initialChatMachineContext: ChatMachineContext = {
+	commandName: '',
 	libraryName: '',
 	library: undefined,
 	run: undefined,
 	retrievalRun: undefined,
 	isRetrievalRun: false,
-	repositoryMap: [],
+	retrievalContext: '',
 	repositoryConfig: undefined,
 	messages: [],
 	toolCalls: [],
@@ -90,9 +94,9 @@ const initialChatMachineContext: ChatMachineContext = {
 
 export enum ChatState {
 	FETCHING_LIBRARY = 'FETCHING_LIBRARY',
-	FETCHING_REPOSITORY_MAP = 'FETCHING_REPOSITORY_MAP',
 	FETCHING_REPOSITORY_CONFIG = 'FETCHING_REPOSITORY_CONFIG',
-	SENDING_INITIAL_QUERY = 'SENDING_INITIAL_QUERY',
+	SENDING_RETRIEVAL_COMMAND = 'SENDING_RETRIEVAL_COMMAND',
+	SENDING_ASSISTANT_COMMAND = 'SENDING_ASSISTANT_COMMAND',
 	SENDING_QUERY = 'SENDING_QUERY',
 	POLLING_QUERY_STATUS = 'POLLING_QUERY_STATUS',
 	ROUTING_TOOL_CALLS = 'ROUTING_TOOL_CALLS',
@@ -113,15 +117,11 @@ type ChatMachineState =
 			context: ChatMachineContext;
 	  }
 	| {
-			value: ChatState.FETCHING_REPOSITORY_MAP;
-			context: ChatMachineContext;
-	  }
-	| {
 			value: ChatState.FETCHING_REPOSITORY_CONFIG;
 			context: ChatMachineContext;
 	  }
 	| {
-			value: ChatState.SENDING_INITIAL_QUERY;
+			value: ChatState.SENDING_RETRIEVAL_COMMAND;
 			context: ChatMachineContext;
 	  }
 	| {
@@ -319,7 +319,7 @@ export const chatMachine = createMachine<
 					actions: assign({
 						library: (_, event: DoneInvokeEvent<Library>) => event.data,
 					}),
-					target: ChatState.FETCHING_REPOSITORY_MAP,
+					target: ChatState.FETCHING_REPOSITORY_CONFIG,
 				},
 				onError: {
 					target: ChatState.ERROR_IDLE,
@@ -330,23 +330,11 @@ export const chatMachine = createMachine<
 				},
 			},
 		},
-		[ChatState.FETCHING_REPOSITORY_MAP]: {
-			invoke: {
-				src: async () => await getRepositoryMap(),
-				onDone: {
-					target: ChatState.FETCHING_REPOSITORY_CONFIG,
-					actions: assign({
-						repositoryMap: (_, event: DoneInvokeEvent<FileMapItem[]>) =>
-							event.data,
-					}),
-				},
-			},
-		},
 		[ChatState.FETCHING_REPOSITORY_CONFIG]: {
 			invoke: {
 				src: async () => await getRepositoryConfig(),
 				onDone: {
-					target: ChatState.SUCCESS_IDLE,
+					target: ChatState.SENDING_RETRIEVAL_COMMAND,
 					actions: assign({
 						repositoryConfig: (_, event: DoneInvokeEvent<RepoConfig>) =>
 							event.data,
@@ -354,26 +342,89 @@ export const chatMachine = createMachine<
 				},
 			},
 		},
-		// 		[ChatState.SENDING_INITIAL_QUERY]: {
-		// 			always: [
-		// 				{
-		// 					actions: assign({
-		// isRetrievalRun: true,
-		// 						query: context => {
-		// 							const packageJsonMapItem = context.repositoryMap?.find(
-		// 								mapItem => mapItem.filePath === 'package.json',
-		// 							);
-		// 							const summary = packageJsonMapItem?.fileSummary;
-		// 							const packageManager = context.repositoryConfig?.packageManager;
-		// 							const libraryName = context.library?.name;
-		// 							return `Here is a summary of my repository: "${summary}. The repository uses the '${packageManager}' package manager."
-		// Question: "Given this information, how do I manually install the '${libraryName}' library in my repository?" (Respond with a complete guide).`;
-		// 						},
-		// 					}),
-		// 					target: ChatState.SENDING_QUERY,
-		// 				},
-		// 			],
-		// 		},
+		[ChatState.SENDING_RETRIEVAL_COMMAND]: {
+			entry: [
+				assign({
+					enterDisabled: true,
+					isRetrievalRun: true,
+					messages: context => [
+						...context.messages,
+						{
+							id: uuid(),
+							message: ` 🌍 Reading documentation... `,
+							isTool: true,
+						},
+					],
+				}),
+			],
+			invoke: {
+				src: async context => {
+					const commandName = context.commandName;
+					const libraryName = context.libraryName;
+					const repositoryMap = await getRepositoryMap();
+					const packageJsonMapItem = repositoryMap.find(
+						mapItem => mapItem.filePath === 'package.json',
+					);
+					const repositorySummary = packageJsonMapItem?.fileSummary;
+					const packageManager = context.repositoryConfig?.packageManager;
+					if (!repositorySummary) {
+						throw new Error('Repository summary missing');
+					}
+					if (!packageManager) {
+						throw new Error('Package manager missing from config');
+					}
+					return await sendRetrievalCommand({
+						commandName,
+						libraryName,
+						repositorySummary,
+						packageManager,
+					});
+				},
+				onDone: {
+					target: ChatState.POLLING_QUERY_STATUS,
+					actions: assign({
+						retrievalRun: (_, event: DoneInvokeEvent<Run>) => event.data,
+					}),
+				},
+				onError: {
+					target: ChatState.ERROR_IDLE,
+					actions: assign({
+						errorMessage: (_, event: DoneInvokeEvent<Error>) =>
+							event.data.message,
+					}),
+				},
+			},
+		},
+		[ChatState.SENDING_ASSISTANT_COMMAND]: {
+			entry: [assign({isLoading: true})],
+			invoke: {
+				src: async context => {
+					const libraryName = context.libraryName;
+					const commandName = context.commandName;
+					const retrievalContext = context.retrievalContext;
+					return await sendAssistantCommand({
+						retrievalContext,
+						libraryName,
+						commandName,
+					});
+				},
+
+				onDone: {
+					target: ChatState.POLLING_QUERY_STATUS,
+					actions: assign({
+						run: (_, event: DoneInvokeEvent<Run>) => event.data,
+					}),
+				},
+				onError: {
+					target: ChatState.ERROR_IDLE,
+					actions: assign({
+						errorMessage: (_, event: DoneInvokeEvent<Error>) =>
+							event.data.message,
+					}),
+				},
+			},
+			exit: [assign({isLoading: false})],
+		},
 		[ChatState.SENDING_QUERY]: {
 			invoke: {
 				src: async ({query, isRetrievalRun, run, retrievalRun, library}) => {
@@ -474,27 +525,17 @@ export const chatMachine = createMachine<
 					if (!queryRun?.thread_id) {
 						throw new Error('Thread ID not found');
 					}
-					return await getQueryResult({
-						thread_id: queryRun.thread_id,
-					});
+					return await getQueryResult({thread_id: queryRun.thread_id});
 				},
 				onDone: [
 					{
 						cond: context => context.isRetrievalRun,
-						target: ChatState.SENDING_QUERY,
-						actions: assign((context, event: DoneInvokeEvent<string>) => ({
-							messages: [
-								...context.messages,
-								{
-									id: uuid(),
-									message: event.data,
-									isRetrievalRun: context.isRetrievalRun,
-								},
-							],
-							query: `${event.data}
-Walk me through each step one at a time. Let's start with the first step.`,
+						target: ChatState.SENDING_ASSISTANT_COMMAND,
+						actions: assign({
 							isRetrievalRun: false,
-						})),
+							retrievalContext: (_, event: DoneInvokeEvent<string>) =>
+								event.data,
+						}),
 					},
 					{
 						cond: context => !context.isRetrievalRun,
@@ -538,7 +579,7 @@ Walk me through each step one at a time. Let's start with the first step.`,
 								{
 									id: uuid(),
 									isTool: true,
-									message: '👀 Reading a summary of your repository',
+									message: ` 👀 Reading a summary of your repository `,
 								},
 							],
 						}),
@@ -561,7 +602,7 @@ Walk me through each step one at a time. Let's start with the first step.`,
 								{
 									id: uuid(),
 									isTool: true,
-									message: `🔎 Searching for ${args.file_path}`,
+									message: ` 🔎 Searching for ${args.file_path} `,
 								},
 							];
 						},
@@ -584,7 +625,7 @@ Walk me through each step one at a time. Let's start with the first step.`,
 								{
 									id: uuid(),
 									isTool: true,
-									message: `📖 Reading ${args.file_path}`,
+									message: ` 📖 Reading ${args.file_path} `,
 								},
 							];
 						},
@@ -607,7 +648,7 @@ Walk me through each step one at a time. Let's start with the first step.`,
 								{
 									id: uuid(),
 									isTool: true,
-									message: `🛠️ Creating ${args.file_path}`,
+									message: ` 🛠️ Creating ${args.file_path} `,
 								},
 							];
 						},
@@ -630,7 +671,7 @@ Walk me through each step one at a time. Let's start with the first step.`,
 								{
 									id: uuid(),
 									isTool: true,
-									message: `✨ Editing ${args.file_path}`,
+									message: ` ✨ Editing ${args.file_path} `,
 								},
 							];
 						},

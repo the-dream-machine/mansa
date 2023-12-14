@@ -11,8 +11,14 @@ import {Chat} from '../components/pages/Chat.js';
 export const args = zod.tuple([
 	zod.string().describe(
 		argument({
+			name: 'command',
+			description: 'The command you want to run e.g "install"',
+		}),
+	),
+	zod.string().describe(
+		argument({
 			name: 'library',
-			description: 'Name of the library you are trying to use',
+			description: 'Name of the library you are trying to use e.g "stripe"',
 		}),
 	),
 ]);
@@ -26,7 +32,7 @@ export default function Index({args}: Props) {
 		<ThemeProvider theme={inkTheme}>
 			<NavigationProvider>
 				{/* <FullScreen> */}
-				<Chat name={args[0]} />
+				<NavigationHandler commandName={args[0]} libraryName={args[1]} />
 				{/* </FullScreen> */}
 			</NavigationProvider>
 		</ThemeProvider>

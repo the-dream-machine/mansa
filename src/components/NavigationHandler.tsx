@@ -12,8 +12,9 @@ import {Chat} from './pages/Chat.js';
 
 interface Props {
 	libraryName: string;
+	commandName: string;
 }
-const NavigationHandler = ({libraryName}: Props) => {
+const NavigationHandler = ({libraryName, commandName}: Props) => {
 	const [state] = NavigationContext.useActor();
 	const showLoader =
 		state.matches(AppState.DOES_CONFIG_EXIST) ||
@@ -26,7 +27,9 @@ const NavigationHandler = ({libraryName}: Props) => {
 
 	return (
 		<>
-			{state.matches(NavigationPage.CHAT) && <Chat name={libraryName} />}
+			{state.matches(NavigationPage.CHAT) && (
+				<Chat libraryName={libraryName} commandName={commandName} />
+			)}
 			{state.matches(NavigationPage.ABOUT) && <About />}
 			{state.matches(NavigationPage.CREATE_CONFIG) && <SelectPackageManager />}
 			{state.matches(NavigationPage.INDEX_REPOSITORY) && <IndexRepository />}
