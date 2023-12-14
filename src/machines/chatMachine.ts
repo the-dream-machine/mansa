@@ -1,4 +1,11 @@
-import {type DoneInvokeEvent, assign, createMachine} from 'xstate';
+import {
+	type DoneInvokeEvent,
+	assign,
+	createMachine,
+	spawn,
+	ActorRef,
+	send,
+} from 'xstate';
 import {v4 as uuid} from 'uuid';
 import {type FileMapItem} from '../types/FileMapItem.js';
 import {type RepoConfig} from '../types/Repo.js';
@@ -29,42 +36,23 @@ import {getLibrary} from '../utils/api/getLibrary.js';
 import {type Library} from '../types/Library.js';
 import {sendRetrievalCommand} from '../utils/api/sendRetrievalCommand.js';
 import {sendAssistantCommand} from '../utils/api/sendAssistantCommand.js';
-
-interface Message {
-	id: string;
-	message: string;
-	isUser?: boolean;
-	isRetrievalRun?: boolean;
-	isTool?: boolean;
-	isAssistant?: boolean;
-}
-
-interface ChatMachineContext {
-	repositoryConfig?: RepoConfig;
-	commandName: string;
-	libraryName: string;
-	library?: Library;
-	run?: Run;
-	isRetrievalRun: boolean;
-	retrievalRun?: Run;
-	retrievalContext: string;
-	messages: Message[];
-	toolCalls: RequiredActionFunctionToolCall[];
-	currentToolCallProcessingIndex: number;
-	toolOutputs: ToolOutput[];
-	query: string;
-	status?: RunStatus;
-
-	// Component states
-	enterLabel: string;
-	enterDisabled: boolean;
-	isLoading: boolean;
-	loadingMessage: string;
-	isWorking: boolean;
-	isSuccess: boolean;
-	isError: boolean;
-	errorMessage?: string;
-}
+import {
+	CreateFileEvent,
+	CreateFileMachineEvent,
+	createFileMachine,
+	initialCreateFileMachineContext,
+} from './createFileMachine.js';
+import {ExecuteCommandMachineEvent} from './executeCommandMachine.js';
+import {ModifyFileMachineEvent} from './modifyFileMachine.js';
+import {UserActionMachineEvent} from './userActionMachine.js';
+import {
+	ChatEvent,
+	ChatMachineContext,
+	ChatMachineEvent,
+} from '../types/ChatMachine.js';
+import {getCreateFileActor} from '../utils/actors/getCreateFileActor.js';
+import {Message} from '../types/Message.js';
+import {sendTo} from 'xstate/lib/actions.js';
 
 const initialChatMachineContext: ChatMachineContext = {
 	commandName: '',
@@ -75,8 +63,20 @@ const initialChatMachineContext: ChatMachineContext = {
 	isRetrievalRun: false,
 	retrievalContext: '',
 	repositoryConfig: undefined,
+	activeToolActor: undefined,
 	messages: [],
-	toolCalls: [],
+	// toolCalls: [],
+	toolCalls: [
+		{
+			id: 'call_6TAdGAVYnMQmTTkpeEERNOVg',
+			type: 'function',
+			function: {
+				name: 'create_file',
+				arguments:
+					'{"file_path": "./src/Jobs/example.ts", "file_content": "import { eventTrigger } from \\"@trigger.dev/sdk\\"\\nimport { client } from \\"@/trigger\\" // Replace \\"@/trigger\\" with the relative path to your Trigger Client configuration file\\n\\nclient.defineJob({\\n  id: \\"example-job\\",\\n  name: \\"Example Job\\",\\n  version: \\"0.0.1\\",\\n  trigger: eventTrigger({\\n    name: \\"example.event\\",\\n  }),\\n  run: async (payload, io, ctx) => {\\n    await io.logger.info(\\"Hello world!\\", { payload })\\n\\n    return {\\n      message: \\"Hello world!\\",\\n    }\\n  },\\n})"}',
+			},
+		},
+	],
 	currentToolCallProcessingIndex: 0,
 	toolOutputs: [],
 	query: '',
@@ -100,10 +100,10 @@ export enum ChatState {
 	SENDING_QUERY = 'SENDING_QUERY',
 	POLLING_QUERY_STATUS = 'POLLING_QUERY_STATUS',
 	ROUTING_TOOL_CALLS = 'ROUTING_TOOL_CALLS',
+	CREATE_FILE_TOOL_CALL_IDLE = 'CREATE_FILE_TOOL_CALL_IDLE',
 	PROCESSING_GET_REPOSITORY_SUMMARY_TOOL_CALL = 'PROCESSING_GET_REPOSITORY_SUMMARY_TOOL_CALL',
 	PROCESSING_FIND_FILE_BY_PATH_TOOL_CALL = 'PROCESSING_FIND_FILE_BY_PATH_TOOL_CALL',
 	PROCESSING_READ_FILE_TOOL_CALL = 'PROCESSING_READ_FILE_TOOL_CALL',
-	PROCESSING_CREATE_FILE_TOOL_CALL = 'PROCESSING_CREATE_FILE_TOOL_CALL',
 	PROCESSING_EDIT_FILE_TOOL_CALL = 'PROCESSING_EDIT_FILE_TOOL_CALL',
 	SUBMITTING_TOOL_CALLS = 'SUBMITTING_TOOL_CALLS',
 	FETCHING_QUERY_RESULT = 'FETCHING_QUERY_RESULT',
@@ -137,6 +137,10 @@ type ChatMachineState =
 			context: ChatMachineContext;
 	  }
 	| {
+			value: ChatState.CREATE_FILE_TOOL_CALL_IDLE;
+			context: ChatMachineContext;
+	  }
+	| {
 			value: ChatState.PROCESSING_GET_REPOSITORY_SUMMARY_TOOL_CALL;
 			context: ChatMachineContext;
 	  }
@@ -146,10 +150,6 @@ type ChatMachineState =
 	  }
 	| {
 			value: ChatState.PROCESSING_READ_FILE_TOOL_CALL;
-			context: ChatMachineContext;
-	  }
-	| {
-			value: ChatState.PROCESSING_CREATE_FILE_TOOL_CALL;
 			context: ChatMachineContext;
 	  }
 	| {
@@ -172,15 +172,6 @@ type ChatMachineState =
 			value: ChatState.ERROR_IDLE;
 			context: ChatMachineContext;
 	  };
-
-export enum ChatEvent {
-	ENTER_KEY_PRESS = 'ENTER_KEY_PRESS',
-	SEND_QUERY = 'SEND_QUERY',
-}
-
-type ChatMachineEvent =
-	| {type: ChatEvent.ENTER_KEY_PRESS}
-	| {type: ChatEvent.SEND_QUERY; query: string};
 
 // Guards
 const isLastToolCall = (context: ChatMachineContext) => {
@@ -310,7 +301,8 @@ export const chatMachine = createMachine<
 	preserveActionOrder: true,
 	predictableActionArguments: true,
 	context: initialChatMachineContext,
-	initial: ChatState.FETCHING_LIBRARY,
+	initial: ChatState.ROUTING_TOOL_CALLS,
+
 	states: {
 		[ChatState.FETCHING_LIBRARY]: {
 			invoke: {
@@ -635,23 +627,9 @@ export const chatMachine = createMachine<
 					cond: context =>
 						context.toolCalls[context.currentToolCallProcessingIndex]?.function
 							.name === 'create_file',
-					target: ChatState.PROCESSING_CREATE_FILE_TOOL_CALL,
+					target: ChatState.CREATE_FILE_TOOL_CALL_IDLE,
 					actions: assign({
-						messages: context => {
-							const args = JSON.parse(
-								context.toolCalls[context.currentToolCallProcessingIndex]
-									?.function.arguments ?? '',
-							) as unknown as CreateFileToolParams;
-
-							return [
-								...context.messages,
-								{
-									id: uuid(),
-									isTool: true,
-									message: ` 🛠️ Creating ${args.file_path} `,
-								},
-							];
-						},
+						activeToolActor: context => getCreateFileActor(context),
 					}),
 				},
 				{
@@ -722,16 +700,25 @@ export const chatMachine = createMachine<
 				},
 			},
 		},
-		[ChatState.PROCESSING_CREATE_FILE_TOOL_CALL]: {
-			invoke: {
-				src: async context => createFileToolCall(context),
-				onDone: {
-					actions: assign((context, event: DoneInvokeEvent<ToolOutput>) => ({
-						toolOutputs: [...context.toolOutputs, event.data],
-						currentToolCallProcessingIndex:
-							context.currentToolCallProcessingIndex + 1,
-					})),
-					target: ChatState.ROUTING_TOOL_CALLS,
+		[ChatState.CREATE_FILE_TOOL_CALL_IDLE]: {
+			entry: [assign({enterDisabled: false})],
+			on: {
+				[ChatEvent.ENTER_KEY_PRESS]: {
+					actions: send(
+						{type: CreateFileEvent.ENTER_KEY_PRESSED},
+						{to: context => context.activeToolActor!},
+					),
+				},
+				[ChatEvent.ADD_MESSAGE]: {
+					actions: [
+						() => console.log('ADDING MESSAGE'),
+						assign({
+							messages: (context, event) => [
+								...context.messages,
+								event.message,
+							],
+						}),
+					],
 				},
 			},
 		},

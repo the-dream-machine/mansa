@@ -8,6 +8,9 @@ import {sendParent} from 'xstate/lib/actions.js';
 import {StepsEvent} from '../types/StepsMachine.js';
 import {sleep} from 'zx';
 
+import {v4 as uuid} from 'uuid';
+import {ChatEvent} from '../types/ChatMachine.js';
+
 // Context
 export interface CreateFileMachineContext {
 	filePath?: string;
@@ -95,7 +98,7 @@ export const createFileMachine = createMachine<
 				onDone: {
 					target: CreateFileState.HIGHLIGHTING_CODE,
 					actions: [
-						() => console.log('Formatted!'),
+						(_, event) => console.log(event.data),
 						assign({
 							formattedCode: (_, event: DoneInvokeEvent<string>) => event.data,
 						}),
@@ -104,7 +107,6 @@ export const createFileMachine = createMachine<
 				onError: {
 					target: CreateFileState.HIGHLIGHTING_CODE,
 					actions: [
-						(_, event) => console.log('Not formatted!', event),
 						assign({
 							formattedCode: context => context.rawCode,
 						}),
@@ -123,9 +125,13 @@ export const createFileMachine = createMachine<
 				},
 				onDone: {
 					target: CreateFileState.IDLE,
-					actions: assign({
-						highlightedCode: (_, event: DoneInvokeEvent<string>) => event.data,
-					}),
+					actions: [
+						(_, event) => console.log('Highlighted!', event.data),
+						assign({
+							highlightedCode: (_, event: DoneInvokeEvent<string>) =>
+								event.data,
+						}),
+					],
 				},
 				onError: {
 					target: CreateFileState.HIGHLIGHTING_UNSUPPORTED_CODE,
@@ -156,7 +162,17 @@ export const createFileMachine = createMachine<
 		[CreateFileState.IDLE]: {
 			on: {
 				[CreateFileEvent.ENTER_KEY_PRESSED]: {
-					target: CreateFileState.CREATING_FILE,
+					// target: CreateFileState.CREATING_FILE,
+					actions: [
+						sendParent(context => ({
+							type: ChatEvent.ADD_MESSAGE,
+							message: {
+								id: uuid(),
+								message: context.highlightedCode,
+								isTool: true,
+							},
+						})),
+					],
 				},
 			},
 		},

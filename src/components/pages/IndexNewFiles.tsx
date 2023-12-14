@@ -54,7 +54,7 @@ export const IndexNewFiles = () => {
 
 	return (
 		<PageContainer>
-			<Header title="mansa" backgroundColor={Colors.DarkGreen} />
+			<Header title="mansa" />
 			<ScrollContainer>
 				<SectionContainer>
 					{/* Title */}

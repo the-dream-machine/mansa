@@ -20,13 +20,13 @@ export const inkTheme = extendTheme(defaultTheme, {
 		Select: {
 			styles: {
 				focusIndicator: (): TextProps => ({
-					color: Colors.LightGreen,
+					color: Colors.LightYellow,
 				}),
 				label: ({isFocused}: SelectState): TextProps => {
 					let color: Colors = Colors.LightGray;
 
 					if (isFocused) {
-						color = Colors.LightGreen;
+						color = Colors.LightYellow;
 					}
 
 					return {color};
@@ -79,7 +79,7 @@ export const inkTheme = extendTheme(defaultTheme, {
 		ProgressBar: {
 			styles: {
 				completed: () => ({
-					color: Colors.DarkGreen,
+					color: Colors.DarkYellow,
 				}),
 			},
 		},

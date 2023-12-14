@@ -38,11 +38,11 @@ const SelectPackageManager = () => {
 
 	return (
 		<PageContainer>
-			<Header title="mansa" backgroundColor={Colors.DarkGreen} />
+			<Header title="mansa" />
 			<ScrollContainer>
 				<SectionContainer>
 					<Text color={Colors.White}>
-						Set up mansa in {state.context.repositoryName}{' '}
+						Set up mansa
 						<Text color={Colors.DarkGray}>(Step 1 of 2)</Text>
 					</Text>
 					<Text color={Colors.LightGray}>

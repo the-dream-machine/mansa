@@ -1,6 +1,6 @@
 import React, {useState} from 'react';
 import {Box, Spacer, Text, useApp, useInput} from 'ink';
-import {useMachine} from '@xstate/react';
+import {useActor, useMachine} from '@xstate/react';
 
 import {Header} from '../Header.js';
 import {Footer} from '../Footer.js';
@@ -10,8 +10,15 @@ import {NavigationContext} from '../NavigationProvider.js';
 import {Colors} from '../../styles/Colors.js';
 import {ScrollContainer} from '../ScrollContainer.js';
 import {SectionContainer} from '../SectionContainer.js';
-import {ChatEvent, chatMachine} from '../../machines/chatMachine.js';
+import {chatMachine} from '../../machines/chatMachine.js';
 import {Spinner, TextInput} from '@inkjs/ui';
+import {Actor} from '../../types/Actor.js';
+import {
+	CreateFileMachineContext,
+	CreateFileMachineEvent,
+	CreateFileMachineState,
+} from '../../machines/createFileMachine.js';
+import {ChatEvent} from '../../types/ChatMachine.js';
 
 interface Props {
 	libraryName: string;
@@ -19,11 +26,18 @@ interface Props {
 }
 
 export const Chat = ({libraryName, commandName}: Props) => {
-	const [value, setValue] = useState('');
-	const [, navigate] = NavigationContext.useActor();
 	const [state, send] = useMachine(chatMachine, {
 		context: {libraryName, commandName},
 	});
+	const activeToolActor = state.context.activeToolActor;
+	const [createFileMachineState, createFileMachineSend] = useActor(
+		activeToolActor!,
+	) as Actor<
+		CreateFileMachineContext,
+		CreateFileMachineEvent,
+		CreateFileMachineState
+	>;
+	// console.log('🌱 # createFileMachineState:', createFileMachineState.context);
 
 	const library = state.context.library;
 	const messages = state.context.messages;
@@ -40,6 +54,7 @@ export const Chat = ({libraryName, commandName}: Props) => {
 			exit();
 		}
 		if (key.return) {
+			send({type: ChatEvent.ENTER_KEY_PRESS});
 		}
 	});
 
@@ -57,40 +72,56 @@ export const Chat = ({libraryName, commandName}: Props) => {
 			{/* <ScrollContainer> */}
 			{/* eslint-disable-next-line @typescript-eslint/ban-ts-comment */}
 			{/* @ts-ignore */}
-			{/* <Text>{state.value}</Text> */}
+			<Text>PARENT: {state.value}</Text>
+			{/* eslint-disable-next-line @typescript-eslint/ban-ts-comment */}
+			{/* @ts-ignore */}
+			<Text>CHILD: {createFileMachineState.value}</Text>
 
 			<SectionContainer>
 				<Box flexDirection="column" gap={2}>
-					{messages.map(({id, message, isUser, isTool, isAssistant}) => (
-						<Box key={id}>
-							{isUser && (
-								<Box
-									paddingLeft={2}
-									paddingY={1}
-									borderColor={Colors.LightGray}
-									borderStyle="single"
-									borderBottom={false}
-									borderRight={false}
-									borderTop={false}
-								>
-									<Text color={Colors.LightGray}>{message}</Text>
-								</Box>
-							)}
-							{isTool && (
-								<Box gap={2}>
-									{isLoading && <Spinner />}
-									<Box
-										flexGrow={0}
-										borderStyle="round"
-										borderColor={Colors.DarkGray}
-									>
-										<Text>{message}</Text>
+					{messages.map(
+						({id, message, isUser, isCreateFile, isTool, isAssistant}) => (
+							<Box key={id}>
+								{isCreateFile && (
+									<Box>
+										<Box
+											flexGrow={0}
+											borderStyle="round"
+											borderColor={Colors.DarkGray}
+										>
+											<Text>{message}</Text>
+										</Box>
 									</Box>
-								</Box>
-							)}
-							{isAssistant && <Text color={Colors.LightGray}>{message}</Text>}
-						</Box>
-					))}
+								)}
+								{isUser && (
+									<Box
+										paddingLeft={2}
+										paddingY={1}
+										borderColor={Colors.LightGray}
+										borderStyle="single"
+										borderBottom={false}
+										borderRight={false}
+										borderTop={false}
+									>
+										<Text color={Colors.LightGray}>{message}</Text>
+									</Box>
+								)}
+								{isTool && (
+									<Box gap={2}>
+										{isLoading && <Spinner />}
+										<Box
+											flexGrow={0}
+											borderStyle="round"
+											borderColor={Colors.DarkGray}
+										>
+											<Text>{message}</Text>
+										</Box>
+									</Box>
+								)}
+								{isAssistant && <Text color={Colors.LightGray}>{message}</Text>}
+							</Box>
+						),
+					)}
 
 					{!enterDisabled && (
 						<Box
@@ -105,7 +136,6 @@ export const Chat = ({libraryName, commandName}: Props) => {
 							<TextInput
 								isDisabled={enterDisabled}
 								placeholder="Type something..."
-								onChange={setValue}
 								onSubmit={query => send({type: ChatEvent.SEND_QUERY, query})}
 							/>
 						</Box>
