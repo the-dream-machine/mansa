@@ -1,19 +1,7 @@
-import {
-	type DoneInvokeEvent,
-	assign,
-	createMachine,
-	spawn,
-	ActorRef,
-	send,
-} from 'xstate';
+import {type DoneInvokeEvent, assign, createMachine} from 'xstate';
 import {v4 as uuid} from 'uuid';
-import {type FileMapItem} from '../types/FileMapItem.js';
 import {type RepoConfig} from '../types/Repo.js';
-import {
-	type RunStatusResponse,
-	type Run,
-	type RunStatus,
-} from '../types/Run.js';
+import {type RunStatusResponse, type Run} from '../types/Run.js';
 import {getRepositoryMap} from '../utils/repository/getRepositoryMap.js';
 import {getRepositoryConfig} from '../utils/repository/getRepositoryConfig.js';
 import {sendQuery} from '../utils/api/sendQuery.js';
@@ -22,38 +10,24 @@ import {getQueryStatus} from '../utils/api/getQueryStatus.js';
 import {getQueryResult} from '../utils/api/getQueryResult.js';
 import {
 	type ReadFileToolParams,
-	type CreateFileToolParams,
 	type EditFileToolParams,
 	type FindFileByPathToolParams,
 } from '../types/ToolParams.js';
 import {writeToFile} from '../utils/writeToFile.js';
-import {
-	type RequiredActionFunctionToolCall,
-	type ToolOutput,
-} from '../types/Tool.js';
+import {type ToolOutput} from '../types/Tool.js';
 import {submitToolOutputs} from '../utils/api/submitToolOutputs.js';
 import {getLibrary} from '../utils/api/getLibrary.js';
 import {type Library} from '../types/Library.js';
 import {sendRetrievalCommand} from '../utils/api/sendRetrievalCommand.js';
 import {sendAssistantCommand} from '../utils/api/sendAssistantCommand.js';
 import {
-	CreateFileEvent,
-	CreateFileMachineEvent,
-	createFileMachine,
-	initialCreateFileMachineContext,
-} from './createFileMachine.js';
-import {ExecuteCommandMachineEvent} from './executeCommandMachine.js';
-import {ModifyFileMachineEvent} from './modifyFileMachine.js';
-import {UserActionMachineEvent} from './userActionMachine.js';
-import {
 	ChatEvent,
-	ChatMachineContext,
-	ChatMachineEvent,
+	type ChatMachineContext,
+	type ChatMachineEvent,
 } from '../types/ChatMachine.js';
 import {getCreateFileActor} from '../utils/actors/getCreateFileActor.js';
-import {Message} from '../types/Message.js';
-import {sendTo} from 'xstate/lib/actions.js';
 import {getRepositorySummaryActor} from '../utils/actors/getRepositorySummaryActor.js';
+import {findFileByPathActor} from '../utils/actors/findFileByPathActor.js';
 
 const initialChatMachineContext: ChatMachineContext = {
 	commandName: '',
@@ -69,13 +43,23 @@ const initialChatMachineContext: ChatMachineContext = {
 	// toolCalls: [],
 	toolCalls: [
 		{
-			id: 'call_FLXT7DtAlblCWo1rcrEvLVQI',
+			id: 'call_6xjrWUSKy3Mkp9vtL85GVDzW',
 			type: 'function',
 			function: {
-				name: 'get_repository_summary',
-				arguments: '{}',
+				name: 'find_file_by_path',
+				arguments: '{"file_path":".env.local"}',
 			},
 		},
+
+		// {
+		// 	id: 'call_FLXT7DtAlblCWo1rcrEvLVQI',
+		// 	type: 'function',
+		// 	function: {
+		// 		name: 'get_repository_summary',
+		// 		arguments: '{}',
+		// 	},
+		// },
+
 		// {
 		// 	id: 'call_6TAdGAVYnMQmTTkpeEERNOVg',
 		// 	type: 'function',
@@ -113,7 +97,7 @@ export enum ChatState {
 	// Tool Calls
 	HANDLING_GET_REPOSITORY_SUMMARY_TOOL_CALL = 'HANDLING_GET_REPOSITORY_SUMMARY_TOOL_CALL',
 	HANDLING_CREATE_FILE_TOOL_CALL = 'HANDLING_CREATE_FILE_TOOL_CALL',
-	PROCESSING_FIND_FILE_BY_PATH_TOOL_CALL = 'PROCESSING_FIND_FILE_BY_PATH_TOOL_CALL',
+	HANDLING_FIND_FILE_BY_PATH_TOOL_CALL = 'HANDLING_FIND_FILE_BY_PATH_TOOL_CALL',
 	PROCESSING_READ_FILE_TOOL_CALL = 'PROCESSING_READ_FILE_TOOL_CALL',
 	PROCESSING_EDIT_FILE_TOOL_CALL = 'PROCESSING_EDIT_FILE_TOOL_CALL',
 	SUBMITTING_TOOL_CALLS = 'SUBMITTING_TOOL_CALLS',
@@ -156,7 +140,7 @@ type ChatMachineState =
 			context: ChatMachineContext;
 	  }
 	| {
-			value: ChatState.PROCESSING_FIND_FILE_BY_PATH_TOOL_CALL;
+			value: ChatState.HANDLING_FIND_FILE_BY_PATH_TOOL_CALL;
 			context: ChatMachineContext;
 	  }
 	| {
@@ -190,21 +174,6 @@ const isLastToolCall = (context: ChatMachineContext) => {
 };
 
 // Tool handlers
-const getRepositorySummaryToolCall = async (
-	context: ChatMachineContext,
-): Promise<ToolOutput> => {
-	const toolCall = context.toolCalls[context.currentToolCallProcessingIndex];
-	if (!toolCall) {
-		throw new Error('getRepositorySummaryToolCall: Tool call is undefined');
-	}
-
-	const repositoryMap = await getRepositoryMap();
-	const packageJsonMapItem = repositoryMap.find(
-		mapItem => mapItem.filePath === 'package.json',
-	);
-	const output = JSON.stringify({summary: packageJsonMapItem?.fileSummary});
-	return {tool_call_id: toolCall.id, output};
-};
 
 const findFileByPathToolCall = async (
 	context: ChatMachineContext,
@@ -249,31 +218,6 @@ const readFileToolCall = async (
 		return {tool_call_id: toolCall.id, output};
 	} catch (error) {
 		const output = JSON.stringify({error: 'file does not exist'});
-		return {tool_call_id: toolCall.id, output};
-	}
-};
-
-const createFileToolCall = async (
-	context: ChatMachineContext,
-): Promise<ToolOutput> => {
-	const toolCall = context.toolCalls[context.currentToolCallProcessingIndex];
-	if (!toolCall) {
-		throw new Error('createFileToolCall: Tool call is undefined');
-	}
-
-	const args = (await JSON.parse(
-		toolCall.function.arguments,
-	)) as unknown as CreateFileToolParams;
-
-	try {
-		await writeToFile({
-			filePath: args.file_path,
-			fileContent: args.file_content,
-		});
-		const output = JSON.stringify({response: 'file created successfully'});
-		return {tool_call_id: toolCall.id, output};
-	} catch (error) {
-		const output = JSON.stringify({error});
 		return {tool_call_id: toolCall.id, output};
 	}
 };
@@ -596,24 +540,10 @@ export const chatMachine = createMachine<
 					cond: context =>
 						context.toolCalls[context.currentToolCallProcessingIndex]?.function
 							.name === 'find_file_by_path',
-					target: ChatState.PROCESSING_FIND_FILE_BY_PATH_TOOL_CALL,
 					actions: assign({
-						messages: context => {
-							const args = JSON.parse(
-								context.toolCalls[context.currentToolCallProcessingIndex]
-									?.function.arguments ?? '',
-							) as unknown as FindFileByPathToolParams;
-
-							return [
-								...context.messages,
-								{
-									id: uuid(),
-									isTool: true,
-									text: ` 🔎 Searching for ${args.file_path} `,
-								},
-							];
-						},
+						activeToolActor: context => findFileByPathActor(context),
 					}),
+					target: ChatState.HANDLING_FIND_FILE_BY_PATH_TOOL_CALL,
 				},
 				{
 					cond: context =>
@@ -675,7 +605,7 @@ export const chatMachine = createMachine<
 		[ChatState.HANDLING_GET_REPOSITORY_SUMMARY_TOOL_CALL]: {
 			entry: [assign({enterDisabled: false})],
 		},
-		[ChatState.PROCESSING_FIND_FILE_BY_PATH_TOOL_CALL]: {
+		[ChatState.HANDLING_FIND_FILE_BY_PATH_TOOL_CALL]: {
 			invoke: {
 				src: async context => findFileByPathToolCall(context),
 				onDone: {

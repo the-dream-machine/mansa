@@ -13,14 +13,10 @@ import {getRepositoryConfig} from '../utils/repository/getRepositoryConfig.js';
 // Context
 export interface GetRepositorySummaryMachineContext {
 	toolCallId: string;
-	repositorySummary: string;
 }
 
 export const initialGetRepositorySummaryContext: GetRepositorySummaryMachineContext =
-	{
-		toolCallId: '',
-		repositorySummary: '',
-	};
+	{toolCallId: ''};
 
 // State
 export enum GetRepositorySummaryState {
@@ -49,7 +45,7 @@ export const getRepositorySummaryMachine = createMachine<
 					type: ChatEvent.ADD_MESSAGE,
 					message: {
 						id: uuid(),
-						text: 'Getting repository summary',
+						text: 'Reading repository metadata',
 						isGetRepositorySummary: true,
 					},
 				})),

@@ -15,6 +15,7 @@ import {CreateFileMessage} from '../messages/CreateFileMessage.js';
 import {type ActorRef} from 'xstate';
 import {type CreateFileMachineEvent} from '../../machines/createFileMachine.js';
 import {GetRepositoryMessage} from '../messages/GetRepositoryMessage.js';
+import {FindFileByPathMessage} from '../messages/FindFileByPathMessage.js';
 
 interface Props {
 	libraryName: string;
@@ -25,6 +26,7 @@ export const Chat = ({libraryName, commandName}: Props) => {
 	const [state, send] = useMachine(chatMachine, {
 		context: {libraryName, commandName},
 	});
+	console.log('🌱 # state:', state.value);
 
 	const activeToolActor = state.context.activeToolActor;
 	const library = state.context.library;
@@ -50,7 +52,7 @@ export const Chat = ({libraryName, commandName}: Props) => {
 			{/* <ScrollContainer> */}
 			{/* eslint-disable-next-line @typescript-eslint/ban-ts-comment */}
 			{/* @ts-ignore */}
-			<Text>PARENT: {state.value}</Text>
+			{/* <Text>PARENT: {state.value}</Text> */}
 
 			<SectionContainer>
 				<Box flexDirection="column" gap={2}>
@@ -60,6 +62,7 @@ export const Chat = ({libraryName, commandName}: Props) => {
 							text,
 							isUser,
 							isGetRepositorySummary,
+							isFindFileByPath,
 							isCreateFile,
 							isTool,
 							isAssistant,
@@ -68,6 +71,9 @@ export const Chat = ({libraryName, commandName}: Props) => {
 							<Box key={id}>
 								{isGetRepositorySummary && (
 									<GetRepositoryMessage message={message} />
+								)}
+								{isFindFileByPath && (
+									<FindFileByPathMessage message={message} />
 								)}
 								{isCreateFile && (
 									<CreateFileMessage
