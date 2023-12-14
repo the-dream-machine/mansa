@@ -5,7 +5,7 @@ import {getRepositoryChecksums} from '../utils/repository/getRepositoryChecksums
 import {repositoryChecksumsMatch} from '../utils/repository/repositoryChecksumsMatch.js';
 import {getRepositoryFilePaths} from '../utils/repository/getRepositoryFilePaths.js';
 import {writeToFile} from '../utils/writeToFile.js';
-import {manjaroRepositoryPath} from '../utils/manjaroPath.js';
+import {mansaRepositoryPath} from '../utils/mansaPath.js';
 
 export enum NavigationPage {
 	ABOUT = 'ABOUT',
@@ -131,7 +131,7 @@ export const navigationMachine = createMachine<
 						);
 
 						await writeToFile({
-							filePath: `${manjaroRepositoryPath}/map.json`,
+							filePath: `${mansaRepositoryPath}/map.json`,
 							fileContent: JSON.stringify(updatedFilePaths),
 						});
 					}
@@ -172,7 +172,7 @@ export const navigationMachine = createMachine<
 
 						// Un-index files that don't exist in the repo
 						await writeToFile({
-							filePath: `${manjaroRepositoryPath}/checksums.json`,
+							filePath: `${mansaRepositoryPath}/checksums.json`,
 							fileContent: JSON.stringify(updatedFilePaths),
 						});
 					}

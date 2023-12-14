@@ -38,11 +38,11 @@ const SelectPackageManager = () => {
 
 	return (
 		<PageContainer>
-			<Header title="manjaro" backgroundColor={Colors.DarkGreen} />
+			<Header title="mansa" backgroundColor={Colors.DarkGreen} />
 			<ScrollContainer>
 				<SectionContainer>
 					<Text color={Colors.White}>
-						Set up manjaro in {state.context.repositoryName}{' '}
+						Set up mansa in {state.context.repositoryName}{' '}
 						<Text color={Colors.DarkGray}>(Step 1 of 2)</Text>
 					</Text>
 					<Text color={Colors.LightGray}>

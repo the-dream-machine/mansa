@@ -1,6 +1,6 @@
 import {fs} from 'zx';
 import {createChecksum} from '../createChecksum.js';
-import {manjaroRepositoryPath} from '../manjaroPath.js';
+import {mansaRepositoryPath} from '../mansaPath.js';
 import {getRepositoryChecksums} from './getRepositoryChecksums.js';
 import {writeToFile} from '../writeToFile.js';
 import type {FileChecksumItem} from '../../types/FileChecksumItem.js';
@@ -11,7 +11,7 @@ interface Args {
 
 export const updateRepositoryChecksums = async ({filePath}: Args) => {
 	const checksum = await createChecksum({filePath});
-	const repositoryChecksumFilePath = `${manjaroRepositoryPath}/checksums.json`;
+	const repositoryChecksumFilePath = `${mansaRepositoryPath}/checksums.json`;
 	let updatedChecksums: FileChecksumItem[] = [];
 
 	if (await fs.exists(repositoryChecksumFilePath)) {

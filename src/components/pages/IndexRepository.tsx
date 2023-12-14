@@ -54,24 +54,24 @@ export const IndexRepository = () => {
 
 	return (
 		<PageContainer>
-			<Header title="manjaro" backgroundColor={Colors.DarkGreen} />
+			<Header title="mansa" backgroundColor={Colors.DarkGreen} />
 
 			<ScrollContainer>
 				<SectionContainer>
 					<Box paddingBottom={1}>
 						<Text color={Colors.White}>
-							Set up manjaro <Text color={Colors.DarkGray}>(Step 2 of 2)</Text>
+							Set up mansa <Text color={Colors.DarkGray}>(Step 2 of 2)</Text>
 						</Text>
 					</Box>
 
 					<Text color={getStateColor(Colors.LightGray)}>
-						To provide instructions tailored to your codebase, manjaro needs to
+						To provide instructions tailored to your codebase, mansa needs to
 						analyze and create an index of your project's files. The index helps
-						manjaro learn which files need to be created or edited.
+						mansa learn which files need to be created or edited.
 					</Text>
 
 					<Text color={getStateColor(Colors.LightGray)}>
-						manjaro looks at your{' '}
+						mansa looks at your{' '}
 						<Text color={getStateColor(Colors.White)} italic>
 							.gitignore
 						</Text>{' '}
@@ -91,9 +91,9 @@ export const IndexRepository = () => {
 					>
 						<Text color={getStateColor(Colors.White)}>👀 Privacy</Text>
 						<Text color={getStateColor(Colors.LightGray)}>
-							manjaro may send snippets of your code to the server for
-							processing. All your files and their content remain on your
-							device, they are never stored by manjaro or third parties.
+							mansa may send snippets of your code to the server for processing.
+							All your files and their content remain on your device, they are
+							never stored by mansa or third parties.
 						</Text>
 					</Box>
 

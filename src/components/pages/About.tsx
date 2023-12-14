@@ -33,38 +33,38 @@ export const About = () => {
 
 	return (
 		<PageContainer>
-			<Header title="manjaro" backgroundColor={BaseColors.Pink500} />
+			<Header title="mansa" backgroundColor={BaseColors.Pink500} />
 			<ScrollContainer>
 				<SectionContainer>
-					<Text>What is manjaro?</Text>
+					<Text>What is mansa?</Text>
 					<Text color={'gray'}>
-						manjaro uses your <Text color="white">.gitignore</Text> file to
-						figure out which files and folders should be ignored when parsing
-						and indexing your code. Also, manjaro ignores file formats whose
-						content can't be parsed like image, video and audio files.
+						mansa uses your <Text color="white">.gitignore</Text> file to figure
+						out which files and folders should be ignored when parsing and
+						indexing your code. Also, mansa ignores file formats whose content
+						can't be parsed like image, video and audio files.
 					</Text>
 
 					<Box flexDirection="column" gap={2}>
 						<Box flexDirection="column" gap={1} marginTop={2}>
 							<Text color="white">🧠 Full codebase knowledge</Text>
 							<Text color="gray">
-								To generate accurate API guides, manjaro maintains an index of
-								the files in your project. This index is updated when the
-								content of your files change.
+								To generate accurate API guides, mansa maintains an index of the
+								files in your project. This index is updated when the content of
+								your files change.
 							</Text>
 						</Box>
 						<Box flexDirection="column" gap={1}>
 							<Text color="white">🧩 API expert</Text>
 							<Text color="gray">
-								manjaro finds the most relevant documentation and
+								mansa finds the most relevant documentation and
 							</Text>
 						</Box>
 						<Box flexDirection="column" gap={1}>
 							<Text color="white">👀 Privacy</Text>
 							<Text color="gray">
 								All your files remain on your device, they are never stored on
-								manjaro's servers. While editing files, code snippets will be
-								sent to our server for processing.
+								mansa's servers. While editing files, code snippets will be sent
+								to our server for processing.
 							</Text>
 						</Box>
 						<Box flexDirection="column" gap={1}>
@@ -73,7 +73,7 @@ export const About = () => {
 								<Text color={Colors.LightGray}>- You're always in control</Text>
 							</Text>
 							<Text color="gray">
-								manjaro can create files, edit files and run commands. It cannot
+								mansa can create files, edit files and run commands. It cannot
 								delete files. You will always be prompted for confirmation
 								before any actions are taken.
 							</Text>

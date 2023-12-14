@@ -1,11 +1,11 @@
 import {$} from 'zx';
 
 export const addToGitIgnore = async () => {
-	// Create .manjaro local dir
+	// Create .mansa local dir
 	const result = await $`
 	# Define the words you want to add to .gitignore
-	header="# manjaro"
-	firstItem=".manjaro"
+	header="# mansa"
+	firstItem=".mansa"
 
 	# Check if .gitignore exists
 	if [ -f .gitignore ]; then

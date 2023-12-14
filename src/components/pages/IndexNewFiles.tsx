@@ -54,7 +54,7 @@ export const IndexNewFiles = () => {
 
 	return (
 		<PageContainer>
-			<Header title="manjaro" backgroundColor={Colors.DarkGreen} />
+			<Header title="mansa" backgroundColor={Colors.DarkGreen} />
 			<ScrollContainer>
 				<SectionContainer>
 					{/* Title */}

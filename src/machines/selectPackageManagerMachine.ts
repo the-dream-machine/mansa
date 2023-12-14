@@ -1,7 +1,7 @@
 import {type Sender, createMachine, assign, type DoneInvokeEvent} from 'xstate';
 
 import {AppState, type NavigationMachineEvent} from './navigationMachine.js';
-import {createManjaroConfig} from '../utils/createManjaroConfig.js';
+import {createMansaConfig} from '../utils/createMansaConfig.js';
 import type {PackageManager} from '../types/PackageManager.js';
 import {getRepositoryDetails} from '../utils/repository/getRepositoryDetails.js';
 import {type Repo} from '../types/Repo.js';
@@ -86,7 +86,7 @@ export const selectPackageManagerMachine = createMachine<
 		[SelectPackageManagerState.REGISTERING_PACKAGE_MANAGER]: {
 			invoke: {
 				src: async context => {
-					await createManjaroConfig({
+					await createMansaConfig({
 						packageManager: context.packageManager,
 					});
 				},
