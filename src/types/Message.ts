@@ -1,9 +1,10 @@
 export interface Message {
 	id: string;
-	message: string;
+	text: string;
+	isGetRepositorySummary?: boolean;
+	isCreateFile?: boolean;
 	isUser?: boolean;
 	isRetrievalRun?: boolean;
-	isCreateFile?: boolean;
 	isTool?: boolean;
 	isAssistant?: boolean;
 }

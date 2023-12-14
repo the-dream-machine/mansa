@@ -5,7 +5,6 @@ import {highlightAsync} from '../utils/highlightAsync.js';
 import loadLanguages from 'prismjs/components/index.js';
 import {writeToFile} from '../utils/writeToFile.js';
 import {sendParent} from 'xstate/lib/actions.js';
-import {StepsEvent} from '../types/StepsMachine.js';
 import {sleep} from 'zx';
 
 import {v4 as uuid} from 'uuid';
@@ -13,8 +12,9 @@ import {ChatEvent} from '../types/ChatMachine.js';
 
 // Context
 export interface CreateFileMachineContext {
-	filePath?: string;
-	fileExtension?: string;
+	toolCallId: string;
+	filePath: string;
+	fileExtension: string;
 	rawCode?: string;
 	formattedCode?: string;
 	highlightedCode?: string;
@@ -30,6 +30,7 @@ export enum CreateFileState {
 	FORMATTING_CODE = 'FORMATTING_CODE',
 	HIGHLIGHTING_CODE = 'HIGHLIGHTING_CODE',
 	HIGHLIGHTING_UNSUPPORTED_CODE = 'HIGHLIGHTING_UNSUPPORTED_CODE',
+	UPDATING_MESSAGES = 'UPDATING_MESSAGES',
 	IDLE = 'IDLE',
 	CREATING_FILE = 'CREATING_FILE',
 	CREATE_FILE_SUCCESS_IDLE = 'CREATE_FILE_SUCCESS_IDLE',
@@ -47,6 +48,10 @@ export type CreateFileMachineState =
 			value: CreateFileState.HIGHLIGHTING_UNSUPPORTED_CODE;
 			context: CreateFileMachineContext;
 	  }
+	| {
+			value: CreateFileState.UPDATING_MESSAGES;
+			context: CreateFileMachineContext;
+	  }
 	| {value: CreateFileState.IDLE; context: CreateFileMachineContext}
 	| {value: CreateFileState.CREATING_FILE; context: CreateFileMachineContext}
 	| {
@@ -59,13 +64,14 @@ export type CreateFileMachineState =
 	  };
 
 export enum CreateFileEvent {
-	ENTER_KEY_PRESSED = 'ENTER_KEY_PRESSED',
+	ENTER_KEY_PRESS = 'ENTER_KEY_PRESS',
 }
 
 //  State machine events
-export type CreateFileMachineEvent = {type: CreateFileEvent.ENTER_KEY_PRESSED};
+export type CreateFileMachineEvent = {type: CreateFileEvent.ENTER_KEY_PRESS};
 
 export const initialCreateFileMachineContext: CreateFileMachineContext = {
+	toolCallId: '',
 	filePath: '',
 	fileExtension: '',
 	rawCode: '',
@@ -98,7 +104,6 @@ export const createFileMachine = createMachine<
 				onDone: {
 					target: CreateFileState.HIGHLIGHTING_CODE,
 					actions: [
-						(_, event) => console.log(event.data),
 						assign({
 							formattedCode: (_, event: DoneInvokeEvent<string>) => event.data,
 						}),
@@ -124,9 +129,8 @@ export const createFileMachine = createMachine<
 					});
 				},
 				onDone: {
-					target: CreateFileState.IDLE,
+					target: CreateFileState.UPDATING_MESSAGES,
 					actions: [
-						(_, event) => console.log('Highlighted!', event.data),
 						assign({
 							highlightedCode: (_, event: DoneInvokeEvent<string>) =>
 								event.data,
@@ -146,7 +150,7 @@ export const createFileMachine = createMachine<
 						language: 'ts',
 					}),
 				onDone: {
-					target: CreateFileState.IDLE,
+					target: CreateFileState.UPDATING_MESSAGES,
 					actions: assign({
 						highlightedCode: (_, event: DoneInvokeEvent<string>) => event.data,
 					}),
@@ -159,20 +163,27 @@ export const createFileMachine = createMachine<
 				},
 			},
 		},
-		[CreateFileState.IDLE]: {
-			on: {
-				[CreateFileEvent.ENTER_KEY_PRESSED]: {
-					// target: CreateFileState.CREATING_FILE,
+		[CreateFileState.UPDATING_MESSAGES]: {
+			always: [
+				{
+					target: CreateFileState.IDLE,
 					actions: [
 						sendParent(context => ({
 							type: ChatEvent.ADD_MESSAGE,
 							message: {
 								id: uuid(),
-								message: context.highlightedCode,
-								isTool: true,
+								text: context.highlightedCode,
+								isCreateFile: true,
 							},
 						})),
 					],
+				},
+			],
+		},
+		[CreateFileState.IDLE]: {
+			on: {
+				[CreateFileEvent.ENTER_KEY_PRESS]: {
+					target: CreateFileState.CREATING_FILE,
 				},
 			},
 		},
@@ -201,8 +212,14 @@ export const createFileMachine = createMachine<
 				})),
 			],
 			on: {
-				[CreateFileEvent.ENTER_KEY_PRESSED]: {
-					actions: sendParent({type: StepsEvent.NAVIGATE_NEXT_STEP}),
+				[CreateFileEvent.ENTER_KEY_PRESS]: {
+					actions: sendParent(context => ({
+						type: ChatEvent.SUBMIT_TOOL_OUTPUT,
+						toolOutput: {
+							tool_call_id: context.toolCallId,
+							output: JSON.stringify({response: 'file created successfully'}),
+						},
+					})),
 				},
 			},
 		},

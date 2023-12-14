@@ -49,7 +49,7 @@ export const CreateFileStep = () => {
 			exit();
 		}
 		if (key.return) {
-			createFileMachineSend(CreateFileEvent.ENTER_KEY_PRESSED);
+			createFileMachineSend(CreateFileEvent.ENTER_KEY_PRESS);
 		}
 	});
 

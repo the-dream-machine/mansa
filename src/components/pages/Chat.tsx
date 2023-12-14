@@ -1,24 +1,20 @@
-import React, {useState} from 'react';
-import {Box, Spacer, Text, useApp, useInput} from 'ink';
-import {useActor, useMachine} from '@xstate/react';
+import React from 'react';
+import {Box, Spacer, Text} from 'ink';
+import {useMachine} from '@xstate/react';
 
 import {Header} from '../Header.js';
 import {Footer} from '../Footer.js';
 import {PageContainer} from '../PageContainer.js';
 
-import {NavigationContext} from '../NavigationProvider.js';
 import {Colors} from '../../styles/Colors.js';
-import {ScrollContainer} from '../ScrollContainer.js';
 import {SectionContainer} from '../SectionContainer.js';
 import {chatMachine} from '../../machines/chatMachine.js';
 import {Spinner, TextInput} from '@inkjs/ui';
-import {Actor} from '../../types/Actor.js';
-import {
-	CreateFileMachineContext,
-	CreateFileMachineEvent,
-	CreateFileMachineState,
-} from '../../machines/createFileMachine.js';
 import {ChatEvent} from '../../types/ChatMachine.js';
+import {CreateFileMessage} from '../messages/CreateFileMessage.js';
+import {type ActorRef} from 'xstate';
+import {type CreateFileMachineEvent} from '../../machines/createFileMachine.js';
+import {GetRepositoryMessage} from '../messages/GetRepositoryMessage.js';
 
 interface Props {
 	libraryName: string;
@@ -29,16 +25,8 @@ export const Chat = ({libraryName, commandName}: Props) => {
 	const [state, send] = useMachine(chatMachine, {
 		context: {libraryName, commandName},
 	});
-	const activeToolActor = state.context.activeToolActor;
-	const [createFileMachineState, createFileMachineSend] = useActor(
-		activeToolActor!,
-	) as Actor<
-		CreateFileMachineContext,
-		CreateFileMachineEvent,
-		CreateFileMachineState
-	>;
-	// console.log('🌱 # createFileMachineState:', createFileMachineState.context);
 
+	const activeToolActor = state.context.activeToolActor;
 	const library = state.context.library;
 	const messages = state.context.messages;
 	const enterLabel = state.context.enterLabel;
@@ -47,16 +35,6 @@ export const Chat = ({libraryName, commandName}: Props) => {
 	const isSuccess = state.context.isSuccess;
 	const isError = state.context.isError;
 	const errorMessage = state.context.errorMessage;
-
-	const {exit} = useApp();
-	useInput((_, key) => {
-		if (key.escape) {
-			exit();
-		}
-		if (key.return) {
-			send({type: ChatEvent.ENTER_KEY_PRESS});
-		}
-	});
 
 	return (
 		<PageContainer>
@@ -73,25 +51,29 @@ export const Chat = ({libraryName, commandName}: Props) => {
 			{/* eslint-disable-next-line @typescript-eslint/ban-ts-comment */}
 			{/* @ts-ignore */}
 			<Text>PARENT: {state.value}</Text>
-			{/* eslint-disable-next-line @typescript-eslint/ban-ts-comment */}
-			{/* @ts-ignore */}
-			<Text>CHILD: {createFileMachineState.value}</Text>
 
 			<SectionContainer>
 				<Box flexDirection="column" gap={2}>
-					{messages.map(
-						({id, message, isUser, isCreateFile, isTool, isAssistant}) => (
+					{messages.map(message => {
+						const {
+							id,
+							text,
+							isUser,
+							isGetRepositorySummary,
+							isCreateFile,
+							isTool,
+							isAssistant,
+						} = message;
+						return (
 							<Box key={id}>
+								{isGetRepositorySummary && (
+									<GetRepositoryMessage message={message} />
+								)}
 								{isCreateFile && (
-									<Box>
-										<Box
-											flexGrow={0}
-											borderStyle="round"
-											borderColor={Colors.DarkGray}
-										>
-											<Text>{message}</Text>
-										</Box>
-									</Box>
+									<CreateFileMessage
+										message={message}
+										actor={activeToolActor as ActorRef<CreateFileMachineEvent>}
+									/>
 								)}
 								{isUser && (
 									<Box
@@ -103,25 +85,26 @@ export const Chat = ({libraryName, commandName}: Props) => {
 										borderRight={false}
 										borderTop={false}
 									>
-										<Text color={Colors.LightGray}>{message}</Text>
+										<Text color={Colors.LightGray}>{text}</Text>
 									</Box>
 								)}
 								{isTool && (
-									<Box gap={2}>
-										{isLoading && <Spinner />}
+									<Box>
 										<Box
+											gap={2}
 											flexGrow={0}
-											borderStyle="round"
-											borderColor={Colors.DarkGray}
+											// borderStyle="round"
+											// borderColor={Colors.DarkGray}
 										>
-											<Text>{message}</Text>
+											{isLoading && <Spinner />}
+											<Text>{text}</Text>
 										</Box>
 									</Box>
 								)}
-								{isAssistant && <Text color={Colors.LightGray}>{message}</Text>}
+								{isAssistant && <Text color={Colors.White}>{text}</Text>}
 							</Box>
-						),
-					)}
+						);
+					})}
 
 					{!enterDisabled && (
 						<Box

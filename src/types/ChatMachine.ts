@@ -45,9 +45,11 @@ export enum ChatEvent {
 	ENTER_KEY_PRESS = 'ENTER_KEY_PRESS',
 	SEND_QUERY = 'SEND_QUERY',
 	ADD_MESSAGE = 'ADD_MESSAGE',
+	SUBMIT_TOOL_OUTPUT = 'SUBMIT_TOOL_OUTPUT',
 }
 
 export type ChatMachineEvent =
 	| {type: ChatEvent.ENTER_KEY_PRESS}
 	| {type: ChatEvent.SEND_QUERY; query: string}
-	| {type: ChatEvent.ADD_MESSAGE; message: Message};
+	| {type: ChatEvent.ADD_MESSAGE; message: Message}
+	| {type: ChatEvent.SUBMIT_TOOL_OUTPUT; toolOutput: ToolOutput};

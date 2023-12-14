@@ -18,6 +18,7 @@ export const getCreateFileActor = (context: ChatMachineContext) => {
 	return spawn(
 		createFileMachine.withContext({
 			...initialCreateFileMachineContext,
+			toolCallId: toolCall.id,
 			rawCode: args.file_content,
 			filePath: args.file_path,
 			fileExtension: 'tsx',

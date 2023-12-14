@@ -53,6 +53,7 @@ import {
 import {getCreateFileActor} from '../utils/actors/getCreateFileActor.js';
 import {Message} from '../types/Message.js';
 import {sendTo} from 'xstate/lib/actions.js';
+import {getRepositorySummaryActor} from '../utils/actors/getRepositorySummaryActor.js';
 
 const initialChatMachineContext: ChatMachineContext = {
 	commandName: '',
@@ -68,14 +69,22 @@ const initialChatMachineContext: ChatMachineContext = {
 	// toolCalls: [],
 	toolCalls: [
 		{
-			id: 'call_6TAdGAVYnMQmTTkpeEERNOVg',
+			id: 'call_FLXT7DtAlblCWo1rcrEvLVQI',
 			type: 'function',
 			function: {
-				name: 'create_file',
-				arguments:
-					'{"file_path": "./src/Jobs/example.ts", "file_content": "import { eventTrigger } from \\"@trigger.dev/sdk\\"\\nimport { client } from \\"@/trigger\\" // Replace \\"@/trigger\\" with the relative path to your Trigger Client configuration file\\n\\nclient.defineJob({\\n  id: \\"example-job\\",\\n  name: \\"Example Job\\",\\n  version: \\"0.0.1\\",\\n  trigger: eventTrigger({\\n    name: \\"example.event\\",\\n  }),\\n  run: async (payload, io, ctx) => {\\n    await io.logger.info(\\"Hello world!\\", { payload })\\n\\n    return {\\n      message: \\"Hello world!\\",\\n    }\\n  },\\n})"}',
+				name: 'get_repository_summary',
+				arguments: '{}',
 			},
 		},
+		// {
+		// 	id: 'call_6TAdGAVYnMQmTTkpeEERNOVg',
+		// 	type: 'function',
+		// 	function: {
+		// 		name: 'create_file',
+		// 		arguments:
+		// 			'{"file_path": "./src/Jobs/example.ts", "file_content": "import { eventTrigger } from \\"@trigger.dev/sdk\\"\\nimport { client } from \\"@/trigger\\" // Replace \\"@/trigger\\" with the relative path to your Trigger Client configuration file\\n\\nclient.defineJob({\\n  id: \\"example-job\\",\\n  name: \\"Example Job\\",\\n  version: \\"0.0.1\\",\\n  trigger: eventTrigger({\\n    name: \\"example.event\\",\\n  }),\\n  run: async (payload, io, ctx) => {\\n    await io.logger.info(\\"Hello world!\\", { payload })\\n\\n    return {\\n      message: \\"Hello world!\\",\\n    }\\n  },\\n})"}',
+		// 	},
+		// },
 	],
 	currentToolCallProcessingIndex: 0,
 	toolOutputs: [],
@@ -100,8 +109,10 @@ export enum ChatState {
 	SENDING_QUERY = 'SENDING_QUERY',
 	POLLING_QUERY_STATUS = 'POLLING_QUERY_STATUS',
 	ROUTING_TOOL_CALLS = 'ROUTING_TOOL_CALLS',
-	CREATE_FILE_TOOL_CALL_IDLE = 'CREATE_FILE_TOOL_CALL_IDLE',
-	PROCESSING_GET_REPOSITORY_SUMMARY_TOOL_CALL = 'PROCESSING_GET_REPOSITORY_SUMMARY_TOOL_CALL',
+
+	// Tool Calls
+	HANDLING_GET_REPOSITORY_SUMMARY_TOOL_CALL = 'HANDLING_GET_REPOSITORY_SUMMARY_TOOL_CALL',
+	HANDLING_CREATE_FILE_TOOL_CALL = 'HANDLING_CREATE_FILE_TOOL_CALL',
 	PROCESSING_FIND_FILE_BY_PATH_TOOL_CALL = 'PROCESSING_FIND_FILE_BY_PATH_TOOL_CALL',
 	PROCESSING_READ_FILE_TOOL_CALL = 'PROCESSING_READ_FILE_TOOL_CALL',
 	PROCESSING_EDIT_FILE_TOOL_CALL = 'PROCESSING_EDIT_FILE_TOOL_CALL',
@@ -137,11 +148,11 @@ type ChatMachineState =
 			context: ChatMachineContext;
 	  }
 	| {
-			value: ChatState.CREATE_FILE_TOOL_CALL_IDLE;
+			value: ChatState.HANDLING_GET_REPOSITORY_SUMMARY_TOOL_CALL;
 			context: ChatMachineContext;
 	  }
 	| {
-			value: ChatState.PROCESSING_GET_REPOSITORY_SUMMARY_TOOL_CALL;
+			value: ChatState.HANDLING_CREATE_FILE_TOOL_CALL;
 			context: ChatMachineContext;
 	  }
 	| {
@@ -302,7 +313,21 @@ export const chatMachine = createMachine<
 	predictableActionArguments: true,
 	context: initialChatMachineContext,
 	initial: ChatState.ROUTING_TOOL_CALLS,
-
+	on: {
+		[ChatEvent.ADD_MESSAGE]: {
+			actions: assign({
+				messages: (context, event) => [...context.messages, event.message],
+			}),
+		},
+		[ChatEvent.SUBMIT_TOOL_OUTPUT]: {
+			target: ChatState.ROUTING_TOOL_CALLS,
+			actions: assign((context, event) => ({
+				toolOutputs: [...context.toolOutputs, event.toolOutput],
+				currentToolCallProcessingIndex:
+					context.currentToolCallProcessingIndex + 1,
+			})),
+		},
+	},
 	states: {
 		[ChatState.FETCHING_LIBRARY]: {
 			invoke: {
@@ -343,7 +368,7 @@ export const chatMachine = createMachine<
 						...context.messages,
 						{
 							id: uuid(),
-							message: ` 🌍 Reading documentation... `,
+							text: ` 🌍 Reading documentation... `,
 							isTool: true,
 						},
 					],
@@ -353,12 +378,12 @@ export const chatMachine = createMachine<
 				src: async context => {
 					const commandName = context.commandName;
 					const libraryName = context.libraryName;
+					const packageManager = context.repositoryConfig?.packageManager;
 					const repositoryMap = await getRepositoryMap();
 					const packageJsonMapItem = repositoryMap.find(
 						mapItem => mapItem.filePath === 'package.json',
 					);
 					const repositorySummary = packageJsonMapItem?.fileSummary;
-					const packageManager = context.repositoryConfig?.packageManager;
 					if (!repositorySummary) {
 						throw new Error('Repository summary missing');
 					}
@@ -537,7 +562,7 @@ export const chatMachine = createMachine<
 								...context.messages,
 								{
 									id: uuid(),
-									message: event.data,
+									text: event.data,
 									isAssistant: true,
 								},
 							],
@@ -562,20 +587,10 @@ export const chatMachine = createMachine<
 					cond: context =>
 						context.toolCalls[context.currentToolCallProcessingIndex]?.function
 							.name === 'get_repository_summary',
-					target: ChatState.PROCESSING_GET_REPOSITORY_SUMMARY_TOOL_CALL,
-					actions: [
-						() => console.log('Getting repository summary'),
-						assign({
-							messages: context => [
-								...context.messages,
-								{
-									id: uuid(),
-									isTool: true,
-									message: ` 👀 Reading a summary of your repository `,
-								},
-							],
-						}),
-					],
+					actions: assign({
+						activeToolActor: context => getRepositorySummaryActor(context),
+					}),
+					target: ChatState.HANDLING_GET_REPOSITORY_SUMMARY_TOOL_CALL,
 				},
 				{
 					cond: context =>
@@ -594,7 +609,7 @@ export const chatMachine = createMachine<
 								{
 									id: uuid(),
 									isTool: true,
-									message: ` 🔎 Searching for ${args.file_path} `,
+									text: ` 🔎 Searching for ${args.file_path} `,
 								},
 							];
 						},
@@ -617,7 +632,7 @@ export const chatMachine = createMachine<
 								{
 									id: uuid(),
 									isTool: true,
-									message: ` 📖 Reading ${args.file_path} `,
+									text: ` 📖 Reading ${args.file_path} `,
 								},
 							];
 						},
@@ -627,7 +642,7 @@ export const chatMachine = createMachine<
 					cond: context =>
 						context.toolCalls[context.currentToolCallProcessingIndex]?.function
 							.name === 'create_file',
-					target: ChatState.CREATE_FILE_TOOL_CALL_IDLE,
+					target: ChatState.HANDLING_CREATE_FILE_TOOL_CALL,
 					actions: assign({
 						activeToolActor: context => getCreateFileActor(context),
 					}),
@@ -649,7 +664,7 @@ export const chatMachine = createMachine<
 								{
 									id: uuid(),
 									isTool: true,
-									message: ` ✨ Editing ${args.file_path} `,
+									text: ` ✨ Editing ${args.file_path} `,
 								},
 							];
 						},
@@ -657,18 +672,8 @@ export const chatMachine = createMachine<
 				},
 			],
 		},
-		[ChatState.PROCESSING_GET_REPOSITORY_SUMMARY_TOOL_CALL]: {
-			invoke: {
-				src: async context => getRepositorySummaryToolCall(context),
-				onDone: {
-					actions: assign((context, event: DoneInvokeEvent<ToolOutput>) => ({
-						toolOutputs: [...context.toolOutputs, event.data],
-						currentToolCallProcessingIndex:
-							context.currentToolCallProcessingIndex + 1,
-					})),
-					target: ChatState.ROUTING_TOOL_CALLS,
-				},
-			},
+		[ChatState.HANDLING_GET_REPOSITORY_SUMMARY_TOOL_CALL]: {
+			entry: [assign({enterDisabled: false})],
 		},
 		[ChatState.PROCESSING_FIND_FILE_BY_PATH_TOOL_CALL]: {
 			invoke: {
@@ -700,27 +705,8 @@ export const chatMachine = createMachine<
 				},
 			},
 		},
-		[ChatState.CREATE_FILE_TOOL_CALL_IDLE]: {
+		[ChatState.HANDLING_CREATE_FILE_TOOL_CALL]: {
 			entry: [assign({enterDisabled: false})],
-			on: {
-				[ChatEvent.ENTER_KEY_PRESS]: {
-					actions: send(
-						{type: CreateFileEvent.ENTER_KEY_PRESSED},
-						{to: context => context.activeToolActor!},
-					),
-				},
-				[ChatEvent.ADD_MESSAGE]: {
-					actions: [
-						() => console.log('ADDING MESSAGE'),
-						assign({
-							messages: (context, event) => [
-								...context.messages,
-								event.message,
-							],
-						}),
-					],
-				},
-			},
 		},
 		[ChatState.PROCESSING_EDIT_FILE_TOOL_CALL]: {
 			invoke: {
@@ -770,7 +756,7 @@ export const chatMachine = createMachine<
 								{
 									id: uuid(),
 									isUser: true,
-									message: event.query,
+									text: event.query,
 								},
 							],
 						})),
