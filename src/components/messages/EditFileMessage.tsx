@@ -61,11 +61,12 @@ export const EditFileMessage = ({message, actor}: Props) => {
 			{/* Press Enter Edit File */}
 			{!isLoading && !isSuccess && (
 				<Text color={Colors.LightGray}>
-					Press <Text color={Colors.LightGreen}>enter</Text> to edit{' '}
+					Press <Text color={Colors.LightGreen}>enter</Text> to apply the
+					changes to{' '}
 					<Text color={Colors.White} italic>
 						{filePath}
-					</Text>{' '}
-					and apply the code changes.
+					</Text>
+					.
 				</Text>
 			)}
 
@@ -74,7 +75,7 @@ export const EditFileMessage = ({message, actor}: Props) => {
 				<Box gap={2}>
 					<Spinner />
 					<Text color={Colors.LightGray}>
-						Creating{' '}
+						Editing{' '}
 						<Text color={Colors.White} italic>
 							{filePath}
 						</Text>

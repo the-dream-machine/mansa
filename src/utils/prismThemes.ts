@@ -13,7 +13,7 @@ export const defaultPrismTheme = ({
 }: ThemeOptions): Theme => {
 	let defaultStyle = null;
 	if (highlightAddition) {
-		defaultStyle = chalk.hex('#76d9e6').bgHex('#002c18');
+		defaultStyle = chalk.hex('#76d9e6').bgHex(BaseColors.Green900);
 	} else if (highlightRemoval) {
 		defaultStyle = chalk.hex('#76d9e6').bgHex(BaseColors.Red900);
 	} else {

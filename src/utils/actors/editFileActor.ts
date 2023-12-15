@@ -21,7 +21,7 @@ export const editFileActor = (context: ChatMachineContext) => {
 		editFileMachine.withContext({
 			...initialEditFileMachineContext,
 			toolCallId: toolCall.id,
-			rawCode: args.file_content,
+			fileContent: args.file_content,
 			filePath: args.file_path,
 			fileExtension: 'json',
 		}),
