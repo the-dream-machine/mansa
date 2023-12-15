@@ -5,15 +5,9 @@ import {type RunStatusResponse, type Run} from '../types/Run.js';
 import {getRepositoryMap} from '../utils/repository/getRepositoryMap.js';
 import {getRepositoryConfig} from '../utils/repository/getRepositoryConfig.js';
 import {sendQuery} from '../utils/api/sendQuery.js';
-import {fs, sleep} from 'zx';
+import {sleep} from 'zx';
 import {getQueryStatus} from '../utils/api/getQueryStatus.js';
 import {getQueryResult} from '../utils/api/getQueryResult.js';
-import {
-	type ReadFileToolParams,
-	type EditFileToolParams,
-} from '../types/ToolParams.js';
-import {writeToFile} from '../utils/writeToFile.js';
-import {type ToolOutput} from '../types/Tool.js';
 import {submitToolOutputs} from '../utils/api/submitToolOutputs.js';
 import {getLibrary} from '../utils/api/getLibrary.js';
 import {type Library} from '../types/Library.js';
@@ -28,6 +22,7 @@ import {createFileActor} from '../utils/actors/createFileActor.js';
 import {getRepositorySummaryActor} from '../utils/actors/getRepositorySummaryActor.js';
 import {findFileByPathActor} from '../utils/actors/findFileByPathActor.js';
 import {readFileActor} from '../utils/actors/readFileActor.js';
+import {editFileActor} from '../utils/actors/editFileActor.js';
 
 const initialChatMachineContext: ChatMachineContext = {
 	commandName: '',
@@ -42,6 +37,15 @@ const initialChatMachineContext: ChatMachineContext = {
 	messages: [],
 	// toolCalls: [],
 	toolCalls: [
+		{
+			id: 'call_cJGsZ9M4X6jOZPw28BOnhO7T',
+			type: 'function',
+			function: {
+				name: 'edit_file',
+				arguments:
+					'{"file_path":"./package.json","file_content":"{\\n  \\"name\\": \\"ragdoll\\",\\n  \\"version\\": \\"0.1.0\\",\\n  \\"private\\": true,\\n  \\"scripts\\": {\\n    \\"build\\": \\"next build\\",\\n    \\"db:push\\": \\"prisma db push\\",\\n    \\"db:studio\\": \\"prisma studio\\",\\n    \\"dev\\": \\"next dev\\",\\n    \\"postinstall\\": \\"prisma generate\\",\\n    \\"lint\\": \\"next lint\\",\\n    \\"start\\": \\"next start\\"\\n  },\\n  \\"dependencies\\": {\\n    \\"@prisma/client\\": \\"^5.1.1\\",\\n    \\"@t3-oss/env-nextjs\\": \\"^0.7.0\\",\\n    \\"@tanstack/react-query\\": \\"^4.32.6\\",\\n    \\"@trpc/client\\": \\"^10.37.1\\",\\n    \\"@trpc/next\\": \\"^10.37.1\\",\\n    \\"@trpc/react-query\\": \\"^10.37.1\\",\\n    \\"@trpc/server\\": \\"^10.37.1\\",\\n    \\"next\\": \\"^13.5.4\\",\\n    \\"react\\": \\"18.2.0\\",\\n    \\"react-dom\\": \\"18.2.0\\",\\n    \\"superjson\\": \\"^1.13.1\\",\\n    \\"zod\\": \\"^3.22.4\\"\\n  },\\n  \\"devDependencies\\": {\\n    \\"@types/eslint\\": \\"^8.44.2\\",\\n    \\"@types/node\\": \\"^18.16.0\\",\\n    \\"@types/react\\": \\"^18.2.20\\",\\n    \\"@types/react-dom\\": \\"^18.2.7\\",\\n    \\"@typescript-eslint/eslint-plugin\\": \\"^6.3.0\\",\\n    \\"@typescript-eslint/parser\\": \\"^6.3.0\\",\\n    \\"eslint\\": \\"^8.47.0\\",\\n    \\"eslint-config-next\\": \\"^13.5.4\\",\\n    \\"prisma\\": \\"^5.1.1\\",\\n    \\"typescript\\": \\"^5.1.6\\"\\n  },\\n  \\"ct3aMetadata\\": {\\n    \\"initVersion\\": \\"7.22.0\\"\\n  },\\n  \\"triggerEndpoint\\": \\"https://api.trigger.dev\\"}"}',
+			},
+		},
 		// {
 		// 	id: 'call_6xjrWUSKy3Mkp9vtL85GVDzW',
 		// 	type: 'function',
@@ -50,24 +54,22 @@ const initialChatMachineContext: ChatMachineContext = {
 		// 		arguments: '{"file_path":".env.local"}',
 		// 	},
 		// },
-		{
-			id: 'call_6xjrWUSKy3Mkp9vtmfk325GVDzW',
-			type: 'function',
-			function: {
-				name: 'read_file',
-				arguments: '{"file_path":"./package.json"}',
-			},
-		},
-
-		{
-			id: 'call_FLXT7DtAlblCWo1rcrEvLVQI',
-			type: 'function',
-			function: {
-				name: 'get_repository_summary',
-				arguments: '{}',
-			},
-		},
-
+		// {
+		// 	id: 'call_6xjrWUSKy3Mkp9vtmfk325GVDzW',
+		// 	type: 'function',
+		// 	function: {
+		// 		name: 'read_file',
+		// 		arguments: '{"file_path":"./package.json"}',
+		// 	},
+		// },
+		// {
+		// 	id: 'call_FLXT7DtAlblCWo1rcrEvLVQI',
+		// 	type: 'function',
+		// 	function: {
+		// 		name: 'get_repository_summary',
+		// 		arguments: '{}',
+		// 	},
+		// },
 		// {
 		// 	id: 'call_6TAdGAVYnMQmTTkpeEERNOVg',
 		// 	type: 'function',
@@ -96,20 +98,22 @@ const initialChatMachineContext: ChatMachineContext = {
 export enum ChatState {
 	FETCHING_LIBRARY = 'FETCHING_LIBRARY',
 	FETCHING_REPOSITORY_CONFIG = 'FETCHING_REPOSITORY_CONFIG',
+
 	SENDING_RETRIEVAL_COMMAND = 'SENDING_RETRIEVAL_COMMAND',
 	SENDING_ASSISTANT_COMMAND = 'SENDING_ASSISTANT_COMMAND',
+
 	SENDING_QUERY = 'SENDING_QUERY',
 	POLLING_QUERY_STATUS = 'POLLING_QUERY_STATUS',
-	ROUTING_TOOL_CALLS = 'ROUTING_TOOL_CALLS',
+	FETCHING_QUERY_RESULT = 'FETCHING_QUERY_RESULT',
 
-	// Tool Calls
+	ROUTING_TOOL_CALLS = 'ROUTING_TOOL_CALLS',
+	SUBMITTING_TOOL_CALLS = 'SUBMITTING_TOOL_CALLS',
 	HANDLING_GET_REPOSITORY_SUMMARY_TOOL_CALL = 'HANDLING_GET_REPOSITORY_SUMMARY_TOOL_CALL',
 	HANDLING_CREATE_FILE_TOOL_CALL = 'HANDLING_CREATE_FILE_TOOL_CALL',
 	HANDLING_FIND_FILE_BY_PATH_TOOL_CALL = 'HANDLING_FIND_FILE_BY_PATH_TOOL_CALL',
 	HANDLING_READ_FILE_TOOL_CALL = 'HANDLING_READ_FILE_TOOL_CALL',
-	PROCESSING_EDIT_FILE_TOOL_CALL = 'PROCESSING_EDIT_FILE_TOOL_CALL',
-	SUBMITTING_TOOL_CALLS = 'SUBMITTING_TOOL_CALLS',
-	FETCHING_QUERY_RESULT = 'FETCHING_QUERY_RESULT',
+	HANDLING_EDIT_FILE_TOOL_CALL = 'HANDLING_EDIT_FILE_TOOL_CALL',
+
 	SUCCESS_IDLE = 'SUCCESS_IDLE',
 	ERROR_IDLE = 'ERROR_IDLE',
 }
@@ -156,7 +160,7 @@ type ChatMachineState =
 			context: ChatMachineContext;
 	  }
 	| {
-			value: ChatState.PROCESSING_EDIT_FILE_TOOL_CALL;
+			value: ChatState.HANDLING_EDIT_FILE_TOOL_CALL;
 			context: ChatMachineContext;
 	  }
 	| {
@@ -181,33 +185,6 @@ const isLastToolCall = (context: ChatMachineContext) => {
 	return context.toolCalls.length === context.currentToolCallProcessingIndex;
 };
 
-// Tool handlers
-
-const editFileToolCall = async (
-	context: ChatMachineContext,
-): Promise<ToolOutput> => {
-	const toolCall = context.toolCalls[context.currentToolCallProcessingIndex];
-	if (!toolCall) {
-		throw new Error('editFileToolCall: Tool call is undefined');
-	}
-
-	const args = (await JSON.parse(
-		toolCall.function.arguments,
-	)) as unknown as EditFileToolParams;
-
-	try {
-		await writeToFile({
-			filePath: args.file_path,
-			fileContent: args.file_content,
-		});
-		const output = JSON.stringify({response: 'file edit successfully'});
-		return {tool_call_id: toolCall.id, output};
-	} catch (error) {
-		const output = JSON.stringify({error});
-		return {tool_call_id: toolCall.id, output};
-	}
-};
-
 export const chatMachine = createMachine<
 	ChatMachineContext,
 	ChatMachineEvent,
@@ -218,21 +195,6 @@ export const chatMachine = createMachine<
 	predictableActionArguments: true,
 	context: initialChatMachineContext,
 	initial: ChatState.ROUTING_TOOL_CALLS,
-	on: {
-		[ChatEvent.ADD_MESSAGE]: {
-			actions: assign({
-				messages: (context, event) => [...context.messages, event.message],
-			}),
-		},
-		[ChatEvent.SUBMIT_TOOL_OUTPUT]: {
-			target: ChatState.ROUTING_TOOL_CALLS,
-			actions: assign((context, event) => ({
-				toolOutputs: [...context.toolOutputs, event.toolOutput],
-				currentToolCallProcessingIndex:
-					context.currentToolCallProcessingIndex + 1,
-			})),
-		},
-	},
 	states: {
 		[ChatState.FETCHING_LIBRARY]: {
 			invoke: {
@@ -528,23 +490,9 @@ export const chatMachine = createMachine<
 					cond: context =>
 						context.toolCalls[context.currentToolCallProcessingIndex]?.function
 							.name === 'edit_file',
-					target: ChatState.PROCESSING_EDIT_FILE_TOOL_CALL,
+					target: ChatState.HANDLING_EDIT_FILE_TOOL_CALL,
 					actions: assign({
-						messages: context => {
-							const args = JSON.parse(
-								context.toolCalls[context.currentToolCallProcessingIndex]
-									?.function.arguments ?? '',
-							) as unknown as EditFileToolParams;
-
-							return [
-								...context.messages,
-								{
-									id: uuid(),
-									isTool: true,
-									text: ` ✨ Editing ${args.file_path} `,
-								},
-							];
-						},
+						activeToolActor: context => editFileActor(context),
 					}),
 				},
 			],
@@ -553,19 +501,7 @@ export const chatMachine = createMachine<
 		[ChatState.HANDLING_FIND_FILE_BY_PATH_TOOL_CALL]: {},
 		[ChatState.HANDLING_READ_FILE_TOOL_CALL]: {},
 		[ChatState.HANDLING_CREATE_FILE_TOOL_CALL]: {},
-		[ChatState.PROCESSING_EDIT_FILE_TOOL_CALL]: {
-			invoke: {
-				src: async context => editFileToolCall(context),
-				onDone: {
-					actions: assign((context, event: DoneInvokeEvent<ToolOutput>) => ({
-						toolOutputs: [...context.toolOutputs, event.data],
-						currentToolCallProcessingIndex:
-							context.currentToolCallProcessingIndex + 1,
-					})),
-					target: ChatState.ROUTING_TOOL_CALLS,
-				},
-			},
-		},
+		[ChatState.HANDLING_EDIT_FILE_TOOL_CALL]: {},
 		[ChatState.SUBMITTING_TOOL_CALLS]: {
 			invoke: {
 				src: async ({isRetrievalRun, retrievalRun, run, toolOutputs}) => {
@@ -630,6 +566,21 @@ export const chatMachine = createMachine<
 					enterDisabled: true,
 				}),
 			],
+		},
+	},
+	on: {
+		[ChatEvent.ADD_MESSAGE]: {
+			actions: assign({
+				messages: (context, event) => [...context.messages, event.message],
+			}),
+		},
+		[ChatEvent.SUBMIT_TOOL_OUTPUT]: {
+			target: ChatState.ROUTING_TOOL_CALLS,
+			actions: assign((context, event) => ({
+				toolOutputs: [...context.toolOutputs, event.toolOutput],
+				currentToolCallProcessingIndex:
+					context.currentToolCallProcessingIndex + 1,
+			})),
 		},
 	},
 });

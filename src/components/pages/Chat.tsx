@@ -17,6 +17,8 @@ import {type CreateFileMachineEvent} from '../../machines/createFileMachine.js';
 import {GetRepositoryMessage} from '../messages/GetRepositoryMessage.js';
 import {FindFileByPathMessage} from '../messages/FindFileByPathMessage.js';
 import {ReadFileMessage} from '../messages/ReadFileMessage.js';
+import {EditFileMessage} from '../messages/EditFileMessage.js';
+import {EditFileMachineEvent} from '../../machines/editFileMachine.js';
 
 interface Props {
 	libraryName: string;
@@ -66,6 +68,7 @@ export const Chat = ({libraryName, commandName}: Props) => {
 							isFindFileByPath,
 							isReadFile,
 							isCreateFile,
+							isEditFile,
 							isTool,
 							isAssistant,
 						} = message;
@@ -82,6 +85,12 @@ export const Chat = ({libraryName, commandName}: Props) => {
 									<CreateFileMessage
 										message={message}
 										actor={activeToolActor as ActorRef<CreateFileMachineEvent>}
+									/>
+								)}
+								{isEditFile && (
+									<EditFileMessage
+										message={message}
+										actor={activeToolActor as ActorRef<EditFileMachineEvent>}
 									/>
 								)}
 								{isUser && (

@@ -2,7 +2,6 @@ import React from 'react';
 import {type Message} from '../../types/Message.js';
 import {Box, Text, useApp, useInput} from 'ink';
 import {Colors} from '../../styles/Colors.js';
-import {Spinner} from '@inkjs/ui';
 
 interface Props {
 	message: Message;

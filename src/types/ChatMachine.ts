@@ -8,6 +8,7 @@ import {type RepoConfig} from './Repo.js';
 import {type Run, type RunStatus} from './Run.js';
 import {type RequiredActionFunctionToolCall, type ToolOutput} from './Tool.js';
 import {type Message} from './Message.js';
+import {EditFileMachineEvent} from '../machines/editFileMachine.js';
 
 export interface ChatMachineContext {
 	repositoryConfig?: RepoConfig;
@@ -26,9 +27,7 @@ export interface ChatMachineContext {
 	status?: RunStatus;
 	activeToolActor?:
 		| ActorRef<CreateFileMachineEvent>
-		| ActorRef<ModifyFileMachineEvent>
-		| ActorRef<ExecuteCommandMachineEvent>
-		| ActorRef<UserActionMachineEvent>;
+		| ActorRef<EditFileMachineEvent>;
 
 	// Component states
 	enterLabel: string;

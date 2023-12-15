@@ -5,6 +5,7 @@ export interface Message {
 	isFindFileByPath?: boolean;
 	isReadFile?: boolean;
 	isCreateFile?: boolean;
+	isEditFile?: boolean;
 	isUser?: boolean;
 	isRetrievalRun?: boolean;
 	isTool?: boolean;
