@@ -16,6 +16,7 @@ import {type ActorRef} from 'xstate';
 import {type CreateFileMachineEvent} from '../../machines/createFileMachine.js';
 import {GetRepositoryMessage} from '../messages/GetRepositoryMessage.js';
 import {FindFileByPathMessage} from '../messages/FindFileByPathMessage.js';
+import {ReadFileMessage} from '../messages/ReadFileMessage.js';
 
 interface Props {
 	libraryName: string;
@@ -63,6 +64,7 @@ export const Chat = ({libraryName, commandName}: Props) => {
 							isUser,
 							isGetRepositorySummary,
 							isFindFileByPath,
+							isReadFile,
 							isCreateFile,
 							isTool,
 							isAssistant,
@@ -75,6 +77,7 @@ export const Chat = ({libraryName, commandName}: Props) => {
 								{isFindFileByPath && (
 									<FindFileByPathMessage message={message} />
 								)}
+								{isReadFile && <ReadFileMessage message={message} />}
 								{isCreateFile && (
 									<CreateFileMessage
 										message={message}

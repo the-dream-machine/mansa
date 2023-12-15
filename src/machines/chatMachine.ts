@@ -5,13 +5,12 @@ import {type RunStatusResponse, type Run} from '../types/Run.js';
 import {getRepositoryMap} from '../utils/repository/getRepositoryMap.js';
 import {getRepositoryConfig} from '../utils/repository/getRepositoryConfig.js';
 import {sendQuery} from '../utils/api/sendQuery.js';
-import {fs, path, sleep} from 'zx';
+import {fs, sleep} from 'zx';
 import {getQueryStatus} from '../utils/api/getQueryStatus.js';
 import {getQueryResult} from '../utils/api/getQueryResult.js';
 import {
 	type ReadFileToolParams,
 	type EditFileToolParams,
-	type FindFileByPathToolParams,
 } from '../types/ToolParams.js';
 import {writeToFile} from '../utils/writeToFile.js';
 import {type ToolOutput} from '../types/Tool.js';
@@ -25,9 +24,10 @@ import {
 	type ChatMachineContext,
 	type ChatMachineEvent,
 } from '../types/ChatMachine.js';
-import {getCreateFileActor} from '../utils/actors/getCreateFileActor.js';
+import {createFileActor} from '../utils/actors/createFileActor.js';
 import {getRepositorySummaryActor} from '../utils/actors/getRepositorySummaryActor.js';
 import {findFileByPathActor} from '../utils/actors/findFileByPathActor.js';
+import {readFileActor} from '../utils/actors/readFileActor.js';
 
 const initialChatMachineContext: ChatMachineContext = {
 	commandName: '',
@@ -42,23 +42,31 @@ const initialChatMachineContext: ChatMachineContext = {
 	messages: [],
 	// toolCalls: [],
 	toolCalls: [
+		// {
+		// 	id: 'call_6xjrWUSKy3Mkp9vtL85GVDzW',
+		// 	type: 'function',
+		// 	function: {
+		// 		name: 'find_file_by_path',
+		// 		arguments: '{"file_path":".env.local"}',
+		// 	},
+		// },
 		{
-			id: 'call_6xjrWUSKy3Mkp9vtL85GVDzW',
+			id: 'call_6xjrWUSKy3Mkp9vtmfk325GVDzW',
 			type: 'function',
 			function: {
-				name: 'find_file_by_path',
-				arguments: '{"file_path":".env.local"}',
+				name: 'read_file',
+				arguments: '{"file_path":"./package.json"}',
 			},
 		},
 
-		// {
-		// 	id: 'call_FLXT7DtAlblCWo1rcrEvLVQI',
-		// 	type: 'function',
-		// 	function: {
-		// 		name: 'get_repository_summary',
-		// 		arguments: '{}',
-		// 	},
-		// },
+		{
+			id: 'call_FLXT7DtAlblCWo1rcrEvLVQI',
+			type: 'function',
+			function: {
+				name: 'get_repository_summary',
+				arguments: '{}',
+			},
+		},
 
 		// {
 		// 	id: 'call_6TAdGAVYnMQmTTkpeEERNOVg',
@@ -98,7 +106,7 @@ export enum ChatState {
 	HANDLING_GET_REPOSITORY_SUMMARY_TOOL_CALL = 'HANDLING_GET_REPOSITORY_SUMMARY_TOOL_CALL',
 	HANDLING_CREATE_FILE_TOOL_CALL = 'HANDLING_CREATE_FILE_TOOL_CALL',
 	HANDLING_FIND_FILE_BY_PATH_TOOL_CALL = 'HANDLING_FIND_FILE_BY_PATH_TOOL_CALL',
-	PROCESSING_READ_FILE_TOOL_CALL = 'PROCESSING_READ_FILE_TOOL_CALL',
+	HANDLING_READ_FILE_TOOL_CALL = 'HANDLING_READ_FILE_TOOL_CALL',
 	PROCESSING_EDIT_FILE_TOOL_CALL = 'PROCESSING_EDIT_FILE_TOOL_CALL',
 	SUBMITTING_TOOL_CALLS = 'SUBMITTING_TOOL_CALLS',
 	FETCHING_QUERY_RESULT = 'FETCHING_QUERY_RESULT',
@@ -144,7 +152,7 @@ type ChatMachineState =
 			context: ChatMachineContext;
 	  }
 	| {
-			value: ChatState.PROCESSING_READ_FILE_TOOL_CALL;
+			value: ChatState.HANDLING_READ_FILE_TOOL_CALL;
 			context: ChatMachineContext;
 	  }
 	| {
@@ -174,53 +182,6 @@ const isLastToolCall = (context: ChatMachineContext) => {
 };
 
 // Tool handlers
-
-const findFileByPathToolCall = async (
-	context: ChatMachineContext,
-): Promise<ToolOutput> => {
-	const toolCall = context.toolCalls[context.currentToolCallProcessingIndex];
-	console.log('🌱 # toolCall:', toolCall);
-	if (!toolCall) {
-		throw new Error('findFileByPathToolCall: Tool call is undefined');
-	}
-
-	const args = (await JSON.parse(
-		toolCall.function.arguments,
-	)) as unknown as FindFileByPathToolParams;
-
-	const dirname = path.dirname(args.file_path);
-	const output = JSON.stringify({does_file_exist: await fs.exists(dirname)});
-	console.log('🌱 # findFileByPathToolCall output:', output);
-	return {tool_call_id: toolCall.id, output};
-};
-
-const readFileToolCall = async (
-	context: ChatMachineContext,
-): Promise<ToolOutput> => {
-	const toolCall = context.toolCalls[context.currentToolCallProcessingIndex];
-	console.log('🌱 # read file toolCall:', toolCall);
-	if (!toolCall) {
-		throw new Error('readFileToolCall: Tool call is undefined');
-	}
-
-	const args = (await JSON.parse(
-		toolCall.function.arguments,
-	)) as unknown as ReadFileToolParams;
-	console.log('🌱 # read file args:', args);
-
-	try {
-		const fileContent = (await fs.readFile(args.file_path)).toString();
-		const output = JSON.stringify({file_content: fileContent});
-		console.log('🌱 # read file output:', {
-			tool_call_id: toolCall.id,
-			output,
-		});
-		return {tool_call_id: toolCall.id, output};
-	} catch (error) {
-		const output = JSON.stringify({error: 'file does not exist'});
-		return {tool_call_id: toolCall.id, output};
-	}
-};
 
 const editFileToolCall = async (
 	context: ChatMachineContext,
@@ -531,41 +492,27 @@ export const chatMachine = createMachine<
 					cond: context =>
 						context.toolCalls[context.currentToolCallProcessingIndex]?.function
 							.name === 'get_repository_summary',
+					target: ChatState.HANDLING_GET_REPOSITORY_SUMMARY_TOOL_CALL,
 					actions: assign({
 						activeToolActor: context => getRepositorySummaryActor(context),
 					}),
-					target: ChatState.HANDLING_GET_REPOSITORY_SUMMARY_TOOL_CALL,
 				},
 				{
 					cond: context =>
 						context.toolCalls[context.currentToolCallProcessingIndex]?.function
 							.name === 'find_file_by_path',
+					target: ChatState.HANDLING_FIND_FILE_BY_PATH_TOOL_CALL,
 					actions: assign({
 						activeToolActor: context => findFileByPathActor(context),
 					}),
-					target: ChatState.HANDLING_FIND_FILE_BY_PATH_TOOL_CALL,
 				},
 				{
 					cond: context =>
 						context.toolCalls[context.currentToolCallProcessingIndex]?.function
 							.name === 'read_file',
-					target: ChatState.PROCESSING_READ_FILE_TOOL_CALL,
+					target: ChatState.HANDLING_READ_FILE_TOOL_CALL,
 					actions: assign({
-						messages: context => {
-							const args = JSON.parse(
-								context.toolCalls[context.currentToolCallProcessingIndex]
-									?.function.arguments ?? '',
-							) as unknown as ReadFileToolParams;
-
-							return [
-								...context.messages,
-								{
-									id: uuid(),
-									isTool: true,
-									text: ` 📖 Reading ${args.file_path} `,
-								},
-							];
-						},
+						activeToolActor: context => readFileActor(context),
 					}),
 				},
 				{
@@ -574,7 +521,7 @@ export const chatMachine = createMachine<
 							.name === 'create_file',
 					target: ChatState.HANDLING_CREATE_FILE_TOOL_CALL,
 					actions: assign({
-						activeToolActor: context => getCreateFileActor(context),
+						activeToolActor: context => createFileActor(context),
 					}),
 				},
 				{
@@ -602,42 +549,10 @@ export const chatMachine = createMachine<
 				},
 			],
 		},
-		[ChatState.HANDLING_GET_REPOSITORY_SUMMARY_TOOL_CALL]: {
-			entry: [assign({enterDisabled: false})],
-		},
-		[ChatState.HANDLING_FIND_FILE_BY_PATH_TOOL_CALL]: {
-			invoke: {
-				src: async context => findFileByPathToolCall(context),
-				onDone: {
-					actions: assign((context, event: DoneInvokeEvent<ToolOutput>) => ({
-						toolOutputs: [...context.toolOutputs, event.data],
-						currentToolCallProcessingIndex:
-							context.currentToolCallProcessingIndex + 1,
-					})),
-					target: ChatState.ROUTING_TOOL_CALLS,
-				},
-				onError: {
-					actions: (_, event) =>
-						console.log('PROCESSING_FIND_FILE_BY_PATH_TOOL_CALL:', event.data),
-				},
-			},
-		},
-		[ChatState.PROCESSING_READ_FILE_TOOL_CALL]: {
-			invoke: {
-				src: async context => readFileToolCall(context),
-				onDone: {
-					actions: assign((context, event: DoneInvokeEvent<ToolOutput>) => ({
-						toolOutputs: [...context.toolOutputs, event.data],
-						currentToolCallProcessingIndex:
-							context.currentToolCallProcessingIndex + 1,
-					})),
-					target: ChatState.ROUTING_TOOL_CALLS,
-				},
-			},
-		},
-		[ChatState.HANDLING_CREATE_FILE_TOOL_CALL]: {
-			entry: [assign({enterDisabled: false})],
-		},
+		[ChatState.HANDLING_GET_REPOSITORY_SUMMARY_TOOL_CALL]: {},
+		[ChatState.HANDLING_FIND_FILE_BY_PATH_TOOL_CALL]: {},
+		[ChatState.HANDLING_READ_FILE_TOOL_CALL]: {},
+		[ChatState.HANDLING_CREATE_FILE_TOOL_CALL]: {},
 		[ChatState.PROCESSING_EDIT_FILE_TOOL_CALL]: {
 			invoke: {
 				src: async context => editFileToolCall(context),

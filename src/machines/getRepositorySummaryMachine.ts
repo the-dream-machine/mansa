@@ -68,6 +68,15 @@ export const getRepositorySummaryMachine = createMachine<
 						},
 					})),
 				},
+				onError: {
+					actions: sendParent((context, event: DoneInvokeEvent<Error>) => ({
+						type: ChatEvent.SUBMIT_TOOL_OUTPUT,
+						toolOutput: {
+							tool_call_id: context.toolCallId,
+							output: JSON.stringify({error: event.data}),
+						},
+					})),
+				},
 			},
 		},
 	},

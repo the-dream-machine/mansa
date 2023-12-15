@@ -5,7 +5,7 @@ import {
 	type DoneInvokeEvent,
 } from 'xstate';
 import {v4 as uuid} from 'uuid';
-import {fs, path} from 'zx';
+import {fs} from 'zx';
 
 import {ChatEvent} from '../types/ChatMachine.js';
 

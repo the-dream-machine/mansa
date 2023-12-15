@@ -25,6 +25,20 @@ export interface CreateFileMachineContext {
 	showSuccessSection: boolean;
 }
 
+export const initialCreateFileMachineContext: CreateFileMachineContext = {
+	toolCallId: '',
+	filePath: '',
+	fileExtension: '',
+	rawCode: '',
+	formattedCode: '',
+	highlightedCode: '',
+	enterLabel: 'create file',
+	isLoading: false,
+	isSuccess: false,
+	isError: false,
+	showSuccessSection: false,
+};
+
 // States
 export enum CreateFileState {
 	FORMATTING_CODE = 'FORMATTING_CODE',
@@ -63,26 +77,12 @@ export type CreateFileMachineState =
 			context: CreateFileMachineContext;
 	  };
 
+// Event
 export enum CreateFileEvent {
 	ENTER_KEY_PRESS = 'ENTER_KEY_PRESS',
 }
 
-//  State machine events
 export type CreateFileMachineEvent = {type: CreateFileEvent.ENTER_KEY_PRESS};
-
-export const initialCreateFileMachineContext: CreateFileMachineContext = {
-	toolCallId: '',
-	filePath: '',
-	fileExtension: '',
-	rawCode: '',
-	formattedCode: '',
-	highlightedCode: '',
-	enterLabel: 'create file',
-	isLoading: false,
-	isSuccess: false,
-	isError: false,
-	showSuccessSection: false,
-};
 
 export const createFileMachine = createMachine<
 	CreateFileMachineContext,

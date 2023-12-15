@@ -3,6 +3,7 @@ export interface Message {
 	text: string;
 	isGetRepositorySummary?: boolean;
 	isFindFileByPath?: boolean;
+	isReadFile?: boolean;
 	isCreateFile?: boolean;
 	isUser?: boolean;
 	isRetrievalRun?: boolean;
