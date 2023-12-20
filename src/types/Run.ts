@@ -1,4 +1,4 @@
-import {type SubmitToolOutputs} from './Tool.js';
+import {type Tool} from './Tool.js';
 
 export interface Run {
 	thread_id: string;
@@ -17,7 +17,9 @@ export type RunStatus =
 
 export interface RunRequiredAction {
 	type: 'submit_tool_outputs';
-	submit_tool_outputs: SubmitToolOutputs;
+	submit_tool_outputs: {
+		tool_calls: Tool[];
+	};
 }
 
 export interface RunStatusResponse {

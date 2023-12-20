@@ -38,7 +38,7 @@ const SelectPackageManager = () => {
 
 	return (
 		<PageContainer>
-			<Header title="mansa" />
+			<Header />
 			<ScrollContainer>
 				<SectionContainer>
 					<Text color={Colors.White}>

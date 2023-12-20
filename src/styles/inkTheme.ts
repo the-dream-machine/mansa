@@ -31,6 +31,10 @@ export const inkTheme = extendTheme(defaultTheme, {
 
 					return {color};
 				},
+				highlightedText: (): TextProps => ({
+					bold: true,
+					color: Colors.LightGreen,
+				}),
 			},
 		},
 		MultiSelect: {
@@ -69,10 +73,7 @@ export const inkTheme = extendTheme(defaultTheme, {
 		TextInput: {
 			styles: {
 				// value: (): TextProps => ({
-				// 	color: Colors.White,
-				// }),
-				// placeholder: (): TextProps => ({
-				// 	color: Colors.DarkGray,
+				// 	color: Colors.LightBlue,
 				// }),
 			},
 		},

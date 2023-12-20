@@ -1,35 +1,21 @@
+export type ToolNames =
+	| 'find_file_by_path'
+	| 'read_file'
+	| 'create_file'
+	| 'edit_file'
+	| 'run_command'
+	| 'user_select'
+	| 'user_input';
+
 export interface ToolFunction {
-	name: string;
-	description: string;
-	parameters: Record<string, string>;
+	name: ToolNames;
+	arguments: string;
 }
 
 export interface Tool {
-	type: 'function';
-	function: ToolFunction;
-}
-
-export type ToolNames =
-	| 'get_repository_summary'
-	| 'find_file_by_path'
-	| 'find_file_by_description'
-	| 'read_file'
-	| 'create_file'
-	| 'edit_file';
-
-export interface RequiredActionFunctionToolCallFunction {
-	arguments: string;
-	name: ToolNames;
-}
-
-export interface RequiredActionFunctionToolCall {
 	id: string;
 	type: 'function';
-	function: RequiredActionFunctionToolCallFunction;
-}
-
-export interface SubmitToolOutputs {
-	tool_calls: RequiredActionFunctionToolCall[];
+	function: ToolFunction;
 }
 
 export interface ToolOutput {

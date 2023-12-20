@@ -8,6 +8,8 @@ interface Args {
 }
 
 export const submitToolOutputs = async ({run, toolOutputs}: Args) => {
+	console.log('🌱 # run:', run);
+	console.log('🌱 # toolOutputs:', toolOutputs);
 	const data = JSON.stringify({run, toolOutputs});
 	const config = {
 		method: 'POST',
