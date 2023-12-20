@@ -4,17 +4,17 @@ import React from 'react';
 import {useActor} from '@xstate/react';
 
 import {Spinner} from '@inkjs/ui';
-import {ToolsContext} from '../../ToolsProvider.js';
-import {type EditFileToolArguments} from '../../../types/ToolArguments.js';
-import {Colors} from '../../../styles/Colors.js';
-import {type MachineActor} from '../../../types/MachineActor.js';
-import {SectionContainer} from '../../SectionContainer.js';
+import {ToolsContext} from '../ToolsProvider.js';
+import {type EditFileToolArguments} from '../../types/ToolArguments.js';
+import {Colors} from '../../styles/Colors.js';
+import {type MachineActor} from '../../types/MachineActor.js';
+import {SectionContainer} from '../SectionContainer.js';
 import {
 	EditFileToolEvent,
 	type EditFileToolMachineContext,
 	type EditFileToolMachineEvent,
 	type EditFileToolMachineState,
-} from '../../../machines/tools/editFileToolMachine.js';
+} from '../../machines/tools/editFileToolMachine.js';
 
 interface Props {
 	id: string;
@@ -22,7 +22,9 @@ interface Props {
 
 export const EditFileTool = ({id}: Props) => {
 	const [toolMachineState] = ToolsContext.useActor();
-	const tool = toolMachineState.context.tools.find(tool => tool.id === id);
+	const tools = toolMachineState.context.tools;
+	const tool = tools.find(tool => tool.id === id);
+	const toolIndex = tools.findIndex(tool => tool.id === id);
 	const toolActor = toolMachineState.context.toolRefs[id];
 
 	const toolArguments = tool?.arguments as EditFileToolArguments;
@@ -53,8 +55,10 @@ export const EditFileTool = ({id}: Props) => {
 
 	return (
 		<SectionContainer showDivider>
-			<Text color={Colors.White}>{title}</Text>
-			<Text color={Colors.LightGray}>{description}</Text>
+			<Box flexDirection="column" gap={1}>
+				<Text color={Colors.White}>{title}</Text>
+				<Text color={Colors.LightGray}>{description}</Text>
+			</Box>
 
 			{/* Code Block */}
 			<Box

@@ -4,17 +4,17 @@ import React from 'react';
 import {useActor} from '@xstate/react';
 
 import {type Option, Select} from '@inkjs/ui';
-import {ToolsContext} from '../../ToolsProvider.js';
-import {type UserSelectToolArguments} from '../../../types/ToolArguments.js';
-import {Colors} from '../../../styles/Colors.js';
-import {type MachineActor} from '../../../types/MachineActor.js';
-import {SectionContainer} from '../../SectionContainer.js';
+import {ToolsContext} from '../ToolsProvider.js';
+import {type UserSelectToolArguments} from '../../types/ToolArguments.js';
+import {Colors} from '../../styles/Colors.js';
+import {type MachineActor} from '../../types/MachineActor.js';
+import {SectionContainer} from '../SectionContainer.js';
 import {
 	type UserSelectToolMachineContext,
 	type UserSelectToolMachineEvent,
 	type UserSelectToolMachineState,
 	UserSelectToolEvent,
-} from '../../../machines/tools/userSelectToolMachine.js';
+} from '../../machines/tools/userSelectToolMachine.js';
 
 interface Props {
 	id: string;
@@ -42,7 +42,6 @@ export const UserSelectTool = ({id}: Props) => {
 
 	const contextOptions = state.context.options;
 	const selectedOption = state.context.selectedOption;
-	console.log('🌱 # selectedOption:', selectedOption);
 	const options: Option[] = contextOptions.map(contextOption => ({
 		label: contextOption,
 		value: contextOption,

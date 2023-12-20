@@ -5,7 +5,8 @@ export type ToolNames =
 	| 'edit_file'
 	| 'run_command'
 	| 'user_select'
-	| 'user_input';
+	| 'user_input'
+	| 'user_action';
 
 export interface ToolFunction {
 	name: ToolNames;

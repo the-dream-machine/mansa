@@ -1,20 +1,20 @@
-import {Box, Text, Spacer} from 'ink';
+import {Box, Text} from 'ink';
 import React, {Fragment} from 'react';
 import {ToolsContext} from '../ToolsProvider.js';
 import {Header} from '../Header.js';
 import {PageContainer} from '../PageContainer.js';
 import {ToolState} from '../../types/ToolMachine.js';
-import {Footer} from '../Footer.js';
-import {RunCommandTool} from './tools/RunCommandTool.js';
-import {UserInputTool} from './tools/UserInputTool.js';
-import {CreateFileTool} from './tools/CreateFileTool.js';
-import {EditFileTool} from './tools/EditFileTool.js';
-import {UserSelectTool} from './tools/UserSelectTool.js';
-import {ReadFileTool} from './tools/ReadFileTool.js';
-import {FindFileByPathTool} from './tools/FindFileByPathTool.js';
+import {RunCommandTool} from '../tools/RunCommandTool.js';
+import {UserInputTool} from '../tools/UserInputTool.js';
+import {CreateFileTool} from '../tools/CreateFileTool.js';
+import {EditFileTool} from '../tools/EditFileTool.js';
+import {UserSelectTool} from '../tools/UserSelectTool.js';
+import {ReadFileTool} from '../tools/ReadFileTool.js';
+import {FindFileByPathTool} from '../tools/FindFileByPathTool.js';
 import {SendCommand} from './SendCommand.js';
 import {Spinner} from '@inkjs/ui';
 import {Colors} from '../../styles/Colors.js';
+import {UserActionTool} from '../tools/UserActionTool.js';
 
 export const Tools = () => {
 	const [state] = ToolsContext.useActor();
@@ -48,8 +48,10 @@ export const Tools = () => {
 					{tool.name === 'run_command' && <RunCommandTool id={tool.id} />}
 					{tool.name === 'user_input' && <UserInputTool id={tool.id} />}
 					{tool.name === 'user_select' && <UserSelectTool id={tool.id} />}
+					{tool.name === 'user_action' && <UserActionTool id={tool.id} />}
 				</Fragment>
 			))}
+
 			{state.matches(ToolState.PROCESSING_ACTIVE_TOOL) && activeTool && (
 				<>
 					{activeTool.name === 'find_file_by_path' && (
@@ -73,24 +75,28 @@ export const Tools = () => {
 					{activeTool.name === 'user_select' && (
 						<UserSelectTool id={activeTool.id} />
 					)}
+					{activeTool.name === 'user_action' && (
+						<UserActionTool id={activeTool.id} />
+					)}
 				</>
 			)}
 
-			{/* eslint-disable-next-line @typescript-eslint/ban-ts-comment */}
-			{/* @ts-ignore */}
-			<Text>State: {state.value}</Text>
 			{isLoading && (
-				<Box gap={1}>
+				<Box gap={1} marginY={1} paddingX={3}>
 					<Spinner />
 					<Text>Loading next step</Text>
 				</Box>
 			)}
 			{isError && (
-				<Box gap={1}>
-					<Text color={Colors.LightRed}>•</Text>
-					<Text>Error {errorMessage}</Text>
+				<Box gap={1} marginY={1} paddingX={3}>
+					<Text color={Colors.LightGray}>
+						<Text color={Colors.LightRed}>Error: </Text>Error {errorMessage}
+					</Text>
 				</Box>
 			)}
+			{/* eslint-disable-next-line @typescript-eslint/ban-ts-comment */}
+			{/* @ts-ignore */}
+			{/* <Text>State: {state.value}</Text> */}
 		</PageContainer>
 	);
 };

@@ -2,17 +2,17 @@ import {Box, Text, useApp, useInput} from 'ink';
 import React from 'react';
 import {useActor} from '@xstate/react';
 
-import {ToolsContext} from '../../ToolsProvider.js';
-import {type ReadFileToolArguments} from '../../../types/ToolArguments.js';
-import {Colors} from '../../../styles/Colors.js';
-import {type MachineActor} from '../../../types/MachineActor.js';
-import {SectionContainer} from '../../SectionContainer.js';
+import {ToolsContext} from '../ToolsProvider.js';
+import {type ReadFileToolArguments} from '../../types/ToolArguments.js';
+import {Colors} from '../../styles/Colors.js';
+import {type MachineActor} from '../../types/MachineActor.js';
+import {SectionContainer} from '../SectionContainer.js';
 import {
 	ReadFileToolEvent,
 	type ReadFileToolMachineContext,
 	type ReadFileToolMachineEvent,
 	type ReadFileToolMachineState,
-} from '../../../machines/tools/readFileToolMachine.js';
+} from '../../machines/tools/readFileToolMachine.js';
 import {Spinner} from '@inkjs/ui';
 
 interface Props {

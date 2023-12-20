@@ -7,6 +7,7 @@ import {getQueryStatus} from '../utils/api/getQueryStatus.js';
 import {getQueryResult} from '../utils/api/getQueryResult.js';
 import {sendAssistantCommand} from '../utils/api/sendAssistantCommand.js';
 import {ToolEvent} from '../types/ToolMachine.js';
+import {getRepositoryDetails} from '../utils/repository/getRepositoryDetails.js';
 
 // Context
 export interface SendCommandMachineContext {
@@ -100,9 +101,10 @@ export const sendCommandMachine = createMachine<
 				],
 				invoke: {
 					src: async context => {
-						const repositorySummary =
-							"This is a Node.js project using Next.js framework and several libraries including Prisma for database interaction, React and React-DOM for UI, React Query for data fetching, TRPC for server and client communication, SuperJSON for serialization, Zod for data validation, and TypeScript for static typing. The repository uses the 'bun' package manager.";
-						if (!repositorySummary) {
+						const repositoryDetails = await getRepositoryDetails();
+
+						// "This is a Node.js project using Next.js framework and several libraries including Prisma for database interaction, React and React-DOM for UI, React Query for data fetching, TRPC for server and client communication, SuperJSON for serialization, Zod for data validation, and TypeScript for static typing. The repository uses the 'bun' package manager.";
+						if (!repositoryDetails) {
 							throw new Error('Repository summary not found.');
 						}
 
@@ -110,7 +112,10 @@ export const sendCommandMachine = createMachine<
 						return await sendRetrievalCommand({
 							commandName: context.libraryCommand,
 							libraryName: context.libraryName,
-							repositorySummary,
+							repositorySummary: JSON.stringify({
+								dependencies: repositoryDetails.dependencies,
+								devDependencies: repositoryDetails.devDependencies,
+							}),
 							packageManager,
 						});
 					},

@@ -6,7 +6,7 @@ interface Props {
 }
 
 export const PageContainer = ({children}: Props) => (
-	<Box flexDirection="column" width="100%" height="100%">
+	<Box flexDirection="column" width="100%">
 		{children}
 	</Box>
 );

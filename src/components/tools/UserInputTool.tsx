@@ -1,19 +1,18 @@
 import {Box, Text, useApp, useInput} from 'ink';
 import React from 'react';
-import {ToolsContext} from '../../ToolsProvider.js';
-import {type UserInputTooArguments} from '../../../types/ToolArguments.js';
+import {ToolsContext} from '../ToolsProvider.js';
+import {type UserInputTooArguments} from '../../types/ToolArguments.js';
 import {useActor} from '@xstate/react';
-import {type MachineActor} from '../../../types/MachineActor.js';
+import {type MachineActor} from '../../types/MachineActor.js';
 import {
 	UserInputToolEvent,
 	type UserInputToolMachineContext,
 	type UserInputToolMachineEvent,
 	type UserInputToolMachineState,
-} from '../../../machines/tools/userInputToolMachine.js';
-import {SectionContainer} from '../../SectionContainer.js';
+} from '../../machines/tools/userInputToolMachine.js';
+import {SectionContainer} from '../SectionContainer.js';
 import {TextInput} from '@inkjs/ui';
-import {Colors} from '../../../styles/Colors.js';
-import figureSet from 'figures';
+import {Colors} from '../../styles/Colors.js';
 
 interface Props {
 	id: string;
@@ -23,6 +22,7 @@ export const UserInputTool = ({id}: Props) => {
 	const [toolMachineState] = ToolsContext.useActor();
 	const tools = toolMachineState.context.tools;
 	const tool = tools.find(tool => tool.id === id);
+	const toolIndex = tools.findIndex(tool => tool.id === id);
 	const toolActor = toolMachineState.context.toolRefs[id];
 
 	const toolArguments = tool?.arguments as UserInputTooArguments;
@@ -77,6 +77,7 @@ export const UserInputTool = ({id}: Props) => {
 						/>
 					</Box>
 				</Box>
+
 				{!isSubmitted && (
 					<Box marginLeft={1}>
 						<Text color={Colors.LightGray}>

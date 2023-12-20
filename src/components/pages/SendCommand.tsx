@@ -27,7 +27,6 @@ export const SendCommand = () => {
 	const isMachineActive = !state.done;
 	const statusLabel = state.context.statusLabel;
 	const enterLabel = state.context.enterLabel;
-	const enterDisabled = state.context.enterDisabled;
 	const isLoading = state.context.isLoading;
 	const isSuccess = state.context.isSuccess;
 	const isError = state.context.isError;
@@ -72,9 +71,8 @@ export const SendCommand = () => {
 				<>
 					{(isSuccess || isError) && (
 						<Box marginLeft={1}>
-							<Text color={Colors.DarkGray}>
-								Press <Text color={Colors.LightGray}>enter</Text> to{' '}
-								{enterLabel}
+							<Text color={Colors.LightGray}>
+								Press <Text color={Colors.White}>enter</Text> to {enterLabel}
 							</Text>
 						</Box>
 					)}

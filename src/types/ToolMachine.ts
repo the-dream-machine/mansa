@@ -3,7 +3,7 @@ import {type ActorRef} from 'xstate';
 import {type Run} from './Run.js';
 import {type ToolNames, type Tool, type ToolOutput} from '../types/Tool.js';
 import {type Library} from './Library.js';
-import {type ToolArguments} from './ToolArguments.js';
+import {UserActionToolArguments, type ToolArguments} from './ToolArguments.js';
 import {type RunCommandToolMachineEvent} from '../machines/tools/runCommandToolMachine.js';
 import {type SendCommandMachineEvent} from '../machines/sendCommandMachine.js';
 import {type CreateFileToolMachineEvent} from '../machines/tools/createFileToolMachine.js';
@@ -12,6 +12,7 @@ import {type UserSelectToolMachineEvent} from '../machines/tools/userSelectToolM
 import {type ReadFileToolMachineEvent} from '../machines/tools/readFileToolMachine.js';
 import {type FindFileByPathToolMachineEvent} from '../machines/tools/findFileByPathToolMachine.js';
 import {type UserInputToolMachineEvent} from '../machines/tools/userInputToolMachine.js';
+import {UserActionToolMachineEvent} from '../machines/tools/userActionToolMachine.js';
 
 export type ToolActorRef = ActorRef<RunCommandToolMachineEvent>;
 
@@ -34,7 +35,8 @@ export interface ToolRefs {
 		| ActorRef<EditFileToolMachineEvent>
 		| ActorRef<RunCommandToolMachineEvent>
 		| ActorRef<UserSelectToolMachineEvent>
-		| ActorRef<UserInputToolMachineEvent>;
+		| ActorRef<UserInputToolMachineEvent>
+		| ActorRef<UserActionToolMachineEvent>;
 }
 
 // Context

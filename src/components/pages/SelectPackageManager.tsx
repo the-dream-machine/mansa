@@ -42,8 +42,7 @@ const SelectPackageManager = () => {
 			<ScrollContainer>
 				<SectionContainer>
 					<Text color={Colors.White}>
-						Set up mansa
-						<Text color={Colors.DarkGray}>(Step 1 of 2)</Text>
+						Set up mansa <Text color={Colors.DarkGray}>(Step 1 of 2)</Text>
 					</Text>
 					<Text color={Colors.LightGray}>
 						Which package manager are you using for this project?

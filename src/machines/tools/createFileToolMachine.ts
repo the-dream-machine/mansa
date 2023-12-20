@@ -5,7 +5,6 @@ import {highlightAsync} from '../../utils/highlightAsync.js';
 import loadLanguages from 'prismjs/components/index.js';
 import {writeToFile} from '../../utils/writeToFile.js';
 import {sendParent} from 'xstate/lib/actions.js';
-import {sleep} from 'zx';
 
 import {ToolEvent} from '../../types/ToolMachine.js';
 
@@ -19,7 +18,6 @@ export interface CreateFileToolMachineContext {
 	highlightedFileContent?: string;
 
 	enterLabel: string;
-	isLoading: boolean;
 	isSuccess: boolean;
 	isSubmitted: boolean;
 	isError: boolean;
@@ -36,7 +34,6 @@ export const initialCreateFileToolMachineContext: CreateFileToolMachineContext =
 		highlightedFileContent: '',
 
 		enterLabel: 'create file',
-		isLoading: false,
 		isSuccess: false,
 		isSubmitted: false,
 		isError: false,
@@ -110,10 +107,11 @@ export const createFileToolMachine = createMachine<
 	states: {
 		[CreateFileToolState.FORMATTING_FILE_CONTENT]: {
 			invoke: {
-				src: async context =>
+				src: async context => {
 					await prettier.format(context.fileContent ?? '', {
 						filepath: context.filePath,
-					}),
+					});
+				},
 				onDone: {
 					target: CreateFileToolState.HIGHLIGHTING_FILE_CONTENT,
 					actions: [
@@ -187,20 +185,17 @@ export const createFileToolMachine = createMachine<
 			},
 		},
 		[CreateFileToolState.CREATING_FILE]: {
-			entry: [assign({isLoading: true, showSuccessSection: true})],
+			entry: [assign({showSuccessSection: true})],
 			invoke: {
-				src: async context => {
-					await sleep(2000);
-					return await writeToFile({
+				src: async context =>
+					await writeToFile({
 						filePath: context?.filePath ?? '',
 						fileContent: context?.formattedFileContent ?? '',
-					});
-				},
+					}),
 				onDone: {
 					target: CreateFileToolState.SUCCESS_IDLE,
 				},
 			},
-			exit: [assign({isLoading: false})],
 		},
 		[CreateFileToolState.SUCCESS_IDLE]: {
 			entry: [

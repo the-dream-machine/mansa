@@ -193,12 +193,6 @@ export const runCommandToolMachine = createMachine<
 					}),
 				},
 			},
-			exit: [
-				assign({
-					isSuccess: initialRunCommandToolMachineContext.isSuccess,
-					enterLabel: initialRunCommandToolMachineContext.enterLabel,
-				}),
-			],
 		},
 		[RunCommandToolState.ERROR_IDLE]: {
 			entry: [assign({isError: true, enterLabel: 'retry'})],

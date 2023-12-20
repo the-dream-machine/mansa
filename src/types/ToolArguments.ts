@@ -46,6 +46,12 @@ export interface UserExplainToolArguments {
 	explanation: string;
 }
 
+export interface UserActionToolArguments {
+	title: string;
+	instructions: string;
+	action_item: string;
+}
+
 export type ToolArguments =
 	| FindFileByPathToolArguments
 	| ReadFileToolArguments
@@ -54,4 +60,5 @@ export type ToolArguments =
 	| RunCommandToolArguments
 	| UserSelectToolArguments
 	| UserInputTooArguments
-	| UserExplainToolArguments;
+	| UserExplainToolArguments
+	| UserActionToolArguments;

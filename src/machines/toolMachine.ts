@@ -24,6 +24,7 @@ import {
 	type ReadFileToolArguments,
 	type FindFileByPathToolArguments,
 	type UserInputTooArguments,
+	UserActionToolArguments,
 } from '../types/ToolArguments.js';
 import {
 	createFileToolMachine,
@@ -57,6 +58,10 @@ import {
 	initialUserSelectToolMachineContext,
 	userSelectToolMachine,
 } from './tools/userSelectToolMachine.js';
+import {
+	initialUserActionToolContext,
+	userActionToolMachine,
+} from './tools/userActionToolMachine.js';
 
 // Context
 export const initialToolMachineContext: ToolMachineContext = {
@@ -67,145 +72,22 @@ export const initialToolMachineContext: ToolMachineContext = {
 	showSendCommand: false,
 	sendCommandActorRef: undefined,
 
-	// run: {
-	// 	run_id: 'run_BVvq4e0tye7VuQgUvRLZruzG',
-	// 	thread_id: 'thread_6DylXOW0sBIObr7Fe2vOU4qs',
-	// },
-
 	run: undefined,
-	tools: [],
-	// tools: [
-	// {
-	// 	id: 'call_Rf0OjdJIhskTFyF4kcvV2SPv',
-	// 	name: 'run_command',
-	// 	type: 'function',
-	// 	status: 'pending',
-	// 	arguments: {
-	// 		title: 'Installing Required Packages',
-	// 		description:
-	// 			'Choose the appropriate package manager and execute the command within your Next.js project directory.',
-	// 		command: 'npm install @trigger.dev/sdk @trigger.dev/nextjs',
-	// 	},
-	// },
-	//  {
-	//   id: "call_Rf0OjdJIhskTFyF4kcvV2SPv",
-	//   type: "function",
-	//   function: {
-	//     name: "run_command",
-	//     arguments: "{\"title\":\"Installing Required Packages\",\"description\":\"Choose the appropriate package manager and execute the command within your Next.js project directory.\",\"command\":\"npm install @trigger.dev/sdk @trigger.dev/nextjs\"}"
-	//   }
-	// }
-	// {
-	// 	id: 'call_qN1AlqnExfp8dUZISsx4VSi5',
-	// 	name: 'read_file',
-	// 	type: 'function',
-	// 	status: 'pending',
-	// 	arguments: {
-	// 		reason: 'Checking dependencies',
-	// 		file_path: './package.json',
-	// 	},
-	// },
-	// {
-	// 	id: 'call_q324n1lk2e12klmfewExfp8dUZISsxfewfwe',
-	// 	name: 'user_select',
-	// 	type: 'function',
-	// 	status: 'pending',
-	// 	arguments: {
-	// 		title: 'Select Package Manager',
-	// 		question:
-	// 			'Which package manager do you want to use for installing the required packages in your Next.js project?',
-	// 		options: ['npm', 'pnpm', 'yarn', 'bun'],
-	// 	},
-	// },
-	// 	{
-	// 		id: 'call_nfjkewbfiuen23o43209uvfdsno',
-	// 		name: 'find_file_by_path',
-	// 		type: 'function',
-	// 		status: 'pending',
-	// 		arguments: {
-	// 			file_path: './env.local',
-	// 		},
-	// 	},
-	// 	{
-	// 		id: 'call_r32krldmfcewnfioepwjfmeklm12',
-	// 		name: 'user_input',
-	// 		type: 'function',
-	// 		status: 'pending',
-	// 		arguments: {
-	// 			title: 'Name',
-	// 			question: 'What is your first name?',
-	// 			placeholder: 'James',
-	// 		},
-	// 	},
-	// 	// {
-	// 	// 	id: 'call_6TAdGAVYnMQmTTkpeEERNOVg',
-	// 	// 	name: 'create_file',
-	// 	// 	type: 'function',
-	// 	// 	status: 'pending',
-	// 	// 	arguments: {
-	// 	// 		title: 'Create an example job',
-	// 	// 		description: 'This is an example job.',
-	// 	// 		file_path: './src/Jobs/example.ts',
-	// 	// 		file_extension: 'ts',
-	// 	// 		file_content:
-	// 	// 			'import { eventTrigger } from "@trigger.dev/sdk"\nimport { client } from "@/trigger" // Replace "@/trigger" with the relative path to your Trigger Client configuration file\n\nclient.defineJob({\n  id: "example-job",\n  name: "Example Job",\n  version: "0.0.1",\n  trigger: eventTrigger({\n    name: "example.event",\n  }),\n  run: async (payload, io, ctx) => {\n    await io.logger.info("Hello world!", { payload })\n\n    return {\n      message: "Hello world!",\n    }\n  },\n})',
-	// 	// 	},
-	// 	// },
-	// 	// 		{
-	// 	// 			id: 'call_cJGsZ9M4X6jOZPw28BOnhO7T',
-	// 	// 			name: 'edit_file',
-	// 	// 			type: 'function',
-	// 	// 			status: 'pending',
-	// 	// 			arguments: {
-	// 	// 				file_path: './package.json',
-	// 	// 				file_extension: 'json',
-	// 	// 				file_content: `{
-	// 	//   "name": "ragdoll",
-	// 	//   "version": "0.1.0",
-	// 	//   "private": true,
-	// 	//   "scripts": {
-	// 	//     "build": "next build",
-	// 	//     "db:push": "prisma db push",
-	// 	//     "db:studio": "prisma studio",
-	// 	//     "dev": "next dev",
-	// 	//     "postinstall": "prisma generate",
-	// 	//     "lint": "next lint",
-	// 	//     "start": "next start"
-	// 	//   },
-	// 	//   "dependencies": {
-	// 	//     "@prisma/client": "^5.1.1",
-	// 	//     "@t3-oss/env-nextjs": "^0.7.0",
-	// 	//     "@tanstack/react-query": "^4.32.6",
-	// 	//     "@trpc/client": "^10.37.1",
-	// 	//     "@trpc/next": "^10.37.1",
-	// 	//     "@trpc/react-query": "^10.37.1",
-	// 	//     "@trpc/server": "^10.37.1",
-	// 	//     "next": "^13.5.4",
-	// 	//     "react": "18.2.0",
-	// 	//     "react-dom": "18.2.0",
-	// 	//     "superjson": "^1.13.1",
-	// 	//     "zod": "^3.22.4"
-	// 	//   },
-	// 	//   "devDependencies": {
-	// 	//     "@types/eslint": "^8.44.2",
-	// 	//     "@types/node": "^18.16.0",
-	// 	//     "@types/react": "^18.2.20",
-	// 	//     "@types/react-dom": "^18.2.7",
-	// 	//     "@typescript-eslint/eslint-plugin": "^6.3.0",
-	// 	//     "@typescript-eslint/parser": "^6.3.0",
-	// 	//     "eslint": "^8.47.0",
-	// 	//     "eslint-config-next": "^13.5.4",
-	// 	//     "prisma": "^5.1.1",
-	// 	//     "typescript": "^5.1.6"
-	// 	//   },
-	// 	//   "ct3aMetadata": {
-	// 	//     "initVersion": "7.22.0"
-	// 	//   },
-	// 	//   "triggerEndpoint": "https://api.trigger.dev"
-	// 	// }`,
-	// 	// 			},
-	// 	// 		},
-	// ],
+	tools: [
+		{
+			id: 'call_2pEWVQAWIrkz7zqpHMygZ5Vv',
+			type: 'function',
+			name: 'user_action',
+			status: 'pending',
+			arguments: {
+				title: 'Obtain development API key',
+				instructions:
+					'Log in to the [Trigger.dev dashboard](https://cloud.trigger.dev/) and select the project. Then, click on the Environments & API Keys tab to copy the development API Key (starting with `tr_dev_`)',
+				action_item: 'https://cloud.trigger.dev/',
+			},
+		},
+	],
+
 	toolRefs: {},
 	toolOutputs: [],
 
@@ -241,11 +123,9 @@ const activatePendingTool = async (
 		);
 
 		if (pendingTools[0]) {
-			console.log('Pending tool FOUND');
 			pendingTools[0].status = 'active';
 			resolve(context.tools);
 		} else {
-			console.log('Pending tool NOT FOUND');
 			throw new Error('No pending tools found');
 		}
 	});
@@ -261,7 +141,7 @@ export const toolMachine = createMachine<
 		predictableActionArguments: true,
 		preserveActionOrder: true,
 		context: initialToolMachineContext,
-		initial: ToolState.FETCHING_LIBRARY,
+		initial: ToolState.ACTIVATING_PENDING_TOOL,
 		states: {
 			[ToolState.FETCHING_LIBRARY]: {
 				invoke: {
@@ -410,11 +290,14 @@ export const toolMachine = createMachine<
 									const activeToolArguments =
 										activeTool.arguments as CreateFileToolArguments;
 
+									const fileExtension = activeToolArguments.file_extension
+										? activeToolArguments.file_extension
+										: 'ts';
 									const activeToolRef = spawn(
 										createFileToolMachine.withContext({
 											...initialCreateFileToolMachineContext,
 											filePath: activeToolArguments.file_path,
-											fileExtension: activeToolArguments.file_extension,
+											fileExtension,
 											fileContent: activeToolArguments.file_content,
 										}),
 									);
@@ -552,6 +435,31 @@ export const toolMachine = createMachine<
 						],
 						target: ToolState.PROCESSING_ACTIVE_TOOL,
 					},
+					{
+						cond: context => getActiveTool(context)?.name === 'user_action',
+						actions: [
+							assign({
+								toolRefs: context => {
+									const activeTool = getActiveTool(context);
+									if (!activeTool) {
+										throw new Error('Active tool not found');
+									}
+									const activeToolArguments =
+										activeTool.arguments as UserActionToolArguments;
+
+									const activeToolRef = spawn(
+										userActionToolMachine.withContext({
+											...initialUserActionToolContext,
+											actionItem: activeToolArguments.action_item,
+										}),
+									);
+
+									return {...context.toolRefs, [activeTool.id]: activeToolRef};
+								},
+							}),
+						],
+						target: ToolState.PROCESSING_ACTIVE_TOOL,
+					},
 				],
 			},
 			[ToolState.PROCESSING_ACTIVE_TOOL]: {
@@ -560,7 +468,6 @@ export const toolMachine = createMachine<
 						actions: [
 							assign({
 								toolOutputs: (context, event) => {
-									console.log('🌱 # event:', event);
 									const activeTool = getActiveTool(context);
 									if (!activeTool) {
 										throw new Error('active tool not found');
@@ -587,6 +494,7 @@ export const toolMachine = createMachine<
 				},
 			},
 			[ToolState.SUBMITTING_TOOL_OUTPUTS]: {
+				entry: [assign({isLoading: true})],
 				invoke: {
 					src: async context => {
 						const {run, toolOutputs} = context;
@@ -604,6 +512,7 @@ export const toolMachine = createMachine<
 						actions: [ToolAction.SET_ERROR_MESSAGE],
 					},
 				},
+				exit: [assign({isLoading: false})],
 			},
 			[ToolState.SUCCESS_IDLE]: {},
 			[ToolState.ERROR_IDLE]: {

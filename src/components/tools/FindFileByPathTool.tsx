@@ -2,17 +2,17 @@ import {Box, Text, useApp, useInput} from 'ink';
 import React from 'react';
 import {useActor} from '@xstate/react';
 
-import {Colors} from '../../../styles/Colors.js';
-import {SectionContainer} from '../../SectionContainer.js';
+import {Colors} from '../../styles/Colors.js';
+import {SectionContainer} from '../SectionContainer.js';
 
-import {ToolsContext} from '../../ToolsProvider.js';
-import {type FindFileByPathToolArguments} from '../../../types/ToolArguments.js';
-import {type MachineActor} from '../../../types/MachineActor.js';
+import {ToolsContext} from '../ToolsProvider.js';
+import {type FindFileByPathToolArguments} from '../../types/ToolArguments.js';
+import {type MachineActor} from '../../types/MachineActor.js';
 import {
 	type FindFileByPathToolMachineContext,
 	type FindFileByPathToolMachineEvent,
 	type FindFileByPathToolMachineState,
-} from '../../../machines/tools/findFileByPathToolMachine.js';
+} from '../../machines/tools/findFileByPathToolMachine.js';
 
 interface Props {
 	id: string;
