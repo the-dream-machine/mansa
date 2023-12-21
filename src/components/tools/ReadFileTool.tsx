@@ -21,6 +21,7 @@ interface Props {
 
 export const ReadFileTool = ({id}: Props) => {
 	const [toolMachineState] = ToolsContext.useActor();
+	const showChat = toolMachineState.context.showChat;
 	const tools = toolMachineState.context.tools;
 	const tool = tools.find(tool => tool.id === id);
 	const toolIndex = tools.findIndex(tool => tool.id === id);
@@ -48,7 +49,7 @@ export const ReadFileTool = ({id}: Props) => {
 		if (key.escape && isMachineActive) {
 			exit();
 		}
-		if (key.return && isMachineActive) {
+		if (key.return && !showChat && isMachineActive) {
 			send(ReadFileToolEvent.ENTER_KEY_PRESS);
 		}
 	});

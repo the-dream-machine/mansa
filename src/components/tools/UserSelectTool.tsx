@@ -22,6 +22,7 @@ interface Props {
 
 export const UserSelectTool = ({id}: Props) => {
 	const [toolMachineState] = ToolsContext.useActor();
+	const showChat = toolMachineState.context.showChat;
 	const tools = toolMachineState.context.tools;
 	const tool = tools.find(tool => tool.id === id);
 	const toolIndex = tools.findIndex(tool => tool.id === id);
@@ -64,7 +65,7 @@ export const UserSelectTool = ({id}: Props) => {
 					<Select
 						options={options}
 						highlightText={selectedOption}
-						isDisabled={!isMachineActive}
+						isDisabled={!isMachineActive || !showChat}
 						onChange={option =>
 							send({type: UserSelectToolEvent.SELECT_OPTION, option})
 						}
@@ -72,9 +73,9 @@ export const UserSelectTool = ({id}: Props) => {
 				</Box>
 			</Box>
 
-			{isMachineActive && (
-				<Text color={Colors.DarkGray}>
-					Press <Text color={Colors.LightGray}>enter</Text> to select an option.
+			{isMachineActive && !showChat && (
+				<Text color={Colors.LightGray}>
+					Press <Text color={Colors.White}>enter</Text> to select an option.
 				</Text>
 			)}
 		</SectionContainer>

@@ -22,6 +22,7 @@ interface Props {
 
 export const RunCommandTool = ({id}: Props) => {
 	const [toolMachineState] = ToolsContext.useActor();
+	const showChat = toolMachineState.context.showChat;
 	const tool = toolMachineState.context.tools.find(tool => tool.id === id);
 	const toolActor = toolMachineState.context.toolRefs[id];
 
@@ -52,7 +53,7 @@ export const RunCommandTool = ({id}: Props) => {
 		if (key.escape && isMachineActive) {
 			exit();
 		}
-		if (key.return && isMachineActive) {
+		if (key.return && !showChat && isMachineActive) {
 			send(RunCommandToolEvent.ENTER_KEY_PRESS);
 		}
 	});
@@ -74,8 +75,8 @@ export const RunCommandTool = ({id}: Props) => {
 				</Box>
 			</Box>
 
-			{!showLogsSection && (
-				<Box marginTop={0}>
+			{!showLogsSection && !showChat && (
+				<Box>
 					<Text color={Colors.LightGray}>
 						Press <Text color={Colors.White}>enter</Text> to run the command.
 					</Text>

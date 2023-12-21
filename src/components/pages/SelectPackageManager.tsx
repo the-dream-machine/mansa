@@ -65,7 +65,7 @@ const SelectPackageManager = () => {
 			</ScrollContainer>
 
 			<Spacer />
-			<Footer controls={['esc', 'enter', 'up', 'down']} />
+			<Footer controls={['esc']} />
 		</PageContainer>
 	);
 };

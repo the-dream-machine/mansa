@@ -1,10 +1,7 @@
 import {Box, Text, useApp, useInput} from 'ink';
 import React from 'react';
 import {useActor} from '@xstate/react';
-
 import {Colors} from '../../styles/Colors.js';
-import {SectionContainer} from '../SectionContainer.js';
-
 import {ToolsContext} from '../ToolsProvider.js';
 import {type FindFileByPathToolArguments} from '../../types/ToolArguments.js';
 import {type MachineActor} from '../../types/MachineActor.js';

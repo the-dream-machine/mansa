@@ -33,7 +33,7 @@ export const StepsComplete = () => {
 				</SectionContainer>
 			</ScrollContainer>
 			<Spacer />
-			<Footer enterLabel="exit" controls={['up', 'down', 'esc', 'enter']} />
+			<Footer enterLabel="exit" controls={['esc']} />
 		</PageContainer>
 	);
 };

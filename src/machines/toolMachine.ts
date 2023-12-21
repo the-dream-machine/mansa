@@ -24,7 +24,7 @@ import {
 	type ReadFileToolArguments,
 	type FindFileByPathToolArguments,
 	type UserInputTooArguments,
-	UserActionToolArguments,
+	type UserActionToolArguments,
 } from '../types/ToolArguments.js';
 import {
 	createFileToolMachine,
@@ -73,32 +73,15 @@ export const initialToolMachineContext: ToolMachineContext = {
 	sendCommandActorRef: undefined,
 
 	run: undefined,
-	tools: [
-		{
-			id: 'call_2pEWVQAWIrkz7zqpHMygZ5Vv',
-			type: 'function',
-			name: 'user_action',
-			status: 'pending',
-			arguments: {
-				title: 'Obtain development API key',
-				instructions:
-					'Log in to the [Trigger.dev dashboard](https://cloud.trigger.dev/) and select the project. Then, click on the Environments & API Keys tab to copy the development API Key (starting with `tr_dev_`)',
-				action_item: 'https://cloud.trigger.dev/',
-			},
-		},
-	],
-
+	tools: [],
 	toolRefs: {},
 	toolOutputs: [],
 
+	showChat: false,
 	isLoading: false,
 	isError: false,
 	errorMessage: '',
 };
-
-// Guards
-const isPendingTools = (context: ToolMachineContext) =>
-	context.tools.some(tool => tool.status === 'pending');
 
 // Utils
 const getActiveTool = (context: ToolMachineContext) =>
@@ -464,6 +447,9 @@ export const toolMachine = createMachine<
 			},
 			[ToolState.PROCESSING_ACTIVE_TOOL]: {
 				on: {
+					[ToolEvent.TOGGLE_CHAT]: {
+						actions: assign({showChat: context => !context.showChat}),
+					},
 					[ToolEvent.SUBMIT_ACTIVE_TOOL_OUTPUT]: {
 						actions: [
 							assign({

@@ -1,9 +1,9 @@
-import {Box, Text} from 'ink';
+import {Box, Spacer, Text, useApp, useInput} from 'ink';
 import React, {Fragment} from 'react';
 import {ToolsContext} from '../ToolsProvider.js';
 import {Header} from '../Header.js';
 import {PageContainer} from '../PageContainer.js';
-import {ToolState} from '../../types/ToolMachine.js';
+import {ToolEvent, ToolState} from '../../types/ToolMachine.js';
 import {RunCommandTool} from '../tools/RunCommandTool.js';
 import {UserInputTool} from '../tools/UserInputTool.js';
 import {CreateFileTool} from '../tools/CreateFileTool.js';
@@ -15,18 +15,31 @@ import {SendCommand} from './SendCommand.js';
 import {Spinner} from '@inkjs/ui';
 import {Colors} from '../../styles/Colors.js';
 import {UserActionTool} from '../tools/UserActionTool.js';
+import {UserChat} from '../UserChat.js';
+import {Footer} from '../Footer.js';
 
 export const Tools = () => {
-	const [state] = ToolsContext.useActor();
+	const [state, send] = ToolsContext.useActor();
 
 	const library = state.context.library;
 	const showSendCommand = state.context.showSendCommand;
+	const showChat = state.context.showChat;
 	const isLoading = state.context.isLoading;
 	const isError = state.context.isError;
 	const errorMessage = state.context.errorMessage;
 	const tools = state.context.tools;
 	const completedTools = tools.filter(tool => tool.status === 'completed');
 	const activeTool = tools.filter(tool => tool.status === 'active')[0];
+
+	const {exit} = useApp();
+	useInput((_, key) => {
+		if (key.escape && isError) {
+			exit();
+		}
+		if (key.tab) {
+			send(ToolEvent.TOGGLE_CHAT);
+		}
+	});
 
 	return (
 		<PageContainer>
@@ -81,10 +94,12 @@ export const Tools = () => {
 				</>
 			)}
 
+			{showChat && <UserChat />}
+
 			{isLoading && (
 				<Box gap={1} marginY={1} paddingX={3}>
 					<Spinner />
-					<Text>Loading next step</Text>
+					<Text>Loading</Text>
 				</Box>
 			)}
 			{isError && (
@@ -94,9 +109,9 @@ export const Tools = () => {
 					</Text>
 				</Box>
 			)}
-			{/* eslint-disable-next-line @typescript-eslint/ban-ts-comment */}
-			{/* @ts-ignore */}
-			{/* <Text>State: {state.value}</Text> */}
+
+			<Spacer />
+			<Footer controls={['esc', 'tab']} />
 		</PageContainer>
 	);
 };

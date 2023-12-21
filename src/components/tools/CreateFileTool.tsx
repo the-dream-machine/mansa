@@ -22,6 +22,7 @@ interface Props {
 export const CreateFileTool = ({id}: Props) => {
 	const [toolMachineState] = ToolsContext.useActor();
 	const tools = toolMachineState.context.tools;
+	const showChat = toolMachineState.context.showChat;
 	const tool = tools.find(tool => tool.id === id);
 	const toolIndex = tools.findIndex(tool => tool.id === id);
 	const toolActor = toolMachineState.context.toolRefs[id];
@@ -48,7 +49,7 @@ export const CreateFileTool = ({id}: Props) => {
 		if (key.escape && isMachineActive) {
 			exit();
 		}
-		if (key.return && isMachineActive) {
+		if (key.return && !showChat && isMachineActive) {
 			send(CreateFileToolEvent.ENTER_KEY_PRESS);
 		}
 	});
@@ -79,7 +80,7 @@ export const CreateFileTool = ({id}: Props) => {
 			</Box>
 
 			{/* Press Enter Create File */}
-			{!isSuccess && (
+			{!isSuccess && !showChat && (
 				<Text color={Colors.LightGray}>
 					Press <Text color={Colors.White}>enter</Text> to create{' '}
 					<Text color={Colors.White} italic>

@@ -3,7 +3,7 @@ import {type ActorRef} from 'xstate';
 import {type Run} from './Run.js';
 import {type ToolNames, type Tool, type ToolOutput} from '../types/Tool.js';
 import {type Library} from './Library.js';
-import {UserActionToolArguments, type ToolArguments} from './ToolArguments.js';
+import {type ToolArguments} from './ToolArguments.js';
 import {type RunCommandToolMachineEvent} from '../machines/tools/runCommandToolMachine.js';
 import {type SendCommandMachineEvent} from '../machines/sendCommandMachine.js';
 import {type CreateFileToolMachineEvent} from '../machines/tools/createFileToolMachine.js';
@@ -12,7 +12,7 @@ import {type UserSelectToolMachineEvent} from '../machines/tools/userSelectToolM
 import {type ReadFileToolMachineEvent} from '../machines/tools/readFileToolMachine.js';
 import {type FindFileByPathToolMachineEvent} from '../machines/tools/findFileByPathToolMachine.js';
 import {type UserInputToolMachineEvent} from '../machines/tools/userInputToolMachine.js';
-import {UserActionToolMachineEvent} from '../machines/tools/userActionToolMachine.js';
+import {type UserActionToolMachineEvent} from '../machines/tools/userActionToolMachine.js';
 
 export type ToolActorRef = ActorRef<RunCommandToolMachineEvent>;
 
@@ -53,6 +53,7 @@ export interface ToolMachineContext {
 	toolRefs: ToolRefs;
 	toolOutputs: ToolOutput[];
 
+	showChat: boolean;
 	isLoading: boolean;
 	isError: boolean;
 	errorMessage: string;
@@ -121,6 +122,7 @@ export type ToolMachineState =
 export enum ToolEvent {
 	SEND_COMMAND_UPDATE_TOOLS = 'SEND_COMMAND_UPDATE_TOOLS',
 	SUBMIT_ACTIVE_TOOL_OUTPUT = 'SUBMIT_ACTIVE_TOOL_OUTPUT',
+	TOGGLE_CHAT = 'TOGGLE_CHAT',
 }
 
 export type ToolMachineEvent =
@@ -131,7 +133,8 @@ export type ToolMachineEvent =
 				tools: Tool[];
 			};
 	  }
-	| {type: ToolEvent.SUBMIT_ACTIVE_TOOL_OUTPUT; output: string};
+	| {type: ToolEvent.SUBMIT_ACTIVE_TOOL_OUTPUT; output: string}
+	| {type: ToolEvent.TOGGLE_CHAT};
 
 // Actions
 export enum ToolAction {

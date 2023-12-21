@@ -3,7 +3,6 @@ import React from 'react';
 
 import {useActor} from '@xstate/react';
 
-import {Spinner} from '@inkjs/ui';
 import {ToolsContext} from '../ToolsProvider.js';
 import {type EditFileToolArguments} from '../../types/ToolArguments.js';
 import {Colors} from '../../styles/Colors.js';
@@ -22,9 +21,9 @@ interface Props {
 
 export const EditFileTool = ({id}: Props) => {
 	const [toolMachineState] = ToolsContext.useActor();
+	const showChat = toolMachineState.context.showChat;
 	const tools = toolMachineState.context.tools;
 	const tool = tools.find(tool => tool.id === id);
-	const toolIndex = tools.findIndex(tool => tool.id === id);
 	const toolActor = toolMachineState.context.toolRefs[id];
 
 	const toolArguments = tool?.arguments as EditFileToolArguments;
@@ -48,7 +47,7 @@ export const EditFileTool = ({id}: Props) => {
 		if (key.escape && isMachineActive) {
 			exit();
 		}
-		if (key.return && isMachineActive) {
+		if (key.return && showChat && isMachineActive) {
 			send(EditFileToolEvent.ENTER_KEY_PRESS);
 		}
 	});
@@ -75,10 +74,10 @@ export const EditFileTool = ({id}: Props) => {
 			</Box>
 
 			{/* Press Enter Create File */}
-			{!isLoading && !isSuccess && (
+			{!isLoading && !isSuccess && !showChat && (
 				<Text color={Colors.LightGray}>
-					Press <Text color={Colors.LightGreen}>enter</Text> to apply these
-					changes to{' '}
+					Press <Text color={Colors.White}>enter</Text> to apply these changes
+					to{' '}
 					<Text color={Colors.White} italic>
 						{filePath}
 					</Text>
@@ -122,8 +121,8 @@ export const EditFileTool = ({id}: Props) => {
 					{isMachineActive && (
 						<Box>
 							<Text color={Colors.LightGray}>
-								Press <Text color={Colors.LightGreen}>enter</Text> to go to the
-								next step.
+								Press <Text color={Colors.White}>enter</Text> to go to the next
+								step.
 							</Text>
 						</Box>
 					)}

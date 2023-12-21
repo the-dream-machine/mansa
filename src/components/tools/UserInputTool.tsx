@@ -20,9 +20,9 @@ interface Props {
 
 export const UserInputTool = ({id}: Props) => {
 	const [toolMachineState] = ToolsContext.useActor();
+	const showChat = toolMachineState.context.showChat;
 	const tools = toolMachineState.context.tools;
 	const tool = tools.find(tool => tool.id === id);
-	const toolIndex = tools.findIndex(tool => tool.id === id);
 	const toolActor = toolMachineState.context.toolRefs[id];
 
 	const toolArguments = tool?.arguments as UserInputTooArguments;
@@ -55,7 +55,6 @@ export const UserInputTool = ({id}: Props) => {
 			<Text color={Colors.LightGray}>{question}</Text>
 
 			<Box flexDirection="column" marginTop={1}>
-				{/* Text Input */}
 				<Box>
 					<Box
 						borderStyle={'round'}
@@ -71,17 +70,19 @@ export const UserInputTool = ({id}: Props) => {
 							defaultValue={answer}
 							isDisabled={isSubmitted}
 							placeholder={placeholder}
-							onSubmit={answer =>
-								send({type: UserInputToolEvent.SUBMIT_ANSWER, answer})
-							}
+							onSubmit={answer => {
+								if (!showChat) {
+									return send({type: UserInputToolEvent.SUBMIT_ANSWER, answer});
+								}
+							}}
 						/>
 					</Box>
 				</Box>
 
-				{!isSubmitted && (
+				{!isSubmitted && !showChat && (
 					<Box marginLeft={1}>
 						<Text color={Colors.LightGray}>
-							Press <Text color={Colors.LightGreen}>enter</Text> to submit
+							Press <Text color={Colors.White}>enter</Text> to submit
 						</Text>
 					</Box>
 				)}
