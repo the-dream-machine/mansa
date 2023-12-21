@@ -27,6 +27,7 @@ export const UserSelectTool = ({id}: Props) => {
 	const tool = tools.find(tool => tool.id === id);
 	const toolIndex = tools.findIndex(tool => tool.id === id);
 	const toolActor = toolMachineState.context.toolRefs[id];
+	const isToolActive = tool?.status === 'active';
 
 	const toolArguments = tool?.arguments as UserSelectToolArguments;
 	const title = toolArguments.title;
@@ -38,7 +39,6 @@ export const UserSelectTool = ({id}: Props) => {
 		UserSelectToolMachineState
 	>;
 
-	const isMachineActive = !state.done;
 	const showDivider = toolIndex > 0;
 
 	const contextOptions = state.context.options;
@@ -50,7 +50,7 @@ export const UserSelectTool = ({id}: Props) => {
 
 	const {exit} = useApp();
 	useInput((_, key) => {
-		if (key.escape && isMachineActive) {
+		if (key.escape && isToolActive) {
 			exit();
 		}
 	});
@@ -65,7 +65,7 @@ export const UserSelectTool = ({id}: Props) => {
 					<Select
 						options={options}
 						highlightText={selectedOption}
-						isDisabled={!isMachineActive || !showChat}
+						isDisabled={!isToolActive || showChat}
 						onChange={option =>
 							send({type: UserSelectToolEvent.SELECT_OPTION, option})
 						}
@@ -73,7 +73,7 @@ export const UserSelectTool = ({id}: Props) => {
 				</Box>
 			</Box>
 
-			{isMachineActive && !showChat && (
+			{isToolActive && !showChat && (
 				<Text color={Colors.LightGray}>
 					Press <Text color={Colors.White}>enter</Text> to select an option.
 				</Text>

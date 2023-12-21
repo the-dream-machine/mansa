@@ -39,30 +39,29 @@ const SelectPackageManager = () => {
 	return (
 		<PageContainer>
 			<Header />
-			<ScrollContainer>
-				<SectionContainer>
-					<Text color={Colors.White}>
-						Set up mansa <Text color={Colors.DarkGray}>(Step 1 of 2)</Text>
-					</Text>
-					<Text color={Colors.LightGray}>
-						Which package manager are you using for this project?
-					</Text>
 
-					<Select
-						options={options}
-						onChange={value => {
-							send({
-								type: SelectPackageManagerEvent.SUBMIT_SELECTION,
-								selection: value as PackageManager,
-							});
-						}}
-					/>
+			<SectionContainer>
+				<Text color={Colors.White}>
+					Set up mansa <Text color={Colors.DarkGray}>(Step 1 of 2)</Text>
+				</Text>
+				<Text color={Colors.LightGray}>
+					Which package manager are you using for this project?
+				</Text>
 
-					<Text color={Colors.LightGray}>
-						Press <Text color={Colors.LightGreen}>enter</Text> to submit.
-					</Text>
-				</SectionContainer>
-			</ScrollContainer>
+				<Select
+					options={options}
+					onChange={value => {
+						send({
+							type: SelectPackageManagerEvent.SUBMIT_SELECTION,
+							selection: value as PackageManager,
+						});
+					}}
+				/>
+
+				<Text color={Colors.LightGray}>
+					Press <Text color={Colors.LightGreen}>enter</Text> to submit.
+				</Text>
+			</SectionContainer>
 
 			<Spacer />
 			<Footer controls={['esc']} />

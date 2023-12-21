@@ -4,13 +4,14 @@ import axios, {
 	type AxiosResponse,
 } from 'axios';
 import {type RunStatusResponse, type Run} from '../../types/Run.js';
+import {apiUrl} from '../apiUrl.js';
 
 export const getQueryStatus = async ({run_id, thread_id}: Run) => {
 	const params = {run_id, thread_id};
 	const config: AxiosRequestConfig = {
 		method: 'GET',
 		maxBodyLength: Infinity,
-		url: 'http://localhost:3000/query-status',
+		url: `${apiUrl}/query-status`,
 		headers: {'Content-Type': 'application/json'},
 		params,
 	};

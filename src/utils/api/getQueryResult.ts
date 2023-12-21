@@ -3,6 +3,7 @@ import axios, {
 	type AxiosRequestConfig,
 	type AxiosResponse,
 } from 'axios';
+import {apiUrl} from '../apiUrl.js';
 
 interface Args {
 	thread_id: string;
@@ -13,7 +14,7 @@ export const getQueryResult = async ({thread_id}: Args) => {
 	const config: AxiosRequestConfig = {
 		method: 'GET',
 		maxBodyLength: Infinity,
-		url: 'http://localhost:3000/query-result',
+		url: `${apiUrl}/query-result`,
 		headers: {'Content-Type': 'application/json'},
 		params,
 	};

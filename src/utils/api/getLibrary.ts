@@ -4,6 +4,7 @@ import axios, {
 	type AxiosResponse,
 } from 'axios';
 import {type Library} from '../../types/Library.js';
+import {apiUrl} from '../apiUrl.js';
 
 interface Args {
 	name: string;
@@ -14,7 +15,7 @@ export const getLibrary = async ({name}: Args) => {
 	const config: AxiosRequestConfig = {
 		method: 'GET',
 		maxBodyLength: Infinity,
-		url: 'http://localhost:3000/library',
+		url: `${apiUrl}/library`,
 		headers: {'Content-Type': 'application/json'},
 		params,
 	};

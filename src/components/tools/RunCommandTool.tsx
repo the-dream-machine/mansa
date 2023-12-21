@@ -25,6 +25,7 @@ export const RunCommandTool = ({id}: Props) => {
 	const showChat = toolMachineState.context.showChat;
 	const tool = toolMachineState.context.tools.find(tool => tool.id === id);
 	const toolActor = toolMachineState.context.toolRefs[id];
+	const isToolActive = tool?.status === 'active';
 
 	const toolArguments = tool?.arguments as RunCommandToolArguments;
 	const title = toolArguments.title;
@@ -36,7 +37,6 @@ export const RunCommandTool = ({id}: Props) => {
 		RunCommandToolMachineState
 	>;
 
-	const isMachineActive = !state.done;
 	const highlightedCommand = state.context.highlightedCommand
 		.split('\n') // Remove newlines
 		.join('')
@@ -50,10 +50,10 @@ export const RunCommandTool = ({id}: Props) => {
 
 	const {exit} = useApp();
 	useInput((_, key) => {
-		if (key.escape && isMachineActive) {
+		if (key.escape && isToolActive) {
 			exit();
 		}
-		if (key.return && !showChat && isMachineActive) {
+		if (key.return && !showChat && isToolActive) {
 			send(RunCommandToolEvent.ENTER_KEY_PRESS);
 		}
 	});
@@ -147,7 +147,7 @@ export const RunCommandTool = ({id}: Props) => {
 						</Box>
 					)}
 
-					{isSuccess && isMachineActive && (
+					{isSuccess && isToolActive && (
 						<Text color={Colors.DarkGray}>
 							Press <Text color={Colors.LightGray}>enter</Text> to go to the
 							next step.

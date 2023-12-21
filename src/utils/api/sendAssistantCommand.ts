@@ -1,5 +1,6 @@
 import axios, {type AxiosError, type AxiosResponse} from 'axios';
 import {type Run} from '../../types/Run.js';
+import {apiUrl} from '../apiUrl.js';
 
 interface Args {
 	retrievalContext: string;
@@ -12,7 +13,7 @@ export const sendAssistantCommand = async (args: Args) => {
 	const config = {
 		method: 'POST',
 		maxBodyLength: Infinity,
-		url: 'http://localhost:3000/assistant-command',
+		url: `${apiUrl}/assistant-command`,
 		headers: {'Content-Type': 'application/json'},
 		data,
 	};

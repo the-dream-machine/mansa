@@ -19,7 +19,6 @@ export const FindFileByPathTool = ({id}: Props) => {
 	const [toolMachineState] = ToolsContext.useActor();
 	const tools = toolMachineState.context.tools;
 	const tool = tools.find(tool => tool.id === id);
-	const toolIndex = tools.findIndex(tool => tool.id === id);
 	const toolActor = toolMachineState.context.toolRefs[id];
 
 	const toolArguments = tool?.arguments as FindFileByPathToolArguments;
@@ -31,7 +30,6 @@ export const FindFileByPathTool = ({id}: Props) => {
 		FindFileByPathToolMachineState
 	>;
 
-	const shouldPad = toolIndex === 0;
 	const fileExists = state.context.fileExists;
 
 	const {exit} = useApp();
@@ -42,7 +40,7 @@ export const FindFileByPathTool = ({id}: Props) => {
 	});
 
 	return (
-		<Box paddingX={3} paddingTop={shouldPad ? 3 : 1} paddingBottom={2}>
+		<Box paddingX={3} paddingY={1}>
 			<Box>
 				<Box
 					borderStyle="round"

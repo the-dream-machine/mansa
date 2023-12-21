@@ -24,6 +24,7 @@ export const UserInputTool = ({id}: Props) => {
 	const tools = toolMachineState.context.tools;
 	const tool = tools.find(tool => tool.id === id);
 	const toolActor = toolMachineState.context.toolRefs[id];
+	const isToolActive = tool?.status === 'active';
 
 	const toolArguments = tool?.arguments as UserInputTooArguments;
 	const title = toolArguments.title;
@@ -36,13 +37,12 @@ export const UserInputTool = ({id}: Props) => {
 		UserInputToolMachineState
 	>;
 
-	const isMachineActive = !state.done;
 	const answer = state.context.answer;
 	const isSubmitted = state.context.isSubmitted;
 
 	const {exit} = useApp();
 	useInput((_, key) => {
-		if (key.escape && isMachineActive) {
+		if (key.escape && isToolActive) {
 			exit();
 		}
 	});
@@ -71,7 +71,7 @@ export const UserInputTool = ({id}: Props) => {
 							isDisabled={isSubmitted}
 							placeholder={placeholder}
 							onSubmit={answer => {
-								if (!showChat) {
+								if (!showChat && isToolActive) {
 									return send({type: UserInputToolEvent.SUBMIT_ANSWER, answer});
 								}
 							}}

@@ -134,10 +134,16 @@ export const createFileToolMachine = createMachine<
 		[CreateFileToolState.HIGHLIGHTING_FILE_CONTENT]: {
 			invoke: {
 				src: async context => {
+					let extension = context.fileExtension;
+					const nullFileExtensions = ['development', 'local', 'env'];
+					if (nullFileExtensions.includes(context.fileExtension)) {
+						extension = 'ts';
+					}
+
 					loadLanguages(context.fileExtension);
 					return await highlightAsync({
 						code: context?.fileContent ?? '',
-						language: context.fileExtension,
+						language: extension,
 					});
 				},
 				onDone: {

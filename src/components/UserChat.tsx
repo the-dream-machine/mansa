@@ -27,11 +27,11 @@ export const UserChat = () => {
 				paddingY={1}
 			>
 				<TextInput
-					placeholder="Type something..."
-					onSubmit={values =>
+					placeholder="What do you want to change?"
+					onSubmit={value =>
 						toolMachineSend({
 							type: ToolEvent.SUBMIT_ACTIVE_TOOL_OUTPUT,
-							output: JSON.stringify({user_request: values}),
+							output: JSON.stringify({user_request: value}),
 						})
 					}
 				/>

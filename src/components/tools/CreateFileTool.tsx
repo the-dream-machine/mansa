@@ -26,6 +26,7 @@ export const CreateFileTool = ({id}: Props) => {
 	const tool = tools.find(tool => tool.id === id);
 	const toolIndex = tools.findIndex(tool => tool.id === id);
 	const toolActor = toolMachineState.context.toolRefs[id];
+	const isToolActive = tool?.status === 'active';
 
 	const toolArguments = tool?.arguments as CreateFileToolArguments;
 	const title = toolArguments.title;
@@ -37,7 +38,6 @@ export const CreateFileTool = ({id}: Props) => {
 		CreateFileToolMachineState
 	>;
 
-	const isMachineActive = !state.done;
 	const filePath = state.context.filePath;
 	const highlightedFileContent = state.context.highlightedFileContent;
 	const isSuccess = state.context.isSuccess;
@@ -46,10 +46,10 @@ export const CreateFileTool = ({id}: Props) => {
 
 	const {exit} = useApp();
 	useInput((_, key) => {
-		if (key.escape && isMachineActive) {
+		if (key.escape && isToolActive) {
 			exit();
 		}
-		if (key.return && !showChat && isMachineActive) {
+		if (key.return && !showChat && isToolActive) {
 			send(CreateFileToolEvent.ENTER_KEY_PRESS);
 		}
 	});
@@ -107,7 +107,7 @@ export const CreateFileTool = ({id}: Props) => {
 						</Box>
 					</Box>
 
-					{isMachineActive && (
+					{isToolActive && (
 						<>
 							{!isSubmitted && (
 								<Box>

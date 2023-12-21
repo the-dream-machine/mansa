@@ -26,6 +26,7 @@ export const UserActionTool = ({id}: Props) => {
 	const tools = toolMachineState.context.tools;
 	const tool = tools.find(tool => tool.id === id);
 	const toolActor = toolMachineState.context.toolRefs[id];
+	const isToolActive = tool?.status === 'active';
 
 	const toolArguments = tool?.arguments as UserActionToolArguments;
 	const title = toolArguments.title;
@@ -37,7 +38,6 @@ export const UserActionTool = ({id}: Props) => {
 		UserActionToolMachineState
 	>;
 
-	const isMachineActive = !state.done;
 	const userAction = state.context.actionItem;
 	const isSuccess = state.context.isSuccess;
 
@@ -52,10 +52,10 @@ export const UserActionTool = ({id}: Props) => {
 
 	const {exit} = useApp();
 	useInput((_, key) => {
-		if (key.escape && isMachineActive) {
+		if (key.escape && isToolActive) {
 			exit();
 		}
-		if (key.return && !showChat && isMachineActive) {
+		if (key.return && !showChat && isToolActive) {
 			send({type: UserActionToolEvent.ENTER_KEY_PRESS});
 		}
 	});
@@ -97,7 +97,7 @@ export const UserActionTool = ({id}: Props) => {
 							</Box>
 						</Box>
 
-						{isMachineActive && (
+						{isToolActive && (
 							<Box>
 								<Text color={Colors.LightGray}>
 									Press <Text color={Colors.White}>enter</Text> to go to the

@@ -25,6 +25,7 @@ export const EditFileTool = ({id}: Props) => {
 	const tools = toolMachineState.context.tools;
 	const tool = tools.find(tool => tool.id === id);
 	const toolActor = toolMachineState.context.toolRefs[id];
+	const isToolActive = tool?.status === 'active';
 
 	const toolArguments = tool?.arguments as EditFileToolArguments;
 	const title = toolArguments.title;
@@ -36,7 +37,6 @@ export const EditFileTool = ({id}: Props) => {
 		EditFileToolMachineState
 	>;
 
-	const isMachineActive = !state.done;
 	const filePath = state.context.filePath;
 	const highlightedDiffFile = state.context.highlightedDiffFile;
 	const isLoading = state.context.isLoading;
@@ -44,10 +44,10 @@ export const EditFileTool = ({id}: Props) => {
 
 	const {exit} = useApp();
 	useInput((_, key) => {
-		if (key.escape && isMachineActive) {
+		if (key.escape && isToolActive) {
 			exit();
 		}
-		if (key.return && showChat && isMachineActive) {
+		if (key.return && showChat && isToolActive) {
 			send(EditFileToolEvent.ENTER_KEY_PRESS);
 		}
 	});
@@ -118,7 +118,7 @@ export const EditFileTool = ({id}: Props) => {
 						</Box>
 					</Box>
 
-					{isMachineActive && (
+					{isToolActive && (
 						<Box>
 							<Text color={Colors.LightGray}>
 								Press <Text color={Colors.White}>enter</Text> to go to the next

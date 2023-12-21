@@ -1,6 +1,7 @@
 import axios, {type AxiosResponse} from 'axios';
 import {type Run} from '../../types/Run.js';
 import {type ToolOutput} from '../../types/Tool.js';
+import {apiUrl} from '../apiUrl.js';
 
 interface Args {
 	run: Run;
@@ -12,7 +13,7 @@ export const submitToolOutputs = async ({run, toolOutputs}: Args) => {
 	const config = {
 		method: 'POST',
 		maxBodyLength: Infinity,
-		url: 'http://localhost:3000/submit-tool-outputs',
+		url: `${apiUrl}/submit-tool-outputs`,
 		headers: {'Content-Type': 'application/json'},
 		data,
 	};

@@ -1,5 +1,6 @@
 import axios, {AxiosError, type AxiosResponse} from 'axios';
 import {type Run} from '../../types/Run.js';
+import {apiUrl} from '../apiUrl.js';
 
 interface Args {
 	query: string;
@@ -18,7 +19,7 @@ export const sendQuery = async ({
 	const config = {
 		method: 'POST',
 		maxBodyLength: Infinity,
-		url: 'http://localhost:3000/query',
+		url: `${apiUrl}/query`,
 		headers: {'Content-Type': 'application/json'},
 		data,
 	};

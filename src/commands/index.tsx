@@ -5,7 +5,6 @@ import {ThemeProvider} from '@inkjs/ui';
 
 import {NavigationProvider} from '../components/NavigationProvider.js';
 import {inkTheme} from '../styles/inkTheme.js';
-import {FullScreen} from '../components/FullScreen.js';
 import NavigationHandler from '../components/NavigationHandler.js';
 
 export const args = zod.tuple([

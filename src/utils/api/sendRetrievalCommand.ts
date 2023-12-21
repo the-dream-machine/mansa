@@ -1,5 +1,6 @@
 import axios, {type AxiosError, type AxiosResponse} from 'axios';
 import {type Run} from '../../types/Run.js';
+import {apiUrl} from '../apiUrl.js';
 
 interface Args {
 	commandName: string;
@@ -13,7 +14,7 @@ export const sendRetrievalCommand = async (args: Args) => {
 	const config = {
 		method: 'POST',
 		maxBodyLength: Infinity,
-		url: 'http://localhost:3000/retrieval-command',
+		url: `${apiUrl}/retrieval-command`,
 		headers: {'Content-Type': 'application/json'},
 		data,
 	};

@@ -36,7 +36,7 @@ export const Tools = () => {
 		if (key.escape && isError) {
 			exit();
 		}
-		if (key.tab) {
+		if (key.tab && !isError) {
 			send(ToolEvent.TOGGLE_CHAT);
 		}
 	});

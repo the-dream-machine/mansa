@@ -73,7 +73,23 @@ export const initialToolMachineContext: ToolMachineContext = {
 	sendCommandActorRef: undefined,
 
 	run: undefined,
-	tools: [],
+	tools: [
+		// {
+		// 	id: 'call_0mpSlTLeZFNakww1bcKPO2HX',
+		// 	name: 'create_file',
+		// 	type: 'function',
+		// 	status: 'pending',
+		// 	arguments: {
+		// 		title: 'Edit .env.local',
+		// 		description:
+		// 			'Add Trigger.dev development API key and API URL to the .env.local file to set the environment variables required for the Trigger.dev SDK.',
+		// 		file_extension: 'js',
+		// 		file_path: './.env.local',
+		// 		file_content:
+		// 			'TRIGGER_API_KEY=ENTER_YOUR_DEVELOPMENT_API_KEY_HERE\\nTRIGGER_API_URL=https://api.trigger.dev\\n',
+		// 	},
+		// },
+	],
 	toolRefs: {},
 	toolOutputs: [],
 
@@ -273,14 +289,11 @@ export const toolMachine = createMachine<
 									const activeToolArguments =
 										activeTool.arguments as CreateFileToolArguments;
 
-									const fileExtension = activeToolArguments.file_extension
-										? activeToolArguments.file_extension
-										: 'ts';
 									const activeToolRef = spawn(
 										createFileToolMachine.withContext({
 											...initialCreateFileToolMachineContext,
 											filePath: activeToolArguments.file_path,
-											fileExtension,
+											fileExtension: activeToolArguments.file_extension,
 											fileContent: activeToolArguments.file_content,
 										}),
 									);
@@ -446,6 +459,7 @@ export const toolMachine = createMachine<
 				],
 			},
 			[ToolState.PROCESSING_ACTIVE_TOOL]: {
+				entry: [assign({showChat: false})],
 				on: {
 					[ToolEvent.TOGGLE_CHAT]: {
 						actions: assign({showChat: context => !context.showChat}),
