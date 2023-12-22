@@ -18,17 +18,10 @@ const NavigationHandler = ({libraryName, libraryCommand}: Props) => {
 	}
 
 	return (
-		<>
-			{state.matches(NavigationPage.TOOLS) && (
-				<ToolsProvider
-					libraryCommand={libraryCommand}
-					libraryName={libraryName}
-				>
-					<Tools />
-				</ToolsProvider>
-			)}
+		<ToolsProvider libraryCommand={libraryCommand} libraryName={libraryName}>
+			{state.matches(NavigationPage.TOOLS) && <Tools />}
 			{state.matches(NavigationPage.CREATE_CONFIG) && <SelectPackageManager />}
-		</>
+		</ToolsProvider>
 	);
 };
 
