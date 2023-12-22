@@ -12,14 +12,15 @@ interface Props {
 }
 
 export const Footer = ({controls}: Props) => {
-	const [toolMachineState] = ToolsContext.useActor();
-	const showChat = toolMachineState.context.showChat;
-	const isError = toolMachineState.context.isError;
+	const [state] = ToolsContext.useActor();
+	const showChat = state.context.showChat;
+	const showSendCommand = state.context.showSendCommand;
+	const isError = state.context.isError;
 
 	const tabLabel = showChat ? 'go back' : 'request changes';
 	return (
 		<Box flexShrink={0} paddingX={3} paddingY={1} width={'100%'}>
-			{controls.includes('tab') && !isError && (
+			{controls.includes('tab') && !isError && !showSendCommand && (
 				<Box>
 					<Text color={BaseColors.Gray500}>tab </Text>
 					<Text color={Colors.DarkGray}>{tabLabel} • </Text>

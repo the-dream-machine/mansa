@@ -98,7 +98,7 @@ export const Tools = () => {
 
 			{isLoading && (
 				<Box gap={1} marginY={1} paddingX={3}>
-					<Spinner />
+					<Text color={Colors.LightYellow}>•</Text>
 					<Text>Loading</Text>
 				</Box>
 			)}

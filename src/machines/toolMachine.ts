@@ -140,7 +140,7 @@ export const toolMachine = createMachine<
 		predictableActionArguments: true,
 		preserveActionOrder: true,
 		context: initialToolMachineContext,
-		initial: ToolState.ACTIVATING_PENDING_TOOL,
+		initial: ToolState.FETCHING_LIBRARY,
 		states: {
 			[ToolState.FETCHING_LIBRARY]: {
 				invoke: {
