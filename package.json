@@ -18,7 +18,7 @@
 	"dependencies": {
 		"@inkjs/ui": "^1.0.0",
 		"@xstate/react": "^3.2.2",
-		"axios": "^1.6.0",
+		"axios": "^1.13.5",
 		"clipboardy": "^4.0.0",
 		"diff": "^5.1.0",
 		"figures": "^5.0.0",
